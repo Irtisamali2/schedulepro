@@ -23,6 +23,7 @@ import {
   servicePricingTiers, type ServicePricingTier, type InsertServicePricingTier,
   websiteTestimonials, type WebsiteTestimonial, type InsertWebsiteTestimonial,
   payments, type Payment, type InsertPayment,
+  contactMessages, type ContactMessage, type InsertContactMessage,
 } from "@shared/schema";
 import { dnsVerificationService } from "./dns-verification";
 
@@ -219,6 +220,13 @@ export interface IStorage {
   }>;
   testSmtpConfig(clientId: string): Promise<boolean>;
   clearSmtpConfig(clientId: string): Promise<void>;
+  
+  // Contact Messages / Super Admin Leads
+  getContactMessages(): Promise<ContactMessage[]>;
+  getContactMessage(id: string): Promise<ContactMessage | undefined>;
+  createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+  updateContactMessage(id: string, updates: Partial<InsertContactMessage>): Promise<ContactMessage>;
+  deleteContactMessage(id: string): Promise<void>;
 }
 
 // In-memory storage implementation
@@ -234,6 +242,7 @@ class MemStorage implements IStorage {
   private operatingHours: OperatingHours[] = [];
   private leads: Lead[] = [];
   private payments: Payment[] = [];
+  private contactMessages: ContactMessage[] = [];
   private clientWebsites: ClientWebsite[] = [
     {
       id: "website_1",
@@ -2033,6 +2042,45 @@ class MemStorage implements IStorage {
       smtpEnabled: false,
       updatedAt: new Date()
     };
+  }
+
+  // Contact Messages / Super Admin Leads Methods
+  async getContactMessages(): Promise<ContactMessage[]> {
+    return this.contactMessages;
+  }
+
+  async getContactMessage(id: string): Promise<ContactMessage | undefined> {
+    return this.contactMessages.find(m => m.id === id);
+  }
+
+  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const newMessage: ContactMessage = {
+      id: `contact_${Date.now()}`,
+      ...message,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.contactMessages.push(newMessage);
+    return newMessage;
+  }
+
+  async updateContactMessage(id: string, updates: Partial<InsertContactMessage>): Promise<ContactMessage> {
+    const messageIndex = this.contactMessages.findIndex(m => m.id === id);
+    if (messageIndex === -1) throw new Error("Contact message not found");
+    
+    this.contactMessages[messageIndex] = {
+      ...this.contactMessages[messageIndex],
+      ...updates,
+      updatedAt: new Date(),
+    };
+    return this.contactMessages[messageIndex];
+  }
+
+  async deleteContactMessage(id: string): Promise<void> {
+    const messageIndex = this.contactMessages.findIndex(m => m.id === id);
+    if (messageIndex === -1) throw new Error("Contact message not found");
+    
+    this.contactMessages.splice(messageIndex, 1);
   }
 }
 

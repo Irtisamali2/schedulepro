@@ -956,3 +956,34 @@ export const insertPlatformReviewSchema = createInsertSchema(platformReviews).pi
 
 export type InsertPlatformReview = z.infer<typeof insertPlatformReviewSchema>;
 export type PlatformReview = typeof platformReviews.$inferSelect;
+
+// =============================================================================
+// Super Admin Contact Messages / Leads
+// =============================================================================
+
+// Contact messages from the super admin website
+export const contactMessages = pgTable("contact_messages", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  source: text("source").default("website"), // website, referral, etc.
+  status: text("status").default("NEW"), // NEW, CONTACTED, CONVERTED, CLOSED
+  notes: text("notes"), // Internal admin notes
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertContactMessageSchema = createInsertSchema(contactMessages).pick({
+  name: true,
+  email: true,
+  subject: true,
+  message: true,
+  source: true,
+  status: true,
+  notes: true,
+});
+
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+export type ContactMessage = typeof contactMessages.$inferSelect;
