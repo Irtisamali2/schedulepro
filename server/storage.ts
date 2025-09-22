@@ -2056,7 +2056,13 @@ class MemStorage implements IStorage {
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
     const newMessage: ContactMessage = {
       id: `contact_${Date.now()}`,
-      ...message,
+      name: message.name,
+      email: message.email,
+      subject: message.subject,
+      message: message.message,
+      source: message.source || "website",
+      status: message.status || "NEW",
+      notes: message.notes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

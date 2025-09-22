@@ -26,7 +26,8 @@ import {
   insertNewsletterSubscriptionSchema,
   insertWebsiteStaffSchema,
   insertServicePricingTierSchema,
-  insertWebsiteTestimonialSchema
+  insertWebsiteTestimonialSchema,
+  insertContactMessageSchema
 } from "@shared/schema";
 import { 
   validateDomain, 
@@ -1093,6 +1094,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting plan:", error);
       res.status(500).json({ error: "Failed to delete plan" });
+    }
+  });
+
+  // =============================================================================
+  // SUPER ADMIN ROUTES - Contact Messages / Website Leads
+  // =============================================================================
+
+  // Get all contact messages for super admin
+  app.get("/api/contact-messages", async (req, res) => {
+    try {
+      const messages = await storage.getContactMessages();
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching contact messages:", error);
+      res.status(500).json({ error: "Failed to fetch contact messages" });
+    }
+  });
+
+  // Handle contact form submission from website
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const messageData = insertContactMessageSchema.parse(req.body);
+      const message = await storage.createContactMessage(messageData);
+      
+      console.log("📧 New contact form submission:", {
+        id: message.id,
+        name: message.name,
+        email: message.email,
+        subject: message.subject
+      });
+      
+      res.json({ 
+        message: "Contact form submitted successfully",
+        id: message.id 
+      });
+    } catch (error) {
+      console.error("Error processing contact form:", error);
+      res.status(500).json({ error: "Failed to submit contact form" });
+    }
+  });
+
+  // Update contact message status/notes (for super admin)
+  app.put("/api/contact-messages/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const message = await storage.updateContactMessage(id, updates);
+      res.json(message);
+    } catch (error) {
+      console.error("Error updating contact message:", error);
+      res.status(500).json({ error: "Failed to update contact message" });
+    }
+  });
+
+  // Delete contact message
+  app.delete("/api/contact-messages/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteContactMessage(id);
+      res.json({ message: "Contact message deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contact message:", error);
+      res.status(500).json({ error: "Failed to delete contact message" });
     }
   });
 
