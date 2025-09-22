@@ -35,6 +35,7 @@ import {
   enhancedDomainConfigurationSchema 
 } from "./domain-validation";
 import { v4 as uuidv4 } from "uuid";
+import { createRateLimitMiddleware, contactFormLimiter } from "./rate-limiter";
 
 // Initialize Stripe (if configured)
 const stripe = process.env.STRIPE_SECRET_KEY 
@@ -1113,7 +1114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Handle contact form submission from website
-  app.post("/api/contact", async (req, res) => {
+  app.post("/api/contact", createRateLimitMiddleware(contactFormLimiter), async (req, res) => {
     try {
       const messageData = insertContactMessageSchema.parse(req.body);
       const message = await storage.createContactMessage(messageData);

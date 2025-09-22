@@ -58,6 +58,7 @@ class RateLimiter {
 export const generalLimiter = new RateLimiter(100, 15 * 60 * 1000); // 100 requests per 15 minutes
 export const paymentLimiter = new RateLimiter(10, 60 * 1000); // 10 payment requests per minute
 export const emailLimiter = new RateLimiter(20, 60 * 60 * 1000); // 20 emails per hour
+export const contactFormLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 contact form submissions per 15 minutes
 
 export function createRateLimitMiddleware(limiter: RateLimiter) {
   return (req: any, res: any, next: any) => {
