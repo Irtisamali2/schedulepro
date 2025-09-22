@@ -30,7 +30,8 @@ import {
   Star,
   ExternalLink,
   Link,
-  Wand2
+  Wand2,
+  Mail
 } from "lucide-react";
 
 interface Client {
@@ -56,6 +57,19 @@ interface Plan {
   storageGB: number;
   stripePriceId?: string;
   stripeProductId?: string;
+}
+
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  source: string | null;
+  status: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Analytics {
@@ -137,6 +151,11 @@ export default function SuperAdminDashboard() {
 
   const { data: onboardingSessions = [] } = useQuery<any[]>({
     queryKey: ['/api/onboarding/sessions']
+  });
+
+  // Contact messages query
+  const { data: contactMessages = [], isLoading: contactMessagesLoading } = useQuery<ContactMessage[]>({
+    queryKey: ['/api/contact-messages']
   });
 
   // Review platforms query
@@ -460,6 +479,7 @@ export default function SuperAdminDashboard() {
     { id: "plans", label: "Plans", icon: CreditCard },
     { id: "payments", label: "Payments", icon: DollarSign },
     { id: "onboarding", label: "Onboarding", icon: UserPlus },
+    { id: "leads", label: "Leads", icon: Mail },
     { id: "reviews", label: "Reviews", icon: Star },
   ];
 
@@ -1778,6 +1798,97 @@ export default function SuperAdminDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+            )}
+
+            {activeView === "leads" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Website Leads</h2>
+                    <p className="text-gray-600">Contact form submissions from your marketing website</p>
+                  </div>
+                </div>
+
+                {contactMessagesLoading ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-gray-600">Loading leads...</p>
+                  </div>
+                ) : contactMessages.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-12">
+                      <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No leads yet</h3>
+                      <p className="text-gray-600">Contact form submissions will appear here when users fill out your website contact form.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4">
+                    {contactMessages.map((message) => (
+                      <Card key={message.id} data-testid={`lead-card-${message.id}`}>
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="font-semibold text-gray-900" data-testid={`lead-name-${message.id}`}>
+                                  {message.name}
+                                </h3>
+                                <Badge 
+                                  variant={message.status === 'NEW' ? 'default' : message.status === 'CONTACTED' ? 'secondary' : 'outline'}
+                                  data-testid={`lead-status-${message.id}`}
+                                >
+                                  {message.status || 'NEW'}
+                                </Badge>
+                                <span className="text-sm text-gray-500">
+                                  {new Date(message.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              
+                              <div className="space-y-1 mb-3">
+                                <p className="text-sm text-gray-600" data-testid={`lead-email-${message.id}`}>
+                                  <strong>Email:</strong> {message.email}
+                                </p>
+                                <p className="text-sm text-gray-600" data-testid={`lead-subject-${message.id}`}>
+                                  <strong>Subject:</strong> {message.subject}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  <strong>Source:</strong> {message.source || 'Website'}
+                                </p>
+                              </div>
+                              
+                              <div className="bg-gray-50 p-3 rounded-md mb-3">
+                                <p className="text-sm text-gray-700" data-testid={`lead-message-${message.id}`}>
+                                  {message.message}
+                                </p>
+                              </div>
+                              
+                              {message.notes && (
+                                <div className="bg-blue-50 p-3 rounded-md">
+                                  <p className="text-sm text-blue-700">
+                                    <strong>Notes:</strong> {message.notes}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-2 ml-4">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.open(`mailto:${message.email}?subject=Re: ${message.subject}`, '_blank')}
+                                data-testid={`lead-email-button-${message.id}`}
+                              >
+                                <Mail className="h-4 w-4 mr-1" />
+                                Email
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
