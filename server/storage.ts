@@ -26,6 +26,8 @@ import {
   contactMessages, type ContactMessage, type InsertContactMessage,
 } from "@shared/schema";
 import { dnsVerificationService } from "./dns-verification";
+import { promises as fs } from "fs";
+import path from "path";
 
 export interface IStorage {
   // Authentication & Users
@@ -243,6 +245,7 @@ class MemStorage implements IStorage {
   private leads: Lead[] = [];
   private payments: Payment[] = [];
   private contactMessages: ContactMessage[] = [];
+  private contactMessagesFile = path.join(process.cwd(), 'data', 'contact-messages.json');
   private clientWebsites: ClientWebsite[] = [
     {
       id: "website_1",
@@ -2045,7 +2048,35 @@ class MemStorage implements IStorage {
   }
 
   // Contact Messages / Super Admin Leads Methods
+  private async loadContactMessages(): Promise<void> {
+    try {
+      // Ensure data directory exists
+      await fs.mkdir(path.dirname(this.contactMessagesFile), { recursive: true });
+      
+      // Try to load existing data
+      const data = await fs.readFile(this.contactMessagesFile, 'utf8');
+      this.contactMessages = JSON.parse(data);
+      console.log(`✅ Loaded ${this.contactMessages.length} contact messages from file`);
+    } catch (error) {
+      // File doesn't exist or is invalid, start with empty array
+      this.contactMessages = [];
+      console.log("📝 Starting with empty contact messages (file not found)");
+    }
+  }
+
+  private async saveContactMessages(): Promise<void> {
+    try {
+      await fs.mkdir(path.dirname(this.contactMessagesFile), { recursive: true });
+      await fs.writeFile(this.contactMessagesFile, JSON.stringify(this.contactMessages, null, 2));
+    } catch (error) {
+      console.error("❌ Failed to save contact messages:", error);
+    }
+  }
+
   async getContactMessages(): Promise<ContactMessage[]> {
+    if (this.contactMessages.length === 0) {
+      await this.loadContactMessages();
+    }
     return this.contactMessages;
   }
 
@@ -2054,6 +2085,11 @@ class MemStorage implements IStorage {
   }
 
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    // Ensure messages are loaded first
+    if (this.contactMessages.length === 0) {
+      await this.loadContactMessages();
+    }
+    
     const newMessage: ContactMessage = {
       id: `contact_${Date.now()}`,
       name: message.name,
@@ -2067,10 +2103,16 @@ class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.contactMessages.push(newMessage);
+    await this.saveContactMessages();
     return newMessage;
   }
 
   async updateContactMessage(id: string, updates: Partial<InsertContactMessage>): Promise<ContactMessage> {
+    // Ensure messages are loaded first
+    if (this.contactMessages.length === 0) {
+      await this.loadContactMessages();
+    }
+    
     const messageIndex = this.contactMessages.findIndex(m => m.id === id);
     if (messageIndex === -1) throw new Error("Contact message not found");
     
@@ -2079,14 +2121,21 @@ class MemStorage implements IStorage {
       ...updates,
       updatedAt: new Date(),
     };
+    await this.saveContactMessages();
     return this.contactMessages[messageIndex];
   }
 
   async deleteContactMessage(id: string): Promise<void> {
+    // Ensure messages are loaded first
+    if (this.contactMessages.length === 0) {
+      await this.loadContactMessages();
+    }
+    
     const messageIndex = this.contactMessages.findIndex(m => m.id === id);
     if (messageIndex === -1) throw new Error("Contact message not found");
     
     this.contactMessages.splice(messageIndex, 1);
+    await this.saveContactMessages();
   }
 }
 
