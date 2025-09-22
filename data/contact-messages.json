@@ -10,5 +10,17 @@
     "notes": null,
     "createdAt": "2025-09-22T15:11:44.028Z",
     "updatedAt": "2025-09-22T15:11:44.028Z"
+  },
+  {
+    "id": "contact_1758555972954",
+    "name": "Sarah Johnson",
+    "email": "sarah@example.com",
+    "subject": "Get Started Inquiry",
+    "message": "I'm interested in trying your business management platform for my salon",
+    "source": "Landing Page",
+    "status": "NEW",
+    "notes": null,
+    "createdAt": "2025-09-22T15:46:12.954Z",
+    "updatedAt": "2025-09-22T15:46:12.954Z"
   }
 ]

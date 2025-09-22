@@ -1,10 +1,16 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Users, BarChart3, Settings, Shield, Zap, Calendar, MessageCircle, FileText, Globe, Star, ArrowRight, Play, Menu, X } from "lucide-react";
+import { insertContactMessageSchema } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 // Import assets
 import gradientBg from "@assets/Group 477_1757064264173.png";
@@ -31,9 +37,55 @@ interface Plan {
   isActive: boolean;
 }
 
+// Form schema for Get Started contact form
+const getStartedFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
+
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { toast } = useToast();
+
+  // Get Started form handling
+  const getStartedForm = useForm<z.infer<typeof getStartedFormSchema>>({
+    resolver: zodResolver(getStartedFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  });
+
+  const contactMutation = useMutation({
+    mutationFn: (data: z.infer<typeof getStartedFormSchema>) => {
+      return apiRequest("/api/contact", "POST", {
+        ...data,
+        subject: "Get Started Inquiry",
+        source: "Landing Page"
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Thank you for your interest! We'll get back to you soon.",
+      });
+      getStartedForm.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "There was a problem sending your message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  function onGetStartedSubmit(data: z.infer<typeof getStartedFormSchema>) {
+    contactMutation.mutate(data);
+  }
 
   const { data: plans = [], isLoading } = useQuery<Plan[]>({
     queryKey: ['/api/public/plans'],
@@ -571,14 +623,19 @@ export default function LandingPage() {
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8">Get Started</h3>
               
-              <form className="space-y-3 sm:space-y-4">
+              <form onSubmit={getStartedForm.handleSubmit(onGetStartedSubmit)} className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2">Email</label>
                   <input 
                     type="email" 
                     placeholder="Enter your email" 
                     className="w-full p-2 sm:p-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                    data-testid="input-get-started-email"
+                    {...getStartedForm.register("email")}
                   />
+                  {getStartedForm.formState.errors.email && (
+                    <p className="text-red-200 text-xs mt-1">{getStartedForm.formState.errors.email.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2">Name</label>
@@ -586,7 +643,12 @@ export default function LandingPage() {
                     type="text" 
                     placeholder="Enter your name" 
                     className="w-full p-2 sm:p-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                    data-testid="input-get-started-name"
+                    {...getStartedForm.register("name")}
                   />
+                  {getStartedForm.formState.errors.name && (
+                    <p className="text-red-200 text-xs mt-1">{getStartedForm.formState.errors.name.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2">Message</label>
@@ -594,10 +656,20 @@ export default function LandingPage() {
                     placeholder="What can we help you with?" 
                     rows={3}
                     className="w-full p-2 sm:p-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                    data-testid="textarea-get-started-message"
+                    {...getStartedForm.register("message")}
                   ></textarea>
+                  {getStartedForm.formState.errors.message && (
+                    <p className="text-red-200 text-xs mt-1">{getStartedForm.formState.errors.message.message}</p>
+                  )}
                 </div>
-                <Button className="w-full bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white py-2 sm:py-3 text-sm sm:text-lg rounded-lg">
-                  Send Message
+                <Button 
+                  type="submit" 
+                  disabled={contactMutation.isPending}
+                  className="w-full bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white py-2 sm:py-3 text-sm sm:text-lg rounded-lg disabled:opacity-50"
+                  data-testid="button-get-started-submit"
+                >
+                  {contactMutation.isPending ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </div>
