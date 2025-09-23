@@ -283,7 +283,16 @@ class MemStorage implements IStorage {
   private websiteTestimonials: WebsiteTestimonial[] = [];
 
   constructor() {
-    this.initializeData();
+    // Only initialize demo data in development or when explicitly requested
+    const shouldSeedDemo = process.env.SEED_DEMO_DATA === 'true' || 
+                          (process.env.NODE_ENV !== 'production' && !process.env.DEPLOY_TARGET);
+    
+    if (shouldSeedDemo) {
+      console.log('🌱 Seeding demo data for development...');
+      this.initializeData();
+    } else {
+      console.log('🚫 Demo data seeding skipped (production environment)');
+    }
   }
 
   private async initializeData() {
