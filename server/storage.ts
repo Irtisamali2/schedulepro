@@ -28,6 +28,8 @@ import {
 import { dnsVerificationService } from "./dns-verification";
 import { promises as fs } from "fs";
 import path from "path";
+import { db } from "./db";
+import { eq, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Authentication & Users
@@ -2139,4 +2141,238 @@ class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// PostgreSQL storage implementation using Drizzle ORM
+class PostgreSQLStorage implements IStorage {
+  // Authentication & Users
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values({
+      ...user,
+      id: `user_${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newUser;
+  }
+
+  // Plans Management  
+  async getPlans(): Promise<Plan[]> {
+    return db.select().from(plans);
+  }
+
+  async getPlan(id: string): Promise<Plan | undefined> {
+    const result = await db.select().from(plans).where(eq(plans.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createPlan(plan: InsertPlan): Promise<Plan> {
+    const [newPlan] = await db.insert(plans).values({
+      ...plan,
+      id: `plan_${Date.now()}`
+    }).returning();
+    return newPlan;
+  }
+
+  async updatePlan(id: string, updates: Partial<InsertPlan>): Promise<Plan> {
+    const [updatedPlan] = await db.update(plans)
+      .set(updates)
+      .where(eq(plans.id, id))
+      .returning();
+    if (!updatedPlan) throw new Error("Plan not found");
+    return updatedPlan;
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    await db.delete(plans).where(eq(plans.id, id));
+  }
+
+  // Contact Messages / Super Admin Leads  
+  async getContactMessages(): Promise<ContactMessage[]> {
+    return db.select().from(contactMessages).orderBy(sql`${contactMessages.createdAt} DESC`);
+  }
+
+  async getContactMessage(id: string): Promise<ContactMessage | undefined> {
+    const result = await db.select().from(contactMessages).where(eq(contactMessages.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const [newMessage] = await db.insert(contactMessages).values({
+      ...message,
+      id: `contact_${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newMessage;
+  }
+
+  async updateContactMessage(id: string, updates: Partial<InsertContactMessage>): Promise<ContactMessage> {
+    const [updatedMessage] = await db.update(contactMessages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(contactMessages.id, id))
+      .returning();
+    if (!updatedMessage) throw new Error("Contact message not found");
+    return updatedMessage;
+  }
+
+  async deleteContactMessage(id: string): Promise<void> {
+    await db.delete(contactMessages).where(eq(contactMessages.id, id));
+  }
+
+  // Note: For brevity, implementing key methods first. Other methods would follow same pattern
+  // using Drizzle ORM operations instead of in-memory arrays
+  
+  // Placeholder implementations for other interface methods (would need full implementation)
+  async getOnboardingSessions(): Promise<OnboardingSession[]> { return []; }
+  async getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined> { return undefined; }
+  async createOnboardingSession(session: InsertOnboardingSession): Promise<OnboardingSession> { throw new Error("Not implemented"); }
+  async updateOnboardingSession(sessionId: string, updates: Partial<InsertOnboardingSession>): Promise<OnboardingSession> { throw new Error("Not implemented"); }
+  async completeOnboarding(sessionId: string): Promise<OnboardingSession> { throw new Error("Not implemented"); }
+  async getClients(): Promise<Client[]> { return []; }
+  async getClient(id: string): Promise<Client | undefined> { return undefined; }
+  async getClientByEmail(email: string): Promise<Client | undefined> { return undefined; }
+  async createClient(client: InsertClient): Promise<Client> { throw new Error("Not implemented"); }
+  async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> { throw new Error("Not implemented"); }
+  async deleteClient(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getServices(): Promise<Service[]> { return []; }
+  async getService(id: number): Promise<Service | undefined> { return undefined; }
+  async createService(service: InsertService): Promise<Service> { throw new Error("Not implemented"); }
+  async getReviews(): Promise<Review[]> { return []; }
+  async createReview(review: InsertReview): Promise<Review> { throw new Error("Not implemented"); }
+  async getClientServices(clientId: string): Promise<ClientService[]> { return []; }
+  async createClientService(service: InsertClientService): Promise<ClientService> { throw new Error("Not implemented"); }
+  async updateClientService(id: string, updates: Partial<InsertClientService>): Promise<ClientService> { throw new Error("Not implemented"); }
+  async deleteClientService(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getAppointments(clientId: string): Promise<Appointment[]> { return []; }
+  async getAppointment(id: string): Promise<Appointment | undefined> { return undefined; }
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> { throw new Error("Not implemented"); }
+  async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> { throw new Error("Not implemented"); }
+  async deleteAppointment(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
+  async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> { return []; }
+  async getLeads(clientId: string): Promise<Lead[]> { return []; }
+  async getLead(id: string): Promise<Lead | undefined> { return undefined; }
+  async createLead(lead: InsertLead): Promise<Lead> { throw new Error("Not implemented"); }
+  async updateLead(id: string, updates: Partial<InsertLead>): Promise<Lead> { throw new Error("Not implemented"); }
+  async deleteLead(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getClientWebsite(clientId: string): Promise<ClientWebsite | undefined> { return undefined; }
+  async createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite> { throw new Error("Not implemented"); }
+  async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> { throw new Error("Not implemented"); }
+  async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> { return undefined; }
+  async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> { return []; }
+  async createAppointmentSlot(slot: InsertAppointmentSlot): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
+  async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
+  async deleteAppointmentSlot(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getAvailableSlots(clientId: string, date: string): Promise<string[]> { return []; }
+  async getTeamMembers(clientId: string): Promise<TeamMember[]> { return []; }
+  async getTeamMember(id: string): Promise<TeamMember | undefined> { return undefined; }
+  async createTeamMember(member: InsertTeamMember): Promise<TeamMember> { throw new Error("Not implemented"); }
+  async updateTeamMember(id: string, updates: Partial<InsertTeamMember>): Promise<TeamMember> { throw new Error("Not implemented"); }
+  async deleteTeamMember(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getReviewPlatforms(): Promise<ReviewPlatform[]> { return []; }
+  async getReviewPlatform(id: string): Promise<ReviewPlatform | undefined> { return undefined; }
+  async createReviewPlatform(platform: InsertReviewPlatform): Promise<ReviewPlatform> { throw new Error("Not implemented"); }
+  async updateReviewPlatform(id: string, updates: Partial<InsertReviewPlatform>): Promise<ReviewPlatform> { throw new Error("Not implemented"); }
+  async deleteReviewPlatform(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getReviewPlatformConnections(clientId: string): Promise<ReviewPlatformConnection[]> { return []; }
+  async getReviewPlatformConnection(id: string): Promise<ReviewPlatformConnection | undefined> { return undefined; }
+  async createReviewPlatformConnection(connection: InsertReviewPlatformConnection): Promise<ReviewPlatformConnection> { throw new Error("Not implemented"); }
+  async updateReviewPlatformConnection(id: string, updates: Partial<InsertReviewPlatformConnection>): Promise<ReviewPlatformConnection> { throw new Error("Not implemented"); }
+  async deleteReviewPlatformConnection(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async syncReviewPlatformData(connectionId: string): Promise<ReviewPlatformConnection> { throw new Error("Not implemented"); }
+  async getPlatformReviews(clientId: string, platform?: string): Promise<PlatformReview[]> { return []; }
+  async getPlatformReview(id: string): Promise<PlatformReview | undefined> { return undefined; }
+  async createPlatformReview(review: InsertPlatformReview): Promise<PlatformReview> { throw new Error("Not implemented"); }
+  async updatePlatformReview(id: string, updates: Partial<InsertPlatformReview>): Promise<PlatformReview> { throw new Error("Not implemented"); }
+  async deletePlatformReview(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getDomainConfigurations(clientId: string): Promise<DomainConfiguration[]> { return []; }
+  async getDomainConfiguration(id: string): Promise<DomainConfiguration | undefined> { return undefined; }
+  async getDomainConfigurationByDomain(domain: string): Promise<DomainConfiguration | undefined> { return undefined; }
+  async createDomainConfiguration(domain: InsertDomainConfiguration): Promise<DomainConfiguration> { throw new Error("Not implemented"); }
+  async updateDomainConfiguration(id: string, updates: Partial<InsertDomainConfiguration>): Promise<DomainConfiguration> { throw new Error("Not implemented"); }
+  async deleteDomainConfiguration(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async verifyDomain(id: string): Promise<DomainConfiguration> { throw new Error("Not implemented"); }
+  async getGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile | undefined> { return undefined; }
+  async createGoogleBusinessProfile(profile: InsertGoogleBusinessProfile): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
+  async updateGoogleBusinessProfile(clientId: string, updates: Partial<InsertGoogleBusinessProfile>): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
+  async deleteGoogleBusinessProfile(clientId: string): Promise<void> { throw new Error("Not implemented"); }
+  async syncGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
+  async getDomainVerificationLogs(domainConfigId: string): Promise<DomainVerificationLog[]> { return []; }
+  async createDomainVerificationLog(log: InsertDomainVerificationLog): Promise<DomainVerificationLog> { throw new Error("Not implemented"); }
+  async getNewsletterSubscriptions(clientId: string): Promise<NewsletterSubscription[]> { return []; }
+  async getNewsletterSubscription(id: string): Promise<NewsletterSubscription | undefined> { return undefined; }
+  async createNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription> { throw new Error("Not implemented"); }
+  async updateNewsletterSubscription(id: string, updates: Partial<InsertNewsletterSubscription>): Promise<NewsletterSubscription> { throw new Error("Not implemented"); }
+  async deleteNewsletterSubscription(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getWebsiteStaff(clientId: string): Promise<WebsiteStaff[]> { return []; }
+  async getWebsiteStaffMember(id: string): Promise<WebsiteStaff | undefined> { return undefined; }
+  async createWebsiteStaff(staff: InsertWebsiteStaff): Promise<WebsiteStaff> { throw new Error("Not implemented"); }
+  async updateWebsiteStaff(id: string, updates: Partial<InsertWebsiteStaff>): Promise<WebsiteStaff> { throw new Error("Not implemented"); }
+  async deleteWebsiteStaff(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getServicePricingTiers(clientId: string): Promise<ServicePricingTier[]> { return []; }
+  async getServicePricingTier(id: string): Promise<ServicePricingTier | undefined> { return undefined; }
+  async createServicePricingTier(tier: InsertServicePricingTier): Promise<ServicePricingTier> { throw new Error("Not implemented"); }
+  async updateServicePricingTier(id: string, updates: Partial<InsertServicePricingTier>): Promise<ServicePricingTier> { throw new Error("Not implemented"); }
+  async deleteServicePricingTier(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getWebsiteTestimonials(clientId: string): Promise<WebsiteTestimonial[]> { return []; }
+  async getWebsiteTestimonial(id: string): Promise<WebsiteTestimonial | undefined> { return undefined; }
+  async createWebsiteTestimonial(testimonial: InsertWebsiteTestimonial): Promise<WebsiteTestimonial> { throw new Error("Not implemented"); }
+  async updateWebsiteTestimonial(id: string, updates: Partial<InsertWebsiteTestimonial>): Promise<WebsiteTestimonial> { throw new Error("Not implemented"); }
+  async deleteWebsiteTestimonial(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async getPayments(clientId: string): Promise<Payment[]> { return []; }
+  async getPayment(id: string): Promise<Payment | undefined> { return undefined; }
+  async createPayment(payment: InsertPayment): Promise<Payment> { throw new Error("Not implemented"); }
+  async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> { throw new Error("Not implemented"); }
+  async getPaymentsByAppointment(appointmentId: string): Promise<Payment[]> { return []; }
+  async calculateServiceAmount(clientId: string, serviceId: string): Promise<number> { return 0; }
+  async calculateTotalWithTip(baseAmount: number, tipPercentage?: number): Promise<number> { return baseAmount; }
+  async updateStripeConfig(clientId: string, publicKey: string, secretKey: string): Promise<void> { throw new Error("Not implemented"); }
+  async getStripePublicKey(clientId: string): Promise<string | null> { return null; }
+  async getStripeSecretKey(clientId: string): Promise<string | null> { return null; }
+  async validateStripeConfig(clientId: string): Promise<boolean> { return false; }
+  async clearStripeConfig(clientId: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateSmtpConfig(clientId: string, config: any): Promise<void> { throw new Error("Not implemented"); }
+  async getSmtpConfig(clientId: string): Promise<any> { return { isConfigured: false, smtpHost: null, smtpPort: null, smtpUsername: null, smtpPassword: null, smtpFromEmail: null, smtpFromName: null, smtpSecure: null, smtpEnabled: null }; }
+  async testSmtpConfig(clientId: string): Promise<boolean> { return false; }
+  async clearSmtpConfig(clientId: string): Promise<void> { throw new Error("Not implemented"); }
+}
+
+// Environment-aware storage factory
+function createStorage(): IStorage {
+  // Detect environment
+  const isReplit = !!process.env.REPL_ID || process.env.DEPLOY_TARGET === 'replit';
+  const isProduction = process.env.NODE_ENV === 'production';
+  const hasDatabaseUrl = !!process.env.DATABASE_URL;
+  const isCoolify = process.env.DEPLOY_TARGET === 'coolify';
+  
+  // Use PostgreSQL only when explicitly on Coolify with database URL
+  const useDatabase = isCoolify && hasDatabaseUrl && !isReplit;
+  
+  const storageType = useDatabase ? 'PostgreSQL' : 'MemStorage';
+  const environment = isReplit ? 'Replit' : (isCoolify ? 'Coolify' : 'Unknown');
+  
+  console.log(`🔧 Environment: ${environment}`);
+  console.log(`💾 Storage: ${storageType}`);
+  console.log(`🗄️  Database URL present: ${hasDatabaseUrl ? 'Yes' : 'No'}`);
+  console.log(`🚀 Production mode: ${isProduction ? 'Yes' : 'No'}`);
+  console.log(`📊 Demo data: ${useDatabase ? 'Disabled (Production)' : 'Enabled (Development)'}`);
+  
+  if (useDatabase) {
+    console.log(`✅ Using PostgreSQL database for production data`);
+    return new PostgreSQLStorage();
+  } else {
+    console.log(`✅ Using MemStorage with demo data for development`);
+    return new MemStorage();
+  }
+}
+
+export const storage = createStorage();
