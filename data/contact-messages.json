@@ -34,5 +34,17 @@
     "notes": null,
     "createdAt": "2025-09-22T16:13:31.143Z",
     "updatedAt": "2025-09-22T16:13:31.143Z"
+  },
+  {
+    "id": "contact_1758638873032",
+    "name": "Environment Test User",
+    "email": "test.environment@example.com",
+    "subject": "Get Started Inquiry",
+    "message": "Testing the new environment-aware storage system after Replit/Coolify separation fix",
+    "source": "Landing Page",
+    "status": "NEW",
+    "notes": null,
+    "createdAt": "2025-09-23T14:47:53.032Z",
+    "updatedAt": "2025-09-23T14:47:53.032Z"
   }
 ]
