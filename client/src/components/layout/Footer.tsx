@@ -8,8 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <div className="flex items-center mb-4">
-              <img src="/favicon.svg" alt="Scheduled" className="h-8 w-8 mr-2" />
-              <h3 className="text-xl font-bold">Scheduled</h3>
+              <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-2" />
+              <h3 className="text-xl font-bold">Scheduled Pro</h3>
             </div>
             <p className="mb-4 text-sm md:text-base">The ultimate scheduling platform for entrepreneurs across all service industries. Grow your business with our professional tools.</p>
             <div className="flex space-x-4">
@@ -114,7 +114,7 @@ export default function Footer() {
         </div>
         
         <div className="border-t border-primary-foreground/20 pt-6 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm md:text-base">&copy; {new Date().getFullYear()} Scheduled. All rights reserved.</p>
+          <p className="text-sm md:text-base">&copy; {new Date().getFullYear()} Scheduled Pro. All rights reserved.</p>
           <div className="mt-4 md:mt-0 flex space-x-4">
             <Link href="/privacy">
               <div className="text-sm text-primary-foreground/80 hover:text-white transition-colors cursor-pointer tap-highlight-none">

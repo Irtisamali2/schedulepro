@@ -13,7 +13,7 @@ export default function Navbar() {
   const terms = getTerminology(selectedIndustry);
   
   // Get business branding from localStorage
-  const businessName = localStorage.getItem('businessName') || selectedIndustry.name;
+  const businessName = localStorage.getItem('businessName') || 'Scheduled Pro';
   const businessLogo = localStorage.getItem('businessLogo');
   
   // Track scrolling for enhanced mobile UX
@@ -59,7 +59,7 @@ export default function Navbar() {
               {businessLogo ? (
                 <img src={businessLogo} alt={businessName} className="h-8 w-8 mr-3 rounded object-cover" />
               ) : (
-                <img src="/favicon.svg" alt="Scheduled" className="h-8 w-8 mr-3" />
+                <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-3" />
               )}
               <span className="font-display">{businessName}</span>
             </div>
