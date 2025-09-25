@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <div className="flex items-center mb-4">
-              <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-2" />
+              <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-6 w-auto mr-2" />
               <h3 className="text-xl font-bold">Scheduled Pro</h3>
             </div>
             <p className="mb-4 text-sm md:text-base">The ultimate scheduling platform for entrepreneurs across all service industries. Grow your business with our professional tools.</p>

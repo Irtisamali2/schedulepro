@@ -56,11 +56,7 @@ export default function Navbar() {
         <div className="flex items-center">
           <Link href="/home">
             <div className="flex items-center cursor-pointer text-xl font-bold text-primary">
-              {businessLogo ? (
-                <img src={businessLogo} alt={businessName} className="h-8 w-8 mr-3 rounded object-cover" />
-              ) : (
-                <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-3" />
-              )}
+              <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-3" />
               <span className="font-display">{businessName}</span>
             </div>
           </Link>
