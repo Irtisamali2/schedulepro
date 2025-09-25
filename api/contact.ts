@@ -1,7 +1,8 @@
-import { storage } from '../server/storage.js';
-import { insertContactMessageSchema } from '../shared/schema.js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { storage } from '../server/storage';
+import { insertContactMessageSchema } from '../shared/schema';
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
