@@ -131,10 +131,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3 md:py-4">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded flex items-center justify-center" style={{backgroundColor: '#7CB8EA'}}>
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="ml-3 text-lg md:text-xl font-bold text-gray-900">Scheduled Pro</h1>
+              <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-3" />
+              <h1 className="text-lg md:text-xl font-bold text-gray-900">Scheduled Pro</h1>
             </div>
             
             {/* Desktop Navigation */}
