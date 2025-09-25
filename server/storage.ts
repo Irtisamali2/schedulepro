@@ -2359,15 +2359,16 @@ class PostgreSQLStorage implements IStorage {
 function createStorage(): IStorage {
   // Detect environment
   const isReplit = !!process.env.REPL_ID || process.env.DEPLOY_TARGET === 'replit';
+  const isVercel = !!process.env.VERCEL || process.env.DEPLOY_TARGET === 'vercel';
+  const isCoolify = process.env.DEPLOY_TARGET === 'coolify';
   const isProduction = process.env.NODE_ENV === 'production';
   const hasDatabaseUrl = !!process.env.DATABASE_URL;
-  const isCoolify = process.env.DEPLOY_TARGET === 'coolify';
   
-  // Use PostgreSQL only when explicitly on Coolify with database URL
-  const useDatabase = isCoolify && hasDatabaseUrl && !isReplit;
+  // Use PostgreSQL for production environments (Coolify or Vercel with database)
+  const useDatabase = (isCoolify || isVercel) && hasDatabaseUrl && !isReplit;
   
   const storageType = useDatabase ? 'PostgreSQL' : 'MemStorage';
-  const environment = isReplit ? 'Replit' : (isCoolify ? 'Coolify' : 'Unknown');
+  const environment = isReplit ? 'Replit' : (isCoolify ? 'Coolify' : (isVercel ? 'Vercel' : 'Unknown'));
   
   console.log(`🔧 Environment: ${environment}`);
   console.log(`💾 Storage: ${storageType}`);
