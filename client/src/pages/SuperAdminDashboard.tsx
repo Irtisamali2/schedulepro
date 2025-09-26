@@ -1495,7 +1495,7 @@ export default function SuperAdminDashboard() {
                               <Edit className="w-4 h-4" />
                             </Button>
                           </SheetTrigger>
-                          <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                          <SheetContent side="right" className="w-[400px] sm:w-[540px] max-h-[80vh] overflow-y-auto">
                             <SheetHeader>
                               <SheetTitle>Edit Plan</SheetTitle>
                               <SheetDescription>
