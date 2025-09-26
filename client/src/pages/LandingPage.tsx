@@ -25,6 +25,9 @@ import profile2 from "@assets/Ellipse 55_1757064789130.png";
 import profile3 from "@assets/Ellipse 56_1757064789130.png";
 import profile4 from "@assets/Ellipse 57_1757064789131.png";
 import playButton from "@assets/Group 215_1757064789132.png";
+// New Figma design assets
+import decorativeWave from "@assets/Vector 32_1758896044047.png";
+import figmaHeroImage from "@assets/image_1758896057320.png";
 
 interface Plan {
   id: string;
@@ -245,20 +248,31 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Column - Text */}
             <div className="text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4 md:mb-6">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-2">
                 Grow Your Business Visibility 
                 <span className="block">with Scheduled Pro</span>
               </h1>
+              
+              {/* Decorative Wave Line */}
+              <div className="flex justify-center lg:justify-start mb-4 md:mb-6">
+                <img 
+                  src={decorativeWave} 
+                  alt="Decorative wave line" 
+                  className="h-3 w-auto"
+                />
+              </div>
+              
               <p className="text-base sm:text-lg text-gray-600 mb-6 md:mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                Take your business to the next level with our comprehensive scheduling and management platform designed for modern entrepreneurs.
+                Register your business today and get your own dedicated landing page in minutes.
               </p>
               <Button 
                 className="text-white px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg w-full sm:w-auto" 
                 style={{backgroundColor: '#7CB8EA'}} 
                 onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6BA6E0'} 
                 onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#7CB8EA'}
+                onClick={() => handleGetStarted('plan_1')}
               >
-                Learn More
+                Register Your Business
               </Button>
             </div>
             
@@ -266,9 +280,9 @@ export default function LandingPage() {
             <div className="relative order-first lg:order-last">
               <div className="relative">
                 <img 
-                  src={heroImage} 
-                  alt="Professional with business dashboard" 
-                  className="w-full h-auto rounded-2xl max-w-md mx-auto lg:max-w-full"
+                  src={figmaHeroImage} 
+                  alt="Professional with business dashboard and analytics" 
+                  className="w-full h-auto max-w-md mx-auto lg:max-w-full"
                 />
               </div>
             </div>
