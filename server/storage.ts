@@ -2268,9 +2268,49 @@ class PostgreSQLStorage implements IStorage {
   // Placeholder implementations for other interface methods (would need full implementation)
   async getOnboardingSessions(): Promise<OnboardingSession[]> { return []; }
   async getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined> { return undefined; }
-  async createOnboardingSession(session: InsertOnboardingSession): Promise<OnboardingSession> { throw new Error("Not implemented"); }
-  async updateOnboardingSession(sessionId: string, updates: Partial<InsertOnboardingSession>): Promise<OnboardingSession> { throw new Error("Not implemented"); }
-  async completeOnboarding(sessionId: string): Promise<OnboardingSession> { throw new Error("Not implemented"); }
+  async createOnboardingSession(session: InsertOnboardingSession): Promise<OnboardingSession> {
+    const dbInstance = this.ensureDB();
+    const sessionId = `onb_${Date.now()}`;
+    
+    const result = await dbInstance.insert(onboardingSessions).values({
+      id: sessionId,
+      sessionId: session.sessionId,
+      planId: session.planId,
+      currentStep: session.currentStep || 1,
+      isCompleted: false,
+      businessData: session.businessData || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      completedAt: null
+    }).returning();
+    return result[0];
+  }
+  async updateOnboardingSession(sessionId: string, updates: Partial<InsertOnboardingSession>): Promise<OnboardingSession> {
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .update(onboardingSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(onboardingSessions.sessionId, sessionId))
+      .returning();
+    
+    if (result.length === 0) throw new Error("Onboarding session not found");
+    return result[0];
+  }
+  async completeOnboarding(sessionId: string): Promise<OnboardingSession> {
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .update(onboardingSessions)
+      .set({ 
+        isCompleted: true, 
+        completedAt: new Date(), 
+        updatedAt: new Date() 
+      })
+      .where(eq(onboardingSessions.sessionId, sessionId))
+      .returning();
+    
+    if (result.length === 0) throw new Error("Onboarding session not found");
+    return result[0];
+  }
   async getClients(): Promise<Client[]> { return []; }
   async getClient(id: string): Promise<Client | undefined> { return undefined; }
   async getClientByEmail(email: string): Promise<Client | undefined> { return undefined; }
