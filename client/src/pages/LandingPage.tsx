@@ -433,9 +433,15 @@ export default function LandingPage() {
             </Card>
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4" style={{backgroundColor: '#D6E9F7'}}></div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">All in One Agent</h3>
-              <p className="text-gray-600 text-xs sm:text-sm">Comprehensive solution that handles all your business needs in one place.</p>
+              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+                <img 
+                  src="/ai-voice-agent-image.png" 
+                  alt="AI voice agent" 
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold mb-2">AI voice agent</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">We always provide useful informatin to make it easier for you every day</p>
             </Card>
           </div>
         </div>
