@@ -341,8 +341,8 @@ class MemStorage implements IStorage {
     // Create Free Demo plan first
     await this.createPlan({
       name: "Free Demo",
-      monthlyPrice: 0,
-      yearlyPrice: 0,
+      price: 0,
+      billing: "MONTHLY",
       features: ["7-day trial", "1 User", "2GB Storage", "Basic Features"],
       maxUsers: 1,
       storageGB: 2,
@@ -353,8 +353,8 @@ class MemStorage implements IStorage {
 
     await this.createPlan({
       name: "Basic",
-      monthlyPrice: 15.00,
-      yearlyPrice: 150.00,
+      price: 15.00,
+      billing: "MONTHLY",
       features: ["1 User", "10GB Storage", "Basic Support", "Online Booking", "Client Management"],
       maxUsers: 1,
       storageGB: 10,
@@ -365,8 +365,8 @@ class MemStorage implements IStorage {
 
     await this.createPlan({
       name: "Pro",
-      monthlyPrice: 99.99,
-      yearlyPrice: 999.90,
+      price: 99.99,
+      billing: "MONTHLY", 
       features: ["5 Users", "100GB Storage", "Priority Support", "Advanced Analytics"],
       maxUsers: 5,
       storageGB: 100,
@@ -377,8 +377,8 @@ class MemStorage implements IStorage {
 
     await this.createPlan({
       name: "Enterprise",
-      monthlyPrice: 299.99,
-      yearlyPrice: 2999.90,
+      price: 299.99,
+      billing: "MONTHLY",
       features: ["Unlimited Users", "1TB Storage", "24/7 Support", "Custom Integrations"],
       maxUsers: 999,
       storageGB: 1000,
@@ -675,20 +675,15 @@ class MemStorage implements IStorage {
     const newPlan: Plan = {
       id: `plan_${this.plans.length + 1}`,
       name: plan.name,
-      monthlyPrice: plan.monthlyPrice || null,
-      monthlyDiscount: plan.monthlyDiscount || 0,
-      monthlyEnabled: plan.monthlyEnabled ?? true,
-      yearlyPrice: plan.yearlyPrice || null,
-      yearlyDiscount: plan.yearlyDiscount || 0,
-      yearlyEnabled: plan.yearlyEnabled ?? true,
+      price: plan.price,
+      billing: plan.billing || "MONTHLY",
       features: plan.features,
       maxUsers: plan.maxUsers,
       storageGB: plan.storageGB,
       isActive: plan.isActive ?? true,
       isFreeTrial: plan.isFreeTrial ?? false,
       trialDays: plan.trialDays ?? 0,
-      monthlyStripePriceId: null,
-      yearlyStripePriceId: null,
+      stripePriceId: null,
       stripeProductId: null,
       createdAt: new Date()
     };

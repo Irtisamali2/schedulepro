@@ -3,27 +3,23 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.scheduled.app',
   appName: 'Scheduled',
-  webDir: 'dist/public',
+  webDir: 'dist',
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
-      backgroundColor: "#ffffff",
+      launchShowDuration: 3000,
+      backgroundColor: "#3b5ac2",
       androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
-      showSpinner: false,
-      iosSpinnerStyle: "small",
-      spinnerColor: "#999999"
-    },
-    StatusBar: {
-      style: "dark"
+      androidScaleType: "CENTER_CROP"
     }
   },
   ios: {
     contentInset: "always",
     backgroundColor: "#ffffff",
-    preferredContentMode: "mobile"
+    preferredContentMode: "mobile",
+    scheme: "scheduled"
   },
   server: {
+    hostname: "app.scheduled.app",
     androidScheme: "https"
   }
 };

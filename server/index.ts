@@ -1,9 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 
-// Export for serverless deployment
-export async function createApp() {
-
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -60,6 +57,7 @@ app.use((req, res, next) => {
   next();
 });
 
+(async () => {
   // Serve marketing site directly
   app.get("/marketing", (req, res) => {
     res.sendFile("marketing-site.html", { root: "." });
@@ -75,55 +73,40 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Only set up static file serving in development
+  // Setup development or production serving
   if (process.env.NODE_ENV === "development") {
     // Dynamic import to avoid bundling Vite in production
     const { setupVite } = await import("./vite");
     await setupVite(app, server);
+  } else {
+    // Production static file serving
+    const path = await import("path");
+    const { fileURLToPath } = await import("url");
+
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const publicPath = path.join(__dirname, "public");
+
+    // Serve static files from dist/public
+    app.use(express.static(publicPath));
+
+    // Catch-all handler for SPA
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(publicPath, "index.html"));
+    });
   }
 
-  return { app, server };
-}
-
-// For serverless deployment (Vercel)
-if (process.env.DEPLOY_TARGET === "vercel") {
-  // Export the app for serverless functions
-  // This will be used by /api/index.ts
-} else {
-  // For local development and other deployments
-  (async () => {
-    const { app, server } = await createApp();
-    
-    // Setup production serving for non-Vercel deployments
-    if (process.env.NODE_ENV !== "development") {
-      const path = await import("path");
-      const { fileURLToPath } = await import("url");
-
-      const __dirname = path.dirname(fileURLToPath(import.meta.url));
-      const publicPath = path.join(__dirname, "public");
-
-      // Serve static files from dist/public
-      app.use(express.static(publicPath));
-
-      // Catch-all handler for SPA
-      app.get("*", (req, res) => {
-        res.sendFile(path.join(publicPath, "index.html"));
-      });
-    }
-
-    // ALWAYS serve the app on port 5000
-    // this serves both the API and the client.
-    // It is the only port that is not firewalled.
-    const port = 5000;
-    server.listen(
-      {
-        port,
-        host: "0.0.0.0",
-        reusePort: true,
-      },
-      () => {
-        console.log(`${new Date().toISOString()} serving on port ${port}`);
-      },
-    );
-  })();
-}
+  // ALWAYS serve the app on port 5000
+  // this serves both the API and the client.
+  // It is the only port that is not firewalled.
+  const port = 5000;
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
+})();

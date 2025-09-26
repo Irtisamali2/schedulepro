@@ -42,34 +42,6 @@ const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
 
-// Helper functions for backwards compatibility with new pricing schema
-function getPlanPrice(plan: any, billingPeriod: 'monthly' | 'yearly' = 'monthly'): number {
-  // Handle new schema format
-  if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
-    return billingPeriod === 'monthly' ? (plan.monthlyPrice || 0) : (plan.yearlyPrice || 0);
-  }
-  // Handle old schema format (backwards compatibility)
-  return (plan as any).price || 0;
-}
-
-function getPlanBilling(plan: any): string {
-  // Handle new schema format (default to monthly)
-  if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
-    return 'MONTHLY';
-  }
-  // Handle old schema format
-  return (plan as any).billing || 'MONTHLY';
-}
-
-function getStripePriceId(plan: any, billingPeriod: 'monthly' | 'yearly' = 'monthly'): string | undefined {
-  // Handle new schema format
-  if (plan.monthlyStripePriceId !== undefined || plan.yearlyStripePriceId !== undefined) {
-    return billingPeriod === 'monthly' ? plan.monthlyStripePriceId : plan.yearlyStripePriceId;
-  }
-  // Handle old schema format
-  return (plan as any).stripePriceId || undefined;
-}
-
 // Permission checking middleware
 interface TeamMemberSession {
   teamMemberId: string;
@@ -676,8 +648,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: `sub_${clientId}`,
         planId: plan.id,
         planName: plan.name,
-        planPrice: getPlanPrice(plan, 'monthly'),
-        billing: getPlanBilling(plan),
+        planPrice: plan.price,
+        billing: plan.billing,
         status: client.status,
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
         nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -730,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await stripe.subscriptions.update(client.stripeSubscriptionId, {
             items: [{
               id: client.stripeSubscriptionId, // This would be the subscription item ID
-              price: getStripePriceId(newPlan, 'monthly') || undefined
+              price: newPlan.stripePriceId || undefined
             }],
             proration_behavior: 'always_invoice'
           });
@@ -746,7 +718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newPlan: {
           id: newPlan.id,
           name: newPlan.name,
-          price: getPlanPrice(newPlan, 'monthly')
+          price: newPlan.price
         }
       });
     } catch (error) {
@@ -1489,8 +1461,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return {
             ...client,
             plan: plan ? plan.name : "Unknown",
-            planPrice: plan ? getPlanPrice(plan, 'monthly') : 0,
-            monthlyRevenue: plan ? getPlanPrice(plan, 'monthly') : 0
+            planPrice: plan ? plan.price : 0,
+            monthlyRevenue: plan ? plan.price : 0
           };
         })
       );
@@ -1555,7 +1527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const client of clients) {
         const plan = plans.find(p => p.id === client.planId);
         if (plan && client.status === "ACTIVE") {
-          totalMRR += getPlanPrice(plan, 'monthly');
+          totalMRR += plan.price;
           planDistribution[plan.name] = (planDistribution[plan.name] || 0) + 1;
         }
       }
@@ -4142,7 +4114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create subscription using plan's Stripe price ID
-      if (!getStripePriceId(plan, 'monthly')) {
+      if (!plan.stripePriceId) {
         return res.status(400).json({ 
           message: "Plan does not have Stripe pricing configured" 
         });
@@ -4151,7 +4123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await stripe.subscriptions.create({
         customer: customer.id,
         items: [{
-          price: getStripePriceId(plan, 'monthly'),
+          price: plan.stripePriceId,
         }],
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],
