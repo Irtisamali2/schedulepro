@@ -2157,11 +2157,105 @@ class MemStorage implements IStorage {
 
 // PostgreSQL storage implementation using Drizzle ORM
 class PostgreSQLStorage implements IStorage {
+  private initialized = false;
+
   private ensureDB() {
     if (!db) {
       throw new Error("Database connection not available. Please check your DATABASE_URL configuration.");
     }
     return db;
+  }
+
+  private async initializeDatabase() {
+    if (this.initialized) return;
+    
+    try {
+      const dbInstance = this.ensureDB();
+      console.log("🔄 Initializing PostgreSQL database tables...");
+      
+      // Create demo data for production (same as MemStorage)
+      await this.seedDemoData();
+      
+      this.initialized = true;
+      console.log("✅ PostgreSQL database initialized successfully");
+    } catch (error) {
+      console.error("❌ Database initialization failed:", error);
+      // Don't throw - let the app try to continue
+    }
+  }
+
+  private async seedDemoData() {
+    const dbInstance = this.ensureDB();
+    
+    try {
+      // Check if data already exists
+      const existingPlans = await dbInstance.select().from(plans).limit(1);
+      if (existingPlans.length > 0) {
+        console.log("📊 Demo data already exists, skipping seed");
+        return;
+      }
+
+      console.log("🌱 Seeding demo data for production...");
+      
+      // Insert demo plans
+      await dbInstance.insert(plans).values([
+        {
+          id: "plan_1",
+          name: "Free Demo",
+          monthlyPrice: 0,
+          yearlyPrice: 0,
+          features: ["1 User", "Basic Support", "Demo Features"],
+          maxUsers: 1,
+          storageGB: 1
+        },
+        {
+          id: "plan_2", 
+          name: "Basic",
+          monthlyPrice: 29,
+          yearlyPrice: 290,
+          features: ["Up to 5 Users", "Email Support", "Client Management"],
+          maxUsers: 5,
+          storageGB: 10
+        },
+        {
+          id: "plan_3",
+          name: "Pro", 
+          monthlyPrice: 79,
+          yearlyPrice: 790,
+          features: ["Unlimited Users", "Priority Support", "Analytics", "API Access"],
+          maxUsers: -1,
+          storageGB: 100
+        },
+        {
+          id: "plan_4",
+          name: "Enterprise",
+          monthlyPrice: 199,
+          yearlyPrice: 1990,
+          features: ["Everything in Pro", "Custom Integrations", "Dedicated Support", "White Label"],
+          maxUsers: -1,
+          storageGB: -1
+        }
+      ]);
+
+      // Insert review platforms
+      await dbInstance.insert(reviewPlatforms).values([
+        {
+          id: "review_platform_1",
+          name: "Google",
+          displayName: "Google Business Profile",
+          rating: 4.9,
+          maxRating: 5,
+          reviewCount: 2500,
+          logoUrl: "/icons/google.svg",
+          isActive: true,
+          sortOrder: 1
+        }
+      ]);
+
+      console.log("✅ Demo data seeded successfully");
+    } catch (error) {
+      console.error("❌ Demo data seeding failed:", error);
+    }
   }
 
   // Authentication & Users
@@ -2190,6 +2284,7 @@ class PostgreSQLStorage implements IStorage {
 
   // Plans Management  
   async getPlans(): Promise<Plan[]> {
+    await this.initializeDatabase();
     const dbInstance = this.ensureDB();
     return dbInstance.select().from(plans);
   }
