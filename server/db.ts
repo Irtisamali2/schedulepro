@@ -19,8 +19,8 @@ console.log(`  - Production: ${isProduction ? 'Yes' : 'No'}`);
 console.log(`  - DATABASE_URL present: ${hasDatabaseUrl ? 'Yes' : 'No'}`);
 
 // Conditional database connection
-let pool: NeonPool | PgPool | null = null;
-let db: ReturnType<typeof drizzleNeon> | ReturnType<typeof drizzlePg> | null = null;
+let pool: any = null;
+let db: any = null;
 
 // Only require DATABASE_URL for production environments that need it
 const requiresDatabase = (isCoolify || isProduction) && !isReplit;
@@ -36,7 +36,7 @@ if (hasDatabaseUrl) {
     console.log(`✅ Initializing Neon PostgreSQL connection`);
     neonConfig.webSocketConstructor = ws;
     pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
-    db = drizzleNeon({ client: pool, schema });
+    db = drizzleNeon(pool, { schema });
   }
 } else if (requiresDatabase) {
   console.error(`❌ DATABASE_URL is required for production deployment`);
