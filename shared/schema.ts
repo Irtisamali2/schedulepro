@@ -25,23 +25,40 @@ export type User = typeof users.$inferSelect;
 export const plans = pgTable("plans", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  price: real("price").notNull(),
-  billing: text("billing").notNull().default("MONTHLY"), // MONTHLY or YEARLY
+  
+  // Monthly pricing
+  monthlyPrice: real("monthly_price"),
+  monthlyDiscount: real("monthly_discount").default(0), // Percentage discount 0-100
+  monthlyEnabled: boolean("monthly_enabled").default(true),
+  
+  // Yearly pricing  
+  yearlyPrice: real("yearly_price"),
+  yearlyDiscount: real("yearly_discount").default(0), // Percentage discount 0-100
+  yearlyEnabled: boolean("yearly_enabled").default(true),
+  
   features: text("features").array().notNull(),
   maxUsers: integer("max_users").notNull(),
   storageGB: integer("storage_gb").notNull(),
   isActive: boolean("is_active").default(true),
   isFreeTrial: boolean("is_free_trial").default(false),
   trialDays: integer("trial_days").default(0),
-  stripePriceId: text("stripe_price_id"), // Stripe Price ID for subscription
-  stripeProductId: text("stripe_product_id"), // Stripe Product ID
+  
+  // Stripe integration - separate for monthly/yearly
+  monthlyStripePriceId: text("monthly_stripe_price_id"), // Stripe Price ID for monthly
+  yearlyStripePriceId: text("yearly_stripe_price_id"), // Stripe Price ID for yearly
+  stripeProductId: text("stripe_product_id"), // Stripe Product ID (shared)
+  
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertPlanSchema = createInsertSchema(plans).pick({
   name: true,
-  price: true,
-  billing: true,
+  monthlyPrice: true,
+  monthlyDiscount: true,
+  monthlyEnabled: true,
+  yearlyPrice: true,
+  yearlyDiscount: true,
+  yearlyEnabled: true,
   features: true,
   maxUsers: true,
   storageGB: true,

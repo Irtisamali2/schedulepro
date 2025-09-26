@@ -103,13 +103,20 @@ export default function SuperAdminDashboard() {
   });
   const [planForm, setPlanForm] = useState({
     name: '',
-    price: 0,
-    billing: 'MONTHLY',
+    // Monthly pricing
+    monthlyPrice: 0,
+    monthlyDiscount: 0,
+    monthlyEnabled: true,
+    // Yearly pricing
+    yearlyPrice: 0, 
+    yearlyDiscount: 0,
+    yearlyEnabled: true,
     features: [] as string[],
     maxUsers: 1,
     storageGB: 10,
     stripeIntegration: 'none' as 'none' | 'link_existing' | 'generate_new',
-    stripePriceId: '',
+    monthlyStripePriceId: '',
+    yearlyStripePriceId: '',
     stripeProductId: ''
   });
   const [newFeature, setNewFeature] = useState('');
@@ -243,13 +250,18 @@ export default function SuperAdminDashboard() {
       setIsAddingPlan(false);
       setPlanForm({
         name: '',
-        price: 0,
-        billing: 'MONTHLY',
+        monthlyPrice: 0,
+        monthlyDiscount: 0,
+        monthlyEnabled: true,
+        yearlyPrice: 0, 
+        yearlyDiscount: 0,
+        yearlyEnabled: true,
         features: [],
         maxUsers: 1,
         storageGB: 10,
         stripeIntegration: 'none',
-        stripePriceId: '',
+        monthlyStripePriceId: '',
+        yearlyStripePriceId: '',
         stripeProductId: ''
       });
     }
@@ -294,8 +306,8 @@ export default function SuperAdminDashboard() {
         },
         body: JSON.stringify({
           name: planData.name,
-          price: planData.price,
-          billing: planData.billing,
+          monthlyPrice: planData.monthlyPrice,
+          yearlyPrice: planData.yearlyPrice,
           features: planData.features
         }),
       });
@@ -1149,16 +1161,8 @@ export default function SuperAdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="planPrice">Price *</Label>
-                        <Input
-                          id="planPrice"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={planForm.price}
-                          onChange={(e) => setPlanForm({ ...planForm, price: parseFloat(e.target.value) || 0 })}
-                          placeholder="29.99"
-                        />
+                        <Label>Pricing Structure</Label>
+                        <p className="text-sm text-gray-500 mb-2">Configure monthly and/or yearly pricing</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -1183,18 +1187,118 @@ export default function SuperAdminDashboard() {
                         />
                       </div>
                     </div>
-                    <div>
-                      <Label htmlFor="billing">Billing Cycle</Label>
-                      <select
-                        id="billing"
-                        className="w-full p-2 border rounded-md"
-                        value={planForm.billing}
-                        onChange={(e) => setPlanForm({ ...planForm, billing: e.target.value })}
-                      >
-                        <option value="MONTHLY">Monthly</option>
-                        <option value="YEARLY">Yearly</option>
-                      </select>
+                    {/* Monthly Pricing Section */}
+                    <div className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">Monthly Billing</h4>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={planForm.monthlyEnabled}
+                            onChange={(e) => setPlanForm({ ...planForm, monthlyEnabled: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">Enable Monthly</span>
+                        </label>
+                      </div>
+                      {planForm.monthlyEnabled && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="monthlyPrice">Monthly Price *</Label>
+                            <Input
+                              id="monthlyPrice"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={planForm.monthlyPrice}
+                              onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseFloat(e.target.value) || 0 })}
+                              placeholder="29.99"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="monthlyDiscount">Discount %</Label>
+                            <Input
+                              id="monthlyDiscount"
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={planForm.monthlyDiscount}
+                              onChange={(e) => setPlanForm({ ...planForm, monthlyDiscount: parseFloat(e.target.value) || 0 })}
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Yearly Pricing Section */}
+                    <div className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">Yearly Billing</h4>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={planForm.yearlyEnabled}
+                            onChange={(e) => setPlanForm({ ...planForm, yearlyEnabled: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">Enable Yearly</span>
+                        </label>
+                      </div>
+                      {planForm.yearlyEnabled && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="yearlyPrice">Yearly Price *</Label>
+                            <Input
+                              id="yearlyPrice"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={planForm.yearlyPrice}
+                              onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseFloat(e.target.value) || 0 })}
+                              placeholder="299.99"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="yearlyDiscount">Discount %</Label>
+                            <Input
+                              id="yearlyDiscount"
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={planForm.yearlyDiscount}
+                              onChange={(e) => setPlanForm({ ...planForm, yearlyDiscount: parseFloat(e.target.value) || 0 })}
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Price Preview */}
+                    {(planForm.monthlyEnabled || planForm.yearlyEnabled) && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <h5 className="font-semibold text-sm mb-2 text-blue-800">Price Preview</h5>
+                        {planForm.monthlyEnabled && (
+                          <p className="text-sm text-blue-700">
+                            Monthly: ${planForm.monthlyPrice} 
+                            {planForm.monthlyDiscount > 0 && (
+                              <span> (${(planForm.monthlyPrice * (1 - planForm.monthlyDiscount / 100)).toFixed(2)} after {planForm.monthlyDiscount}% discount)</span>
+                            )}
+                          </p>
+                        )}
+                        {planForm.yearlyEnabled && (
+                          <p className="text-sm text-blue-700">
+                            Yearly: ${planForm.yearlyPrice}
+                            {planForm.yearlyDiscount > 0 && (
+                              <span> (${(planForm.yearlyPrice * (1 - planForm.yearlyDiscount / 100)).toFixed(2)} after {planForm.yearlyDiscount}% discount)</span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <div>
                       <Label>Features</Label>
                       <div className="space-y-2">
@@ -1275,8 +1379,8 @@ export default function SuperAdminDashboard() {
                               <Label htmlFor="stripePriceId">Stripe Price ID *</Label>
                               <Input
                                 id="stripePriceId"
-                                value={planForm.stripePriceId}
-                                onChange={(e) => setPlanForm({ ...planForm, stripePriceId: e.target.value })}
+                                value={planForm.monthlyStripePriceId}
+                                onChange={(e) => setPlanForm({ ...planForm, monthlyStripePriceId: e.target.value })}
                                 placeholder="price_1234..."
                                 className="mt-1"
                               />
@@ -1319,7 +1423,8 @@ export default function SuperAdminDashboard() {
                             const stripeProduct = await generateStripeProductMutation.mutateAsync(planForm);
                             const planWithStripe = {
                               ...planForm,
-                              stripePriceId: stripeProduct.priceId,
+                              monthlyStripePriceId: stripeProduct.monthlyPriceId || '',
+                              yearlyStripePriceId: stripeProduct.yearlyPriceId || '',
                               stripeProductId: stripeProduct.productId
                             };
                             createPlanMutation.mutate(planWithStripe);
@@ -1372,13 +1477,18 @@ export default function SuperAdminDashboard() {
                               setSelectedPlan(plan);
                               setPlanForm({
                                 name: plan.name,
-                                price: plan.price,
-                                billing: plan.billing,
+                                monthlyPrice: plan.monthlyPrice || 0,
+                                monthlyDiscount: plan.monthlyDiscount || 0,
+                                monthlyEnabled: plan.monthlyEnabled !== false,
+                                yearlyPrice: plan.yearlyPrice || 0,
+                                yearlyDiscount: plan.yearlyDiscount || 0,
+                                yearlyEnabled: plan.yearlyEnabled !== false,
                                 features: [...plan.features],
                                 maxUsers: plan.maxUsers,
                                 storageGB: plan.storageGB,
-                                stripeIntegration: plan.stripePriceId ? 'link_existing' : 'none',
-                                stripePriceId: plan.stripePriceId || '',
+                                stripeIntegration: (plan.monthlyStripePriceId || plan.yearlyStripePriceId) ? 'link_existing' : 'none',
+                                monthlyStripePriceId: plan.monthlyStripePriceId || '',
+                                yearlyStripePriceId: plan.yearlyStripePriceId || '',
                                 stripeProductId: plan.stripeProductId || ''
                               });
                             }}>
@@ -1404,15 +1514,8 @@ export default function SuperAdminDashboard() {
                                     />
                                   </div>
                                   <div>
-                                    <Label htmlFor="editPlanPrice">Price *</Label>
-                                    <Input
-                                      id="editPlanPrice"
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={planForm.price}
-                                      onChange={(e) => setPlanForm({ ...planForm, price: parseFloat(e.target.value) || 0 })}
-                                    />
+                                    <Label>Pricing Structure</Label>
+                                    <p className="text-sm text-gray-500">Configure monthly and/or yearly pricing</p>
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -1437,18 +1540,118 @@ export default function SuperAdminDashboard() {
                                     />
                                   </div>
                                 </div>
-                                <div>
-                                  <Label htmlFor="editBilling">Billing Cycle</Label>
-                                  <select
-                                    id="editBilling"
-                                    className="w-full p-2 border rounded-md"
-                                    value={planForm.billing}
-                                    onChange={(e) => setPlanForm({ ...planForm, billing: e.target.value })}
-                                  >
-                                    <option value="MONTHLY">Monthly</option>
-                                    <option value="YEARLY">Yearly</option>
-                                  </select>
+                                {/* Monthly Pricing Section - Edit */}
+                                <div className="border rounded-lg p-4 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-semibold text-sm">Monthly Billing</h4>
+                                    <label className="flex items-center space-x-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={planForm.monthlyEnabled}
+                                        onChange={(e) => setPlanForm({ ...planForm, monthlyEnabled: e.target.checked })}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm">Enable Monthly</span>
+                                    </label>
+                                  </div>
+                                  {planForm.monthlyEnabled && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label htmlFor="editMonthlyPrice">Monthly Price *</Label>
+                                        <Input
+                                          id="editMonthlyPrice"
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={planForm.monthlyPrice}
+                                          onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseFloat(e.target.value) || 0 })}
+                                          placeholder="29.99"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="editMonthlyDiscount">Discount %</Label>
+                                        <Input
+                                          id="editMonthlyDiscount"
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          step="1"
+                                          value={planForm.monthlyDiscount}
+                                          onChange={(e) => setPlanForm({ ...planForm, monthlyDiscount: parseFloat(e.target.value) || 0 })}
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
+
+                                {/* Yearly Pricing Section - Edit */}
+                                <div className="border rounded-lg p-4 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-semibold text-sm">Yearly Billing</h4>
+                                    <label className="flex items-center space-x-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={planForm.yearlyEnabled}
+                                        onChange={(e) => setPlanForm({ ...planForm, yearlyEnabled: e.target.checked })}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm">Enable Yearly</span>
+                                    </label>
+                                  </div>
+                                  {planForm.yearlyEnabled && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label htmlFor="editYearlyPrice">Yearly Price *</Label>
+                                        <Input
+                                          id="editYearlyPrice"
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={planForm.yearlyPrice}
+                                          onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseFloat(e.target.value) || 0 })}
+                                          placeholder="299.99"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="editYearlyDiscount">Discount %</Label>
+                                        <Input
+                                          id="editYearlyDiscount"
+                                          type="number"
+                                          min="0"
+                                          max="100"
+                                          step="1"
+                                          value={planForm.yearlyDiscount}
+                                          onChange={(e) => setPlanForm({ ...planForm, yearlyDiscount: parseFloat(e.target.value) || 0 })}
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Price Preview - Edit */}
+                                {(planForm.monthlyEnabled || planForm.yearlyEnabled) && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <h5 className="font-semibold text-sm mb-2 text-blue-800">Price Preview</h5>
+                                    {planForm.monthlyEnabled && (
+                                      <p className="text-sm text-blue-700">
+                                        Monthly: ${planForm.monthlyPrice} 
+                                        {planForm.monthlyDiscount > 0 && (
+                                          <span> (${(planForm.monthlyPrice * (1 - planForm.monthlyDiscount / 100)).toFixed(2)} after {planForm.monthlyDiscount}% discount)</span>
+                                        )}
+                                      </p>
+                                    )}
+                                    {planForm.yearlyEnabled && (
+                                      <p className="text-sm text-blue-700">
+                                        Yearly: ${planForm.yearlyPrice}
+                                        {planForm.yearlyDiscount > 0 && (
+                                          <span> (${(planForm.yearlyPrice * (1 - planForm.yearlyDiscount / 100)).toFixed(2)} after {planForm.yearlyDiscount}% discount)</span>
+                                        )}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                                 <div>
                                   <Label>Features</Label>
                                   <div className="space-y-2">
@@ -1529,8 +1732,8 @@ export default function SuperAdminDashboard() {
                                           <Label htmlFor="editStripePriceId">Stripe Price ID *</Label>
                                           <Input
                                             id="editStripePriceId"
-                                            value={planForm.stripePriceId}
-                                            onChange={(e) => setPlanForm({ ...planForm, stripePriceId: e.target.value })}
+                                            value={planForm.monthlyStripePriceId}
+                                            onChange={(e) => setPlanForm({ ...planForm, monthlyStripePriceId: e.target.value })}
                                             placeholder="price_1234..."
                                             className="mt-1"
                                           />
@@ -1572,7 +1775,8 @@ export default function SuperAdminDashboard() {
                                           const stripeProduct = await generateStripeProductMutation.mutateAsync(planForm);
                                           const planWithStripe = {
                                             ...planForm,
-                                            stripePriceId: stripeProduct.priceId,
+                                            monthlyStripePriceId: stripeProduct.monthlyPriceId || '',
+                              yearlyStripePriceId: stripeProduct.yearlyPriceId || '',
                                             stripeProductId: stripeProduct.productId
                                           };
                                           updatePlanMutation.mutate({
