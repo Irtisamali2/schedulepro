@@ -131,8 +131,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3 md:py-4">
             <div className="flex items-center">
-              <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto mr-3" />
-              <h1 className="text-lg md:text-xl font-bold text-gray-900">Scheduled Pro</h1>
+              <img src="/scheduled-pro-logo.png" alt="Logo" className="h-8 w-auto" />
             </div>
             
             {/* Desktop Navigation */}
