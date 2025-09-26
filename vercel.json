@@ -5,11 +5,12 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm run build; cp -r dist/public/* ."
+        "buildCommand": "npm run build",
+        "distDir": "dist/public"
       }
     },
     {
-      "src": "api/**/*.ts",
+      "src": "api/[...path].ts",
       "use": "@vercel/node"
     }
   ],
@@ -19,7 +20,10 @@
       "dest": "/api/[...path]"
     },
     {
-      "handle": "filesystem"
+      "src": "/(.*\\.(png|jpg|jpeg|gif|ico|css|js|svg|json|txt|pdf))$",
+      "headers": {
+        "cache-control": "s-maxage=31536000"
+      }
     },
     {
       "src": "/(.*)",
