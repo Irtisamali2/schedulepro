@@ -29,12 +29,18 @@ import playButton from "@assets/Group 215_1757064789132.png";
 interface Plan {
   id: string;
   name: string;
-  price: number;
-  billing: string;
+  monthlyPrice: number | null;
+  monthlyDiscount: number;
+  monthlyEnabled: boolean;
+  yearlyPrice: number | null;
+  yearlyDiscount: number;
+  yearlyEnabled: boolean;
   features: string[];
   maxUsers: number;
   storageGB: number;
   isActive: boolean;
+  monthlyStripePriceId: string | null;
+  yearlyStripePriceId: string | null;
 }
 
 // Form schema for Get Started contact form
@@ -47,7 +53,49 @@ const getStartedFormSchema = z.object({
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const { toast } = useToast();
+
+  // Fetch plans from API
+  const { data: plans = [] } = useQuery<Plan[]>({
+    queryKey: ['/api/public/plans'],
+  });
+
+  // Calculate display price based on billing period and discounts (with backwards compatibility)
+  const getDisplayPrice = (plan: Plan | any) => {
+    // Handle new schema format
+    if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
+      const price = billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+      const discount = billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0);
+      const enabled = billingPeriod === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
+      
+      if (!enabled || !price) return null;
+      
+      if (discount > 0) {
+        return price * (1 - discount / 100);
+      }
+      return price;
+    }
+    
+    // Handle old schema format (backwards compatibility)
+    if (plan.price !== undefined) {
+      // For old format, show the same price for both billing periods
+      return plan.price;
+    }
+    
+    return null;
+  };
+
+  // Check if a plan has the current billing period enabled (with backwards compatibility)
+  const isPlanEnabled = (plan: Plan | any) => {
+    // Handle new schema format
+    if (plan.monthlyEnabled !== undefined || plan.yearlyEnabled !== undefined) {
+      return billingPeriod === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
+    }
+    
+    // Handle old schema format - always enabled
+    return plan.price !== undefined;
+  };
 
   // Get Started form handling
   const getStartedForm = useForm<z.infer<typeof getStartedFormSchema>>({
@@ -87,14 +135,6 @@ export default function LandingPage() {
     contactMutation.mutate(data);
   }
 
-  const { data: plans = [], isLoading } = useQuery<Plan[]>({
-    queryKey: ['/api/public/plans'],
-    queryFn: async () => {
-      const response = await fetch('/api/public/plans');
-      if (!response.ok) throw new Error('Failed to fetch plans');
-      return response.json();
-    }
-  });
 
   // Fetch review platforms for How It Works section
   const { data: reviewPlatforms = [] } = useQuery({
@@ -457,161 +497,141 @@ export default function LandingPage() {
             
             {/* Toggle Buttons */}
             <div className="inline-flex bg-gray-100 rounded-lg p-1 mb-6 sm:mb-8">
-              <button className="px-4 sm:px-6 py-2 rounded-md text-gray-600 hover:text-gray-900 text-sm sm:text-base">
-                Bil Monthly
+              <button 
+                className={`px-4 sm:px-6 py-2 rounded-md text-sm sm:text-base transition-all ${
+                  billingPeriod === 'monthly' 
+                    ? 'text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                style={billingPeriod === 'monthly' ? {backgroundColor: '#7CB8EA'} : {}}
+                onClick={() => setBillingPeriod('monthly')}
+              >
+                Bill Monthly
               </button>
-              <button className="px-4 sm:px-6 py-2 text-white rounded-md text-sm sm:text-base" style={{backgroundColor: '#7CB8EA'}}>
-                Bil Yearly
+              <button 
+                className={`px-4 sm:px-6 py-2 rounded-md text-sm sm:text-base transition-all ${
+                  billingPeriod === 'yearly' 
+                    ? 'text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                style={billingPeriod === 'yearly' ? {backgroundColor: '#7CB8EA'} : {}}
+                onClick={() => setBillingPeriod('yearly')}
+              >
+                Bill Yearly
+                {billingPeriod === 'yearly' && (
+                  <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">Save More</span>
+                )}
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
-            {/* Basic Plan */}
-            <Card className="p-4 sm:p-6 lg:p-8 border border-gray-200 text-center">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Basic</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-6 sm:mb-8">Have a go and test your superpowers</p>
+            {/* Dynamic Plans */}
+            {plans.map((plan, index) => {
+              const displayPrice = getDisplayPrice(plan);
+              const isEnabled = isPlanEnabled(plan);
+              const isMiddlePlan = index === 1; // Highlight the middle plan
               
-              <div className="mb-6 sm:mb-8">
-                <div className="relative inline-block">
-                  <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">15</span>
-                  <span className="text-xs sm:text-sm text-gray-400 absolute top-1 sm:top-2 -left-2 sm:-left-3">$</span>
-                </div>
-              </div>
+              // Handle both old and new schema formats
+              const originalPrice = plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined 
+                ? (billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice)
+                : plan.price;
+              const discount = plan.monthlyDiscount !== undefined || plan.yearlyDiscount !== undefined
+                ? (billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0))
+                : 0;
               
-              <ul className="space-y-2 sm:space-y-3 text-left mb-6 sm:mb-8">
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">2 Users</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">2 Files</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">Public Share & Comments</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">Chat Support</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">New income apps</span>
-                </li>
-              </ul>
-              
-              <Button 
-                variant="outline" 
-                className="w-full text-sm sm:text-base py-2 sm:py-3"
-                onClick={() => handleGetStarted('plan_1')}
-              >
-                Signup for free
-              </Button>
-            </Card>
+              if (!isEnabled || displayPrice === null) {
+                return null; // Skip disabled plans
+              }
 
-            {/* Pro Plan - Highlighted */}
-            <Card className="p-0 border-none relative text-center md:transform md:scale-105 overflow-hidden rounded-xl">
-              <div 
-                className="absolute inset-0 w-full h-full rounded-xl"
-                style={{
-                  backgroundImage: `url(${gradientBg})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              ></div>
-              
-              <div className="relative z-10 p-4 sm:p-6 lg:p-8">
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Pro</h3>
-                <p className="text-xs sm:text-sm text-white/90 mb-4 sm:mb-6">Experiment the power of infinite possibilities</p>
-                
-                <div className="mb-3 sm:mb-4">
-                  <div className="relative inline-block">
-                    <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">30</span>
-                    <span className="text-xs sm:text-sm text-white/80 absolute top-1 sm:top-2 -left-2 sm:-left-3">$</span>
-                  </div>
-                </div>
-                <p className="text-xs text-white/80 mb-6 sm:mb-8">Save $50 a year</p>
-                
-                {/* White content box for features */}
-                <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
-                  <ul className="space-y-2 sm:space-y-3 text-left">
-                    <li className="flex items-center">
-                      <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                      <span className="text-xs sm:text-sm text-gray-900">4 Users</span>
-                    </li>
-                    <li className="flex items-center">
-                      <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                      <span className="text-xs sm:text-sm text-gray-900">All apps</span>
-                    </li>
-                    <li className="flex items-center">
-                      <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                      <span className="text-xs sm:text-sm text-gray-900">Unlimited editable exports</span>
-                    </li>
-                    <li className="flex items-center">
-                      <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                      <span className="text-xs sm:text-sm text-gray-900">Folders and collaboration</span>
-                    </li>
-                    <li className="flex items-center">
-                      <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                      <span className="text-xs sm:text-sm text-gray-900">All incoming apps</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <Button 
-                  className="w-full bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white rounded-xl text-sm sm:text-base py-2 sm:py-3"
-                  onClick={() => handleGetStarted('plan_2')}
+              return (
+                <Card 
+                  key={plan.id} 
+                  className={`p-0 border-none relative text-center ${
+                    isMiddlePlan ? 'md:transform md:scale-105 overflow-hidden rounded-xl' : 'p-4 sm:p-6 lg:p-8 border border-gray-200'
+                  }`}
                 >
-                  Go to pro
-                </Button>
-              </div>
-            </Card>
+                  {isMiddlePlan && (
+                    <div 
+                      className="absolute inset-0 w-full h-full rounded-xl"
+                      style={{
+                        backgroundImage: `url(${gradientBg})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    ></div>
+                  )}
+                  
+                  <div className={`${isMiddlePlan ? 'relative z-10 p-4 sm:p-6 lg:p-8' : ''}`}>
+                    <h3 className={`text-xl sm:text-2xl font-bold mb-2 ${isMiddlePlan ? 'text-white' : 'text-gray-900'}`}>
+                      {plan.name}
+                    </h3>
+                    <p className={`text-xs sm:text-sm mb-6 sm:mb-8 ${isMiddlePlan ? 'text-white/90' : 'text-gray-600'}`}>
+                      {plan.name === 'Basic' && 'Have a go and test your superpowers'}
+                      {plan.name === 'Pro' && 'Experiment the power of infinite possibilities'}
+                      {plan.name === 'Business' && 'Unveil new superpowers and join the Design League'}
+                    </p>
+                    
+                    <div className={`mb-${isMiddlePlan ? '3 sm:mb-4' : '6 sm:mb-8'}`}>
+                      <div className="relative inline-block">
+                        <span className={`text-3xl sm:text-4xl lg:text-5xl font-bold ${isMiddlePlan ? 'text-white' : 'text-gray-900'}`}>
+                          {Math.round(displayPrice)}
+                        </span>
+                        <span className={`text-xs sm:text-sm absolute top-1 sm:top-2 -left-2 sm:-left-3 ${isMiddlePlan ? 'text-white/80' : 'text-gray-400'}`}>
+                          $
+                        </span>
+                      </div>
+                      <p className={`text-xs mt-1 ${isMiddlePlan ? 'text-white/80' : 'text-gray-500'}`}>
+                        per {billingPeriod === 'monthly' ? 'month' : 'year'}
+                      </p>
+                    </div>
 
-            {/* Business Plan */}
-            <Card className="p-4 sm:p-6 lg:p-8 border border-gray-200 text-center">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Business</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-6 sm:mb-8">Unveil new superpowers and join the Design League</p>
-              
-              <div className="mb-6 sm:mb-8">
-                <div className="relative inline-block">
-                  <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">46</span>
-                  <span className="text-xs sm:text-sm text-gray-400 absolute top-1 sm:top-2 -left-2 sm:-left-3">$</span>
-                </div>
-              </div>
-              
-              <ul className="space-y-2 sm:space-y-3 text-left mb-6 sm:mb-8">
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">All the features of pro plan</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">Account success Manager</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">Single Sign-On (SSO)</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">Co-conception program</span>
-                </li>
-                <li className="flex items-center">
-                  <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-                  <span className="text-xs sm:text-sm">Collaboration-Soon</span>
-                </li>
-              </ul>
-              
-              <Button 
-                variant="outline" 
-                className="w-full text-sm sm:text-base py-2 sm:py-3"
-                onClick={() => handleGetStarted('plan_3')}
-              >
-                Goto Business
-              </Button>
-            </Card>
+                    {/* Show discount info if applicable */}
+                    {discount > 0 && (
+                      <p className={`text-xs mb-6 sm:mb-8 ${isMiddlePlan ? 'text-white/80' : 'text-green-600'}`}>
+                        Save ${(originalPrice! * (discount / 100)).toFixed(0)} with {discount}% discount
+                      </p>
+                    )}
+
+                    {/* Features section */}
+                    {isMiddlePlan ? (
+                      <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
+                        <ul className="space-y-2 sm:space-y-3 text-left">
+                          {plan.features.map((feature, featureIndex) => (
+                            <li key={featureIndex} className="flex items-center">
+                              <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
+                              <span className="text-xs sm:text-sm text-gray-900">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <ul className="space-y-2 sm:space-y-3 text-left mb-6 sm:mb-8">
+                        {plan.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-center">
+                            <img src={checkmarkIcon} alt="Check" className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
+                            <span className="text-xs sm:text-sm">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    
+                    <Button 
+                      className={
+                        isMiddlePlan 
+                          ? "w-full bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white rounded-xl text-sm sm:text-base py-2 sm:py-3"
+                          : "w-full text-sm sm:text-base py-2 sm:py-3"
+                      }
+                      variant={isMiddlePlan ? "default" : "outline"}
+                      onClick={() => handleGetStarted(plan.id)}
+                    >
+                      {index === 0 ? 'Signup for free' : index === 1 ? 'Go to pro' : 'Goto Business'}
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+
           </div>
         </div>
       </section>
