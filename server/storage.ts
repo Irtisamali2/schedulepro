@@ -2166,6 +2166,70 @@ class PostgreSQLStorage implements IStorage {
     return db;
   }
 
+  private async createTables() {
+    const dbInstance = this.ensureDB();
+    
+    try {
+      // Create essential tables if they don't exist
+      console.log("🔧 Creating database tables if they don't exist...");
+      
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "users" (
+          "id" text PRIMARY KEY NOT NULL,
+          "email" text NOT NULL UNIQUE,
+          "password" text NOT NULL,
+          "role" text DEFAULT 'CLIENT' NOT NULL,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+      
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "plans" (
+          "id" text PRIMARY KEY NOT NULL,
+          "name" text NOT NULL,
+          "monthly_price" real,
+          "monthly_discount" real DEFAULT 0,
+          "monthly_enabled" boolean DEFAULT true,
+          "yearly_price" real,
+          "yearly_discount" real DEFAULT 0,
+          "yearly_enabled" boolean DEFAULT true,
+          "features" text[] NOT NULL,
+          "max_users" integer NOT NULL,
+          "storage_gb" integer NOT NULL,
+          "is_active" boolean DEFAULT true,
+          "is_free_trial" boolean DEFAULT false,
+          "trial_days" integer DEFAULT 0,
+          "monthly_stripe_price_id" text,
+          "yearly_stripe_price_id" text,
+          "stripe_product_id" text,
+          "created_at" timestamp DEFAULT now()
+        );
+      `);
+      
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "review_platforms" (
+          "id" text PRIMARY KEY NOT NULL,
+          "name" text NOT NULL,
+          "display_name" text NOT NULL,
+          "rating" real NOT NULL,
+          "max_rating" real NOT NULL,
+          "review_count" integer NOT NULL,
+          "logo_url" text,
+          "is_active" boolean DEFAULT true,
+          "sort_order" integer DEFAULT 0,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+      
+      console.log("✅ Database tables created successfully");
+    } catch (error) {
+      console.error("❌ Table creation failed:", error);
+      throw error;
+    }
+  }
+
   private async initializeDatabase() {
     if (this.initialized) return;
     
@@ -2173,7 +2237,8 @@ class PostgreSQLStorage implements IStorage {
       const dbInstance = this.ensureDB();
       console.log("🔄 Initializing PostgreSQL database tables...");
       
-      // Create demo data for production (same as MemStorage)
+      // First create tables, then seed data
+      await this.createTables();
       await this.seedDemoData();
       
       this.initialized = true;
