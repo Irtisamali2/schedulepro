@@ -1,0 +1,61 @@
+22:19:18.658 Running build in Washington, D.C., USA (East) – iad1
+22:19:18.660 Build machine configuration: 2 cores, 8 GB
+22:19:18.764 Cloning github.com/khakanhyder/schedule-pro-web-app (Branch: my-feature-branch, Commit: 9902727)
+22:19:23.572 Cloning completed: 4.807s
+22:19:23.885 Restored build cache from previous deployment (8AKxJLGXgBdK81ffucUnKVss5eqk)
+22:19:24.601 Running "vercel build"
+22:19:25.009 Vercel CLI 48.1.6
+22:19:25.205 WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+22:19:26.081 Installing dependencies...
+22:19:27.838 
+22:19:27.839 up to date in 1s
+22:19:27.840 
+22:19:27.840 100 packages are looking for funding
+22:19:27.840   run `npm fund` for details
+22:19:27.961 Running "npm run build"
+22:19:28.076 
+22:19:28.077 > rest-express@1.0.0 build
+22:19:28.077 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --external:vite --external:@vitejs/plugin-react --external:@vitejs/* --external:rollup --define:process.env.NODE_ENV='"production"' --keep-names
+22:19:28.077 
+22:19:28.616 [36mvite v5.4.14 [32mbuilding for production...[36m[39m
+22:19:28.671 transforming...
+22:19:29.010 Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+22:19:29.010   npx update-browserslist-db@latest
+22:19:29.011   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+22:19:36.380 [32m✓[39m 2743 modules transformed.
+22:19:37.038 rendering chunks...
+22:19:37.055 computing gzip size...
+22:19:37.085 [2m../dist/public/[22m[32mindex.html                                    [39m[1m[2m    2.38 kB[22m[1m[22m[2m │ gzip:   0.95 kB[22m
+22:19:37.085 [2m../dist/public/[22m[2massets/[22m[32mEllipse 57_1757064789131-n3DfAgyQ.png  [39m[1m[2m    5.66 kB[22m[1m[22m
+22:19:37.086 [2m../dist/public/[22m[2massets/[22m[32mVector 32_1758896044047-v1Mr8HtQ.png   [39m[1m[2m    6.06 kB[22m[1m[22m
+22:19:37.086 [2m../dist/public/[22m[2massets/[22m[32mEllipse 55_1757064789130-DmNWMAK-.png  [39m[1m[2m    8.45 kB[22m[1m[22m
+22:19:37.087 [2m../dist/public/[22m[2massets/[22m[32mEllipse 54_1757064789129-6EtCQK9D.png  [39m[1m[2m    9.76 kB[22m[1m[22m
+22:19:37.087 [2m../dist/public/[22m[2massets/[22m[32mEllipse 56_1757064789130-DOr8dtv9.png  [39m[1m[2m   10.17 kB[22m[1m[22m
+22:19:37.087 [2m../dist/public/[22m[2massets/[22m[32mContents_1757807495638-3-0-BGk8.png    [39m[1m[2m  164.87 kB[22m[1m[22m
+22:19:37.087 [2m../dist/public/[22m[2massets/[22m[32mimage_1758896213219-ppq_uKKB.png       [39m[1m[2m  172.08 kB[22m[1m[22m
+22:19:37.087 [2m../dist/public/[22m[2massets/[22m[32mGroup 477_1757064264173-DLtyHw-R.png   [39m[1m[2m  222.09 kB[22m[1m[22m
+22:19:37.087 [2m../dist/public/[22m[2massets/[22m[32mImage (3)_1757807495639-Cq8zMWR9.png   [39m[1m[2m  787.18 kB[22m[1m[22m
+22:19:37.088 [2m../dist/public/[22m[2massets/[22m[35mindex-By7z0xBP.css                     [39m[1m[2m  119.14 kB[22m[1m[22m[2m │ gzip:  19.78 kB[22m
+22:19:37.088 [2m../dist/public/[22m[2massets/[22m[36mindex-tfqiipMv.js                      [39m[1m[33m1,094.41 kB[39m[22m[2m │ gzip: 299.75 kB[22m
+22:19:37.088 [33m
+22:19:37.088 (!) Some chunks are larger than 500 kB after minification. Consider:
+22:19:37.089 - Using dynamic import() to code-split the application
+22:19:37.089 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+22:19:37.089 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+22:19:37.089 [32m✓ built in 8.44s[39m
+22:19:37.173 
+22:19:37.173   dist/index.js  263.3kb
+22:19:37.173 
+22:19:37.173 ⚡ Done in 26ms
+22:19:37.441 Using TypeScript 5.6.3 (local user-provided)
+22:19:48.403 server/vite.ts(39,5): error TS2322: Type '{ middlewareMode: boolean; hmr: { server: Server<typeof IncomingMessage, typeof ServerResponse>; }; allowedHosts: boolean; }' is not assignable to type 'ServerOptions'.
+22:19:48.403   Types of property 'allowedHosts' are incompatible.
+22:19:48.403     Type 'boolean' is not assignable to type 'true | string[] | undefined'.
+22:19:48.403 
+22:20:02.054 Build Completed in /vercel/output [36s]
+22:20:02.443 Deploying outputs...
+22:20:11.119 Deployment completed
+22:20:11.974 Creating build cache...
+22:20:43.128 Created build cache: 31.151s
+22:20:43.129 Uploading build cache [137.14 MB]
+22:20:45.332 Build cache uploaded: 2.211s
