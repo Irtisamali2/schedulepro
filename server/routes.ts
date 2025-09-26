@@ -61,13 +61,13 @@ function getPlanBilling(plan: any): string {
   return (plan as any).billing || 'MONTHLY';
 }
 
-function getStripePriceId(plan: any, billingPeriod: 'monthly' | 'yearly' = 'monthly'): string | null {
+function getStripePriceId(plan: any, billingPeriod: 'monthly' | 'yearly' = 'monthly'): string | undefined {
   // Handle new schema format
   if (plan.monthlyStripePriceId !== undefined || plan.yearlyStripePriceId !== undefined) {
     return billingPeriod === 'monthly' ? plan.monthlyStripePriceId : plan.yearlyStripePriceId;
   }
   // Handle old schema format
-  return (plan as any).stripePriceId || null;
+  return (plan as any).stripePriceId || undefined;
 }
 
 // Permission checking middleware
