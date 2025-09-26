@@ -36,6 +36,7 @@ import {
 } from "./domain-validation";
 import { v4 as uuidv4 } from "uuid";
 import { createRateLimitMiddleware, contactFormLimiter } from "./rate-limiter";
+import bcrypt from "bcrypt";
 
 // Initialize Stripe (if configured)
 const stripe = process.env.STRIPE_SECRET_KEY 
@@ -1034,7 +1035,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = req.body;
       
       const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
@@ -1059,7 +1065,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = req.body;
       
       const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password || user.role !== "CLIENT") {
+      if (!user || user.role !== "CLIENT") {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
