@@ -107,6 +107,10 @@ export default function OnboardingFlow() {
     
     // Handle old schema format (backwards compatibility)
     if (plan.price !== undefined) {
+      // For old format, simulate yearly pricing as monthly price * 10 (with discount)
+      if (period === 'yearly') {
+        return plan.price * 10;
+      }
       return plan.price;
     }
     
@@ -119,9 +123,9 @@ export default function OnboardingFlow() {
       return period === 'monthly' ? 'month' : 'year';
     }
     
-    // Handle old schema format
+    // Handle old schema format - respect the current period selection
     if (plan.billing) {
-      return plan.billing.toLowerCase();
+      return period === 'monthly' ? 'month' : 'year';
     }
     
     return 'month';
@@ -302,6 +306,34 @@ export default function OnboardingFlow() {
               <p className="text-gray-600">Select the plan that best fits your business needs</p>
             </div>
             
+            {/* Billing Period Toggle */}
+            <div className="flex justify-center">
+              <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setBillingPeriod('monthly')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                    billingPeriod === 'monthly'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  data-testid="toggle-monthly"
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingPeriod('yearly')}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                    billingPeriod === 'yearly'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  data-testid="toggle-yearly"
+                >
+                  Yearly
+                </button>
+              </div>
+            </div>
+            
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {plans.map((plan) => (
                 <Card 
@@ -321,8 +353,8 @@ export default function OnboardingFlow() {
                       )}
                     </div>
                     <div className="text-3xl font-bold">
-                      ${getDisplayPrice(plan) || 0}
-                      <span className="text-sm font-normal text-gray-600">/{getBillingPeriodText(plan)}</span>
+                      ${getDisplayPrice(plan, billingPeriod) || 0}
+                      <span className="text-sm font-normal text-gray-600">/{getBillingPeriodText(plan, billingPeriod)}</span>
                     </div>
                     {plan.isFreeTrial && (
                       <p className="text-sm text-green-600">{plan.trialDays} days free trial</p>
