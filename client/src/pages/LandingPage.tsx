@@ -409,9 +409,15 @@ export default function LandingPage() {
             </Card>
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4" style={{backgroundColor: '#D6E9F7'}}></div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Web Page Builder</h3>
-              <p className="text-gray-600 text-xs sm:text-sm">Create beautiful web pages without any coding knowledge.</p>
+              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+                <img 
+                  src="/web-page-design-image.png" 
+                  alt="Web page design" 
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold mb-2">Web page design</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">Here you can handle projects together with team virtually</p>
             </Card>
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
