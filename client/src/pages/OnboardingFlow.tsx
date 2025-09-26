@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Star, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Star, Sparkles, Home } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 
 interface Plan {
   id: string;
@@ -589,6 +589,16 @@ export default function OnboardingFlow() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
+        {/* Back to Home Button */}
+        <div className="mb-6">
+          <Link href="/">
+            <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
+              <Home className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+        
         {/* Progress Header */}
         <div className="mb-8">
           <div className="flex justify-center mb-4">
