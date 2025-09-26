@@ -5,35 +5,23 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "vite build",
+        "buildCommand": "npm run build",
         "distDir": "dist/public"
       }
-    },
-    {
-      "src": "api/[...path].ts",
-      "use": "@vercel/node"
     }
   ],
+  "functions": {
+    "api/[...path].ts": {
+      "runtime": "@vercel/node@18"
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/[...path]"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
-    {
-      "src": "/favicon.svg",
-      "dest": "/favicon.svg"
-    },
-    {
-      "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|json|txt|pdf))$",
-      "dest": "/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
