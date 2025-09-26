@@ -30,6 +30,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // Authentication & Users
@@ -650,10 +651,11 @@ class MemStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
     const newUser: User = {
       id: `user_${this.users.length + 1}`,
       email: user.email,
-      password: user.password,
+      password: hashedPassword,
       role: user.role || "CLIENT",
       createdAt: new Date(),
       updatedAt: new Date()
@@ -2317,6 +2319,18 @@ class PostgreSQLStorage implements IStorage {
         }
       ]);
 
+      // Create super admin user for deployment access
+      const adminPassword = "SecurePlatform2025!@#$%";
+      console.log("👤 Creating super admin user...");
+      await this.createUser({
+        email: "admin@scheduled-platform.com",
+        password: adminPassword,
+        role: "SUPER_ADMIN"
+      });
+      console.log("✅ Super admin user created successfully");
+      console.log(`📧 Admin Email: admin@scheduled-platform.com`);
+      console.log(`🔑 Admin Password: ${adminPassword}`);
+
       console.log("✅ Demo data seeded successfully");
     } catch (error) {
       console.error("❌ Demo data seeding failed:", error);
@@ -2338,8 +2352,10 @@ class PostgreSQLStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const dbInstance = this.ensureDB();
+    const hashedPassword = await bcrypt.hash(user.password, 10);
     const [newUser] = await dbInstance.insert(users).values({
       ...user,
+      password: hashedPassword,
       id: `user_${Date.now()}`,
       createdAt: new Date(),
       updatedAt: new Date()
