@@ -2152,19 +2152,29 @@ class MemStorage implements IStorage {
 
 // PostgreSQL storage implementation using Drizzle ORM
 class PostgreSQLStorage implements IStorage {
+  private ensureDB() {
+    if (!db) {
+      throw new Error("Database connection not available. Please check your DATABASE_URL configuration.");
+    }
+    return db;
+  }
+
   // Authentication & Users
   async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance.select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance.select().from(users).where(eq(users.email, email)).limit(1);
     return result[0];
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values({
+    const dbInstance = this.ensureDB();
+    const [newUser] = await dbInstance.insert(users).values({
       ...user,
       id: `user_${Date.now()}`,
       createdAt: new Date(),
@@ -2175,16 +2185,19 @@ class PostgreSQLStorage implements IStorage {
 
   // Plans Management  
   async getPlans(): Promise<Plan[]> {
-    return db.select().from(plans);
+    const dbInstance = this.ensureDB();
+    return dbInstance.select().from(plans);
   }
 
   async getPlan(id: string): Promise<Plan | undefined> {
-    const result = await db.select().from(plans).where(eq(plans.id, id)).limit(1);
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance.select().from(plans).where(eq(plans.id, id)).limit(1);
     return result[0];
   }
 
   async createPlan(plan: InsertPlan): Promise<Plan> {
-    const [newPlan] = await db.insert(plans).values({
+    const dbInstance = this.ensureDB();
+    const [newPlan] = await dbInstance.insert(plans).values({
       ...plan,
       id: `plan_${Date.now()}`
     }).returning();
@@ -2192,7 +2205,8 @@ class PostgreSQLStorage implements IStorage {
   }
 
   async updatePlan(id: string, updates: Partial<InsertPlan>): Promise<Plan> {
-    const [updatedPlan] = await db.update(plans)
+    const dbInstance = this.ensureDB();
+    const [updatedPlan] = await dbInstance.update(plans)
       .set(updates)
       .where(eq(plans.id, id))
       .returning();
@@ -2201,21 +2215,25 @@ class PostgreSQLStorage implements IStorage {
   }
 
   async deletePlan(id: string): Promise<void> {
-    await db.delete(plans).where(eq(plans.id, id));
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(plans).where(eq(plans.id, id));
   }
 
   // Contact Messages / Super Admin Leads  
   async getContactMessages(): Promise<ContactMessage[]> {
-    return db.select().from(contactMessages).orderBy(sql`${contactMessages.createdAt} DESC`);
+    const dbInstance = this.ensureDB();
+    return dbInstance.select().from(contactMessages).orderBy(sql`${contactMessages.createdAt} DESC`);
   }
 
   async getContactMessage(id: string): Promise<ContactMessage | undefined> {
-    const result = await db.select().from(contactMessages).where(eq(contactMessages.id, id)).limit(1);
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance.select().from(contactMessages).where(eq(contactMessages.id, id)).limit(1);
     return result[0];
   }
 
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
-    const [newMessage] = await db.insert(contactMessages).values({
+    const dbInstance = this.ensureDB();
+    const [newMessage] = await dbInstance.insert(contactMessages).values({
       ...message,
       id: `contact_${Date.now()}`,
       createdAt: new Date(),
@@ -2225,7 +2243,8 @@ class PostgreSQLStorage implements IStorage {
   }
 
   async updateContactMessage(id: string, updates: Partial<InsertContactMessage>): Promise<ContactMessage> {
-    const [updatedMessage] = await db.update(contactMessages)
+    const dbInstance = this.ensureDB();
+    const [updatedMessage] = await dbInstance.update(contactMessages)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(contactMessages.id, id))
       .returning();
@@ -2234,7 +2253,8 @@ class PostgreSQLStorage implements IStorage {
   }
 
   async deleteContactMessage(id: string): Promise<void> {
-    await db.delete(contactMessages).where(eq(contactMessages.id, id));
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(contactMessages).where(eq(contactMessages.id, id));
   }
 
   // Note: For brevity, implementing key methods first. Other methods would follow same pattern

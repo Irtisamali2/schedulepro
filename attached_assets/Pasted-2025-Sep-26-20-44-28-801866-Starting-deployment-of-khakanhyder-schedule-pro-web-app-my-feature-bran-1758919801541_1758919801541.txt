@@ -1,0 +1,152 @@
+2025-Sep-26 20:44:28.801866
+Starting deployment of khakanhyder/schedule-pro-web-app:my-feature-branch to localhost.
+2025-Sep-26 20:44:29.513209
+Preparing container with helper image: ghcr.io/coollabsio/coolify-helper:1.0.11.
+2025-Sep-26 20:44:29.882265
+[CMD]: docker stop --time=30 sg4c40kg8kwwg8gcgc48oo40
+2025-Sep-26 20:44:29.882265
+Flag --time has been deprecated, use --timeout instead
+2025-Sep-26 20:44:29.887982
+Error response from daemon: No such container: sg4c40kg8kwwg8gcgc48oo40
+2025-Sep-26 20:44:30.235894
+[CMD]: docker rm -f sg4c40kg8kwwg8gcgc48oo40
+2025-Sep-26 20:44:30.235894
+Error response from daemon: No such container: sg4c40kg8kwwg8gcgc48oo40
+2025-Sep-26 20:44:30.690217
+[CMD]: docker run -d --network coolify --name sg4c40kg8kwwg8gcgc48oo40 --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/coollabsio/coolify-helper:1.0.11
+2025-Sep-26 20:44:30.690217
+4f62540b7e7500ad22f0bd4f154b0b8a080b9426cf6d43456fccc4880573591e
+2025-Sep-26 20:44:33.597155
+[CMD]: docker exec sg4c40kg8kwwg8gcgc48oo40 bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote https://x-access-token:<REDACTED>@github.com/khakanhyder/schedule-pro-web-app.git refs/heads/my-feature-branch'
+2025-Sep-26 20:44:33.597155
+f70431392006dbc1ec8972eeb64c9c22af4eddc1	refs/heads/my-feature-branch
+2025-Sep-26 20:44:34.042221
+----------------------------------------
+2025-Sep-26 20:44:34.046430
+Importing khakanhyder/schedule-pro-web-app:my-feature-branch (commit sha HEAD) to /artifacts/sg4c40kg8kwwg8gcgc48oo40.
+2025-Sep-26 20:44:34.502761
+[CMD]: docker exec sg4c40kg8kwwg8gcgc48oo40 bash -c 'git clone --depth=1 --recurse-submodules --shallow-submodules -b 'my-feature-branch' 'https://x-access-token:<REDACTED>@github.com/khakanhyder/schedule-pro-web-app.git' '/artifacts/sg4c40kg8kwwg8gcgc48oo40' && cd /artifacts/sg4c40kg8kwwg8gcgc48oo40 && if [ -f .gitmodules ]; then git submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git submodule update --init --recursive --depth=1; fi && cd /artifacts/sg4c40kg8kwwg8gcgc48oo40 && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git lfs pull'
+2025-Sep-26 20:44:34.502761
+Cloning into '/artifacts/sg4c40kg8kwwg8gcgc48oo40'...
+2025-Sep-26 20:44:40.112321
+[CMD]: docker exec sg4c40kg8kwwg8gcgc48oo40 bash -c 'cd /artifacts/sg4c40kg8kwwg8gcgc48oo40 && git log -1 f70431392006dbc1ec8972eeb64c9c22af4eddc1 --pretty=%B'
+2025-Sep-26 20:44:40.112321
+Update plan display to include new pricing structures and free trial options
+2025-Sep-26 20:44:40.112321
+2025-Sep-26 20:44:40.112321
+Modify the Plan interface to support new schema formats for pricing (monthly, yearly, discounts, enabled states) and add compatibility for older formats. Implement helper functions `getDisplayPrice`, `getBillingPeriodText`, and `formatPlanPrice` to handle both new and old schema structures, enabling the display of free plans, monthly/yearly pricing, and discounts. Update revenue calculation to use the `getDisplayPrice` function for monthly pricing.
+2025-Sep-26 20:44:40.112321
+2025-Sep-26 20:44:40.112321
+Replit-Commit-Author: Agent
+2025-Sep-26 20:44:40.112321
+Replit-Commit-Session-Id: b2c32159-9373-425b-a9b3-1826c5d0a096
+2025-Sep-26 20:44:40.112321
+Replit-Commit-Checkpoint-Type: full_checkpoint
+2025-Sep-26 20:44:40.112321
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/dc20ddd2-39bd-41fd-aebc-067e79bc5557/b2c32159-9373-425b-a9b3-1826c5d0a096/dQmsTRI
+2025-Sep-26 20:44:40.498686
+[CMD]: docker images -q occc000400gokkksoscccw0s:f70431392006dbc1ec8972eeb64c9c22af4eddc1 2>/dev/null
+2025-Sep-26 20:44:40.498686
+3e3f2c2942aa
+2025-Sep-26 20:44:40.520355
+No configuration changed & image found (occc000400gokkksoscccw0s:f70431392006dbc1ec8972eeb64c9c22af4eddc1) with the same Git Commit SHA. Build step skipped.
+2025-Sep-26 20:44:42.538223
+[CMD]: docker exec sg4c40kg8kwwg8gcgc48oo40 bash -c 'cat /artifacts/sg4c40kg8kwwg8gcgc48oo40/Dockerfile'
+2025-Sep-26 20:44:42.538223
+# Build stage
+2025-Sep-26 20:44:42.538223
+FROM node:20-alpine AS builder
+2025-Sep-26 20:44:42.538223
+WORKDIR /app
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Copy package files
+2025-Sep-26 20:44:42.538223
+COPY package*.json ./
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Install ALL dependencies (including devDependencies for build)
+2025-Sep-26 20:44:42.538223
+RUN npm ci
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Copy source code
+2025-Sep-26 20:44:42.538223
+COPY . .
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Build both frontend and backend
+2025-Sep-26 20:44:42.538223
+RUN npm run build
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Production stage
+2025-Sep-26 20:44:42.538223
+FROM node:20-alpine AS production
+2025-Sep-26 20:44:42.538223
+WORKDIR /app
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Install curl for health check
+2025-Sep-26 20:44:42.538223
+RUN apk add --no-cache curl
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Copy package files
+2025-Sep-26 20:44:42.538223
+COPY package*.json ./
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Install all dependencies (since we're using --packages=external)
+2025-Sep-26 20:44:42.538223
+RUN npm ci && npm cache clean --force
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Copy built application from builder stage (includes both server and public assets)
+2025-Sep-26 20:44:42.538223
+COPY --from=builder /app/dist ./dist
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Expose the port
+2025-Sep-26 20:44:42.538223
+EXPOSE 5000
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Health check
+2025-Sep-26 20:44:42.538223
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+2025-Sep-26 20:44:42.538223
+CMD curl -f http://localhost:5000/api/health || curl -f http://localhost:5000/ || exit 1
+2025-Sep-26 20:44:42.538223
+2025-Sep-26 20:44:42.538223
+# Start the application
+2025-Sep-26 20:44:42.538223
+CMD ["npm", "start"]
+2025-Sep-26 20:44:42.992722
+----------------------------------------
+2025-Sep-26 20:44:42.996836
+Application has ports mapped to the host system, rolling update is not supported.
+2025-Sep-26 20:44:43.000627
+Removing old containers.
+2025-Sep-26 20:44:43.724593
+[CMD]: docker stop --time=30 occc000400gokkksoscccw0s-204156158209
+2025-Sep-26 20:44:43.724593
+Flag --time has been deprecated, use --timeout instead
+2025-Sep-26 20:44:43.737235
+occc000400gokkksoscccw0s-204156158209
+2025-Sep-26 20:44:44.113050
+[CMD]: docker rm -f occc000400gokkksoscccw0s-204156158209
+2025-Sep-26 20:44:44.113050
+occc000400gokkksoscccw0s-204156158209
+2025-Sep-26 20:44:45.348677
+[CMD]: docker exec sg4c40kg8kwwg8gcgc48oo40 bash -c 'SOURCE_COMMIT=f70431392006dbc1ec8972eeb64c9c22af4eddc1 COOLIFY_URL=http://occc000400gokkksoscccw0s.190.92.151.123.sslip.io COOLIFY_FQDN=occc000400gokkksoscccw0s.190.92.151.123.sslip.io COOLIFY_BRANCH=my-feature-branch  docker compose --project-name occc000400gokkksoscccw0s --project-directory /artifacts/sg4c40kg8kwwg8gcgc48oo40 -f /artifacts/sg4c40kg8kwwg8gcgc48oo40/docker-compose.yaml up --build -d'
+2025-Sep-26 20:44:45.348677
+Container occc000400gokkksoscccw0s-204427281739  Creating
+2025-Sep-26 20:44:45.452657
+Container occc000400gokkksoscccw0s-204427281739  Created
+2025-Sep-26 20:44:45.465688
+Container occc000400gokkksoscccw0s-204427281739  Starting
+2025-Sep-26 20:44:46.177099
+Container occc000400gokkksoscccw0s-204427281739  Started
+2025-Sep-26 20:44:46.190238
+New container started.
