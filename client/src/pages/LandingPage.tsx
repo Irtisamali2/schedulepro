@@ -397,9 +397,15 @@ export default function LandingPage() {
             </Card>
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4" style={{backgroundColor: '#D6E9F7'}}></div>
+              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+                <img 
+                  src="/leads-management-image.png" 
+                  alt="Leads Management" 
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
               <h3 className="text-base sm:text-lg font-semibold mb-2">Leads Management</h3>
-              <p className="text-gray-600 text-xs sm:text-sm">Capture and nurture leads to grow your customer base.</p>
+              <p className="text-gray-600 text-xs sm:text-sm">We always provide useful informatin to make it easier for you every day</p>
             </Card>
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
