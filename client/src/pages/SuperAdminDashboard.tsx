@@ -50,13 +50,25 @@ interface Client {
 interface Plan {
   id: string;
   name: string;
-  price: number;
-  billing: string;
+  // Support both old and new schema formats
+  price?: number; // Old format
+  billing?: string; // Old format
+  monthlyPrice?: number; // New format
+  yearlyPrice?: number; // New format
+  monthlyEnabled?: boolean; // New format
+  yearlyEnabled?: boolean; // New format
+  monthlyDiscount?: number; // New format
+  yearlyDiscount?: number; // New format
   features: string[];
   maxUsers: number;
   storageGB: number;
+  isActive?: boolean;
+  isFreeTrial?: boolean;
+  trialDays?: number;
   stripePriceId?: string;
   stripeProductId?: string;
+  monthlyStripePriceId?: string;
+  yearlyStripePriceId?: string;
 }
 
 interface ContactMessage {
@@ -136,6 +148,68 @@ export default function SuperAdminDashboard() {
   });
 
   const queryClient = useQueryClient();
+
+  // Helper functions for backwards compatibility
+  const getDisplayPrice = (plan: Plan, period: 'monthly' | 'yearly' = 'monthly') => {
+    // Handle new schema format
+    if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
+      const basePrice = period === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+      const discount = period === 'monthly' ? plan.monthlyDiscount : plan.yearlyDiscount;
+      const enabled = period === 'monthly' ? plan.monthlyEnabled : plan.yearlyEnabled;
+      
+      if (!enabled || basePrice === undefined) return null;
+      
+      let price = basePrice;
+      if (discount && discount > 0) {
+        price = basePrice * (1 - discount / 100);
+      }
+      return price;
+    }
+    
+    // Handle old schema format (backwards compatibility)
+    if (plan.price !== undefined) {
+      return plan.price;
+    }
+    
+    return null;
+  };
+
+  const getBillingPeriodText = (plan: Plan, period: 'monthly' | 'yearly' = 'monthly') => {
+    // Handle new schema format
+    if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
+      return period === 'monthly' ? 'month' : 'year';
+    }
+    
+    // Handle old schema format
+    if (plan.billing) {
+      return plan.billing.toLowerCase().replace('ly', '');
+    }
+    
+    return 'month';
+  };
+
+  const formatPlanPrice = (plan: Plan) => {
+    // Free plans
+    const monthlyPrice = getDisplayPrice(plan, 'monthly');
+    if (monthlyPrice === 0) {
+      return plan.isFreeTrial ? 'FREE' : '$0';
+    }
+
+    // Check if both monthly and yearly are available
+    const yearlyPrice = getDisplayPrice(plan, 'yearly');
+    const hasMonthly = plan.monthlyEnabled !== false && monthlyPrice !== null;
+    const hasYearly = plan.yearlyEnabled !== false && yearlyPrice !== null;
+
+    if (hasMonthly && hasYearly) {
+      return `$${monthlyPrice}/mo • $${yearlyPrice}/yr`;
+    } else if (hasYearly) {
+      return `$${yearlyPrice}/yr`;
+    } else if (hasMonthly) {
+      return `$${monthlyPrice}/mo`;
+    } else {
+      return '$0';
+    }
+  };
 
   // Check authentication
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -667,7 +741,8 @@ export default function SuperAdminDashboard() {
                   <div className="space-y-4">
                     {plans.map((plan) => {
                       const planClients = clients.filter(c => c.plan === plan.name && c.status === 'ACTIVE');
-                      const planRevenue = planClients.length * plan.price;
+                      const monthlyPrice = getDisplayPrice(plan, 'monthly') || 0;
+                      const planRevenue = planClients.length * monthlyPrice;
                       return (
                         <div key={plan.id} className="flex items-center justify-between">
                           <div>
@@ -786,7 +861,7 @@ export default function SuperAdminDashboard() {
                           <option value="">Select Plan</option>
                           {plans.map((plan) => (
                             <option key={plan.id} value={plan.id}>
-                              {plan.name} - ${plan.price}/month
+                              {plan.name} - {formatPlanPrice(plan)}
                             </option>
                           ))}
                         </select>
@@ -1069,7 +1144,7 @@ export default function SuperAdminDashboard() {
                                           >
                                             {plans.map((plan) => (
                                               <option key={plan.id} value={plan.id}>
-                                                {plan.name} - ${plan.price}/month
+                                                {plan.name} - {formatPlanPrice(plan)}
                                               </option>
                                             ))}
                                           </select>
@@ -1435,7 +1510,7 @@ export default function SuperAdminDashboard() {
                           createPlanMutation.mutate(planForm);
                         }
                       }}
-                      disabled={createPlanMutation.isPending || generateStripeProductMutation.isPending || !planForm.name || planForm.price <= 0}
+                      disabled={createPlanMutation.isPending || generateStripeProductMutation.isPending || !planForm.name || (planForm.monthlyPrice <= 0 && planForm.yearlyPrice <= 0)}
                     >
                       {generateStripeProductMutation.isPending ? "Generating..." : 
                        createPlanMutation.isPending ? "Creating..." : "Create Plan"}
@@ -1454,10 +1529,13 @@ export default function SuperAdminDashboard() {
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
                       {plan.name}
-                      <Badge>${plan.price}/mo</Badge>
+                      <Badge className={plan.isFreeTrial ? "bg-green-100 text-green-800" : ""}>{formatPlanPrice(plan)}</Badge>
                     </CardTitle>
                     <CardDescription>
                       {plan.maxUsers} users • {plan.storageGB}GB storage
+                      {plan.isFreeTrial && plan.trialDays && (
+                        <span className="text-green-600"> • {plan.trialDays} days trial</span>
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
