@@ -20,7 +20,20 @@
       "dest": "/api/[...path]"
     },
     {
-      "handle": "filesystem"
+      "src": "/manifest\\.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/favicon\\.svg",
+      "dest": "/favicon.svg"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(png|jpg|jpeg|gif|ico|css|js|txt|pdf))$",
+      "dest": "/$1"
     },
     {
       "src": "/(.*)",
