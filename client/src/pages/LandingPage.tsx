@@ -678,10 +678,7 @@ export default function LandingPage() {
               {/* Company Info */}
               <div className="text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start mb-3 sm:mb-4">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded flex items-center justify-center">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
-                  <h4 className="ml-2 sm:ml-3 text-base sm:text-lg font-bold">Scheduled Pro</h4>
+                  <img src="/scheduled-pro-logo.png" alt="Logo" className="h-6 w-auto sm:h-8 sm:w-auto" />
                 </div>
                 <p className="text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">
                   Get started now try our product
