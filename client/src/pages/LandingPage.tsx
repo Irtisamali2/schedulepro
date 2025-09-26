@@ -678,7 +678,7 @@ export default function LandingPage() {
               {/* Company Info */}
               <div className="text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start mb-3 sm:mb-4">
-                  <img src="/scheduled-pro-logo.png" alt="Logo" className="h-6 w-auto sm:h-8 sm:w-auto" />
+                  <img src="/scheduled-pro-footer-logo.png" alt="Scheduled Pro" className="h-6 w-auto sm:h-8 sm:w-auto" />
                 </div>
                 <p className="text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">
                   Get started now try our product
