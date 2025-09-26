@@ -1,9 +1,9 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
+import { Pool as PgPool } from 'pg';
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
 
 // Environment detection
 const isReplit = !!process.env.REPL_ID;
@@ -19,16 +19,25 @@ console.log(`  - Production: ${isProduction ? 'Yes' : 'No'}`);
 console.log(`  - DATABASE_URL present: ${hasDatabaseUrl ? 'Yes' : 'No'}`);
 
 // Conditional database connection
-let pool: Pool | null = null;
-let db: ReturnType<typeof drizzle> | null = null;
+let pool: NeonPool | PgPool | null = null;
+let db: ReturnType<typeof drizzleNeon> | ReturnType<typeof drizzlePg> | null = null;
 
 // Only require DATABASE_URL for production environments that need it
 const requiresDatabase = (isCoolify || isProduction) && !isReplit;
 
 if (hasDatabaseUrl) {
-  console.log(`✅ Initializing PostgreSQL connection`);
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  db = drizzle({ client: pool, schema });
+  if (isCoolify) {
+    // Use regular PostgreSQL for Coolify
+    console.log(`✅ Initializing Coolify PostgreSQL connection`);
+    pool = new PgPool({ connectionString: process.env.DATABASE_URL });
+    db = drizzlePg(pool, { schema });
+  } else {
+    // Use Neon serverless for other environments
+    console.log(`✅ Initializing Neon PostgreSQL connection`);
+    neonConfig.webSocketConstructor = ws;
+    pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
+    db = drizzleNeon({ client: pool, schema });
+  }
 } else if (requiresDatabase) {
   console.error(`❌ DATABASE_URL is required for production deployment`);
   throw new Error(
