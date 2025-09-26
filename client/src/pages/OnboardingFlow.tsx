@@ -15,14 +15,22 @@ import { useLocation, Link } from 'wouter';
 interface Plan {
   id: string;
   name: string;
-  price: number;
-  billing: string;
+  price?: number; // Old schema format
+  billing?: string; // Old schema format
+  monthlyPrice?: number | null; // New schema format
+  monthlyDiscount?: number;
+  monthlyEnabled?: boolean;
+  yearlyPrice?: number | null; // New schema format
+  yearlyDiscount?: number;
+  yearlyEnabled?: boolean;
   features: string[];
   maxUsers: number;
   storageGB: number;
   isActive: boolean;
   isFreeTrial: boolean;
   trialDays: number;
+  monthlyStripePriceId?: string | null;
+  yearlyStripePriceId?: string | null;
 }
 
 interface OnboardingData {
@@ -79,6 +87,45 @@ export default function OnboardingFlow() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [onboardingData, setOnboardingData] = useState<Partial<OnboardingData>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
+
+  // Helper functions for backwards compatibility with pricing data
+  const getDisplayPrice = (plan: Plan | any, period: 'monthly' | 'yearly' = billingPeriod) => {
+    // Handle new schema format
+    if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
+      const price = period === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+      const discount = period === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0);
+      const enabled = period === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
+      
+      if (!enabled || !price) return null;
+      
+      if (discount > 0) {
+        return price * (1 - discount / 100);
+      }
+      return price;
+    }
+    
+    // Handle old schema format (backwards compatibility)
+    if (plan.price !== undefined) {
+      return plan.price;
+    }
+    
+    return null;
+  };
+
+  const getBillingPeriodText = (plan: Plan | any, period: 'monthly' | 'yearly' = billingPeriod) => {
+    // Handle new schema format
+    if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
+      return period === 'monthly' ? 'month' : 'year';
+    }
+    
+    // Handle old schema format
+    if (plan.billing) {
+      return plan.billing.toLowerCase();
+    }
+    
+    return 'month';
+  };
 
   // Get URL params for plan selection
   useEffect(() => {
@@ -274,8 +321,8 @@ export default function OnboardingFlow() {
                       )}
                     </div>
                     <div className="text-3xl font-bold">
-                      ${plan.price}
-                      <span className="text-sm font-normal text-gray-600">/{plan.billing.toLowerCase()}</span>
+                      ${getDisplayPrice(plan) || 0}
+                      <span className="text-sm font-normal text-gray-600">/{getBillingPeriodText(plan)}</span>
                     </div>
                     {plan.isFreeTrial && (
                       <p className="text-sm text-green-600">{plan.trialDays} days free trial</p>
@@ -464,7 +511,7 @@ export default function OnboardingFlow() {
               <CardContent>
                 <div className="flex justify-between items-center mb-4">
                   <span>{selectedPlan?.name} Plan</span>
-                  <span className="font-bold">${selectedPlan?.price}/{selectedPlan?.billing.toLowerCase()}</span>
+                  <span className="font-bold">${selectedPlan ? getDisplayPrice(selectedPlan) : 0}/{selectedPlan ? getBillingPeriodText(selectedPlan) : 'month'}</span>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center font-bold">

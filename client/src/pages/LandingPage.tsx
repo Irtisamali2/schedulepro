@@ -535,7 +535,7 @@ export default function LandingPage() {
               // Handle both old and new schema formats
               const originalPrice = plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined 
                 ? (billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice)
-                : plan.price;
+                : (plan as any).price;
               const discount = plan.monthlyDiscount !== undefined || plan.yearlyDiscount !== undefined
                 ? (billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0))
                 : 0;

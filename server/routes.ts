@@ -166,27 +166,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { planId, clientEmail } = req.body;
+      const { planId, clientEmail, billingPeriod = 'monthly' } = req.body;
       
       const plan = await storage.getPlan(planId);
       if (!plan) {
         return res.status(404).json({ error: "Plan not found" });
       }
 
+      // Calculate amount based on user's selected billing period with backwards compatibility
+      let amount = 0;
+      let finalBillingPeriod = billingPeriod;
+      
+      // Handle new schema format
+      if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
+        const requestedPrice = billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+        const requestedDiscount = billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0);
+        const requestedEnabled = billingPeriod === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
+        
+        if (requestedEnabled && requestedPrice) {
+          // Use requested billing period
+          amount = requestedPrice * (1 - requestedDiscount / 100);
+        } else {
+          // Fallback to any available billing period
+          if (plan.monthlyEnabled && plan.monthlyPrice) {
+            amount = plan.monthlyPrice * (1 - (plan.monthlyDiscount || 0) / 100);
+            finalBillingPeriod = 'monthly';
+          } else if (plan.yearlyEnabled && plan.yearlyPrice) {
+            amount = plan.yearlyPrice * (1 - (plan.yearlyDiscount || 0) / 100);
+            finalBillingPeriod = 'yearly';
+          }
+        }
+      } else {
+        // Handle old schema format (backwards compatibility)
+        amount = (plan as any).price || 0;
+      }
+      
+      // Validation: Ensure we have a valid amount
+      if (amount <= 0) {
+        return res.status(400).json({ 
+          error: "No valid pricing available for this plan and billing period" 
+        });
+      }
+      
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(plan.price * 100), // Convert to cents
+        amount: Math.round(amount * 100), // Convert to cents
         currency: 'usd',
         metadata: {
           planId: plan.id,
           planName: plan.name,
-          clientEmail: clientEmail
+          clientEmail: clientEmail,
+          billingPeriod: finalBillingPeriod
         }
       });
 
       res.json({
         clientSecret: paymentIntent.client_secret,
         planName: plan.name,
-        amount: plan.price
+        amount: amount,
+        billingPeriod: finalBillingPeriod
       });
     } catch (error) {
       console.error("Error creating payment intent:", error);
