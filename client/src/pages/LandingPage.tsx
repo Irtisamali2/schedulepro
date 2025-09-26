@@ -674,10 +674,10 @@ export default function LandingPage() {
 
           {/* Bottom Footer */}
           <div className="border-t border-white/20 pt-6 sm:pt-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
+            <div className="flex justify-center mb-6 sm:mb-8">
               {/* Company Info */}
-              <div className="text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start mb-3 sm:mb-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-3 sm:mb-4">
                   <img src="/scheduled-pro-footer-logo.png" alt="Scheduled Pro" className="h-6 w-auto sm:h-8 sm:w-auto" />
                 </div>
                 <p className="text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">
@@ -693,39 +693,6 @@ export default function LandingPage() {
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                 </div>
-              </div>
-
-              {/* Support */}
-              <div className="text-center sm:text-left">
-                <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h4>
-                <ul className="space-y-1 sm:space-y-2 text-white/80 text-xs sm:text-sm">
-                  <li><a href="#" className="hover:text-white">Help Centre</a></li>
-                  <li><a href="#" className="hover:text-white">Account Information</a></li>
-                  <li><a href="#" className="hover:text-white">About</a></li>
-                  <li><a href="#" className="hover:text-white">Contact us</a></li>
-                </ul>
-              </div>
-
-              {/* Help and Solution */}
-              <div className="text-center sm:text-left">
-                <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Help and Solution</h4>
-                <ul className="space-y-1 sm:space-y-2 text-white/80 text-xs sm:text-sm">
-                  <li><a href="#" className="hover:text-white">Talk to support</a></li>
-                  <li><a href="#" className="hover:text-white">Support docs</a></li>
-                  <li><a href="#" className="hover:text-white">System status</a></li>
-                  <li><a href="#" className="hover:text-white">Covid response</a></li>
-                </ul>
-              </div>
-
-              {/* Product */}
-              <div className="text-center sm:text-left">
-                <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Product</h4>
-                <ul className="space-y-1 sm:space-y-2 text-white/80 text-xs sm:text-sm">
-                  <li><a href="#" className="hover:text-white">Update</a></li>
-                  <li><a href="#" className="hover:text-white">Security</a></li>
-                  <li><a href="#" className="hover:text-white">Beta test</a></li>
-                  <li><a href="#" className="hover:text-white">Pricing product</a></li>
-                </ul>
               </div>
             </div>
 
