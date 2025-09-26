@@ -10,14 +10,18 @@
       }
     },
     {
-      "src": "api/**/*.ts",
+      "src": "api/[...path].ts",
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/api/[...path]"
+    },
+    {
+      "src": "/((?!api/).*)",
+      "dest": "/index.html"
     }
   ],
   "env": {
