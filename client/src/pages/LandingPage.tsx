@@ -373,7 +373,13 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Feature Cards */}
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4" style={{backgroundColor: '#D6E9F7'}}></div>
+              <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
+                <img 
+                  src="/appointment-management-image.png" 
+                  alt="Appointment Management" 
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
               <h3 className="text-base sm:text-lg font-semibold mb-2">Appointment Management</h3>
               <p className="text-gray-600 text-xs sm:text-sm">Track and manage all your appointments in one centralized location.</p>
             </Card>
