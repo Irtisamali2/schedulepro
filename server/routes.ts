@@ -649,8 +649,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: `sub_${clientId}`,
         planId: plan.id,
         planName: plan.name,
-        planPrice: plan.price,
-        billing: plan.billing,
+        planPrice: plan.monthlyPrice || 0,
+        billing: "monthly", // Default billing period
         status: client.status,
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
         nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -703,7 +703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await stripe.subscriptions.update(client.stripeSubscriptionId, {
             items: [{
               id: client.stripeSubscriptionId, // This would be the subscription item ID
-              price: newPlan.stripePriceId || undefined
+              price: newPlan.monthlyStripePriceId || undefined
             }],
             proration_behavior: 'always_invoice'
           });
@@ -719,7 +719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newPlan: {
           id: newPlan.id,
           name: newPlan.name,
-          price: newPlan.price
+          price: newPlan.monthlyPrice || 0
         }
       });
     } catch (error) {
@@ -1472,8 +1472,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return {
             ...client,
             plan: plan ? plan.name : "Unknown",
-            planPrice: plan ? plan.price : 0,
-            monthlyRevenue: plan ? plan.price : 0
+            planPrice: plan ? (plan.monthlyPrice || 0) : 0,
+            monthlyRevenue: plan ? (plan.monthlyPrice || 0) : 0
           };
         })
       );
@@ -1538,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const client of clients) {
         const plan = plans.find(p => p.id === client.planId);
         if (plan && client.status === "ACTIVE") {
-          totalMRR += plan.price;
+          totalMRR += (plan.monthlyPrice || 0);
           planDistribution[plan.name] = (planDistribution[plan.name] || 0) + 1;
         }
       }
@@ -4125,7 +4125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create subscription using plan's Stripe price ID
-      if (!plan.stripePriceId) {
+      if (!plan.monthlyStripePriceId) {
         return res.status(400).json({ 
           message: "Plan does not have Stripe pricing configured" 
         });
@@ -4134,7 +4134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await stripe.subscriptions.create({
         customer: customer.id,
         items: [{
-          price: plan.stripePriceId,
+          price: plan.monthlyStripePriceId,
         }],
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],

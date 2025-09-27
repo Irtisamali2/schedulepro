@@ -1,0 +1,47 @@
+Deployment is Failed.
+
+
+2025-Sep-27 00:01:56.723465
+Starting deployment of khakanhyder/schedule-pro-web-app:coolify-deployment-fix to localhost.
+2025-Sep-27 00:01:56.994777
+Preparing container with helper image: ghcr.io/coollabsio/coolify-helper:1.0.11.
+2025-Sep-27 00:01:57.158636
+[CMD]: docker stop --time=30 hk0c0ckkcgggsscss4s0cs4g
+2025-Sep-27 00:01:57.158636
+Flag --time has been deprecated, use --timeout instead
+2025-Sep-27 00:01:57.161773
+Error response from daemon: No such container: hk0c0ckkcgggsscss4s0cs4g
+2025-Sep-27 00:01:57.311313
+[CMD]: docker rm -f hk0c0ckkcgggsscss4s0cs4g
+2025-Sep-27 00:01:57.311313
+Error response from daemon: No such container: hk0c0ckkcgggsscss4s0cs4g
+2025-Sep-27 00:01:57.575753
+[CMD]: docker run -d --network coolify --name hk0c0ckkcgggsscss4s0cs4g  --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/coollabsio/coolify-helper:1.0.11
+2025-Sep-27 00:01:57.575753
+26dd137413b5c3815212398f063c08a87f2744370a91f6d2d943fc216fd78961
+2025-Sep-27 00:02:00.105359
+[CMD]: docker exec hk0c0ckkcgggsscss4s0cs4g bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote https://x-access-token:<REDACTED>@github.com/khakanhyder/schedule-pro-web-app.git refs/heads/coolify-deployment-fix'
+2025-Sep-27 00:02:00.105359
+508b3c80f4bac9e844f5a94965f1c563d15663b2	refs/heads/coolify-deployment-fix
+2025-Sep-27 00:02:00.569170
+----------------------------------------
+2025-Sep-27 00:02:00.585235
+Importing khakanhyder/schedule-pro-web-app:coolify-deployment-fix (commit sha HEAD) to /artifacts/hk0c0ckkcgggsscss4s0cs4g.
+2025-Sep-27 00:02:00.880330
+[CMD]: docker exec hk0c0ckkcgggsscss4s0cs4g bash -c 'git clone --depth=1 --recurse-submodules --shallow-submodules -b 'coolify-deployment-fix' 'https://x-access-token:<REDACTED>@github.com/khakanhyder/schedule-pro-web-app.git' '/artifacts/hk0c0ckkcgggsscss4s0cs4g' && cd /artifacts/hk0c0ckkcgggsscss4s0cs4g && if [ -f .gitmodules ]; then git submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git submodule update --init --recursive --depth=1; fi && cd /artifacts/hk0c0ckkcgggsscss4s0cs4g && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git lfs pull'
+2025-Sep-27 00:02:00.880330
+Cloning into '/artifacts/hk0c0ckkcgggsscss4s0cs4g'...
+2025-Sep-27 00:02:02.501808
+Starting deployment of khakanhyder/schedule-pro-web-app:coolify-deployment-fix to localhost.
+2025-Sep-27 00:02:02.803528
+Preparing container with helper image: ghcr.io/coollabsio/coolify-helper:1.0.11.
+2025-Sep-27 00:02:02.962256
+Flag --time has been deprecated, use --timeout instead
+2025-Sep-27 00:02:03.598846
+hk0c0ckkcgggsscss4s0cs4g
+2025-Sep-27 00:02:03.780594
+Error response from daemon: No such container: hk0c0ckkcgggsscss4s0cs4g
+2025-Sep-27 00:02:04.062098
+f8a148bae45e55018320c85950e22e600891998db8b40505852f04924b38080e
+2025-Sep-27 00:02:06.627794
+508b3c80f4bac9e844f5a94965f1c563d15663b2	refs/heads/coolify-deployment-fix
