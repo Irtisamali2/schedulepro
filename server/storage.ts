@@ -2294,6 +2294,109 @@ class PostgreSQLStorage implements IStorage {
           "last_login" timestamp
         );
       `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "services" (
+          "id" serial PRIMARY KEY,
+          "name" text NOT NULL,
+          "description" text NOT NULL,
+          "price" text NOT NULL,
+          "duration_minutes" integer NOT NULL,
+          "category" text
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "client_services" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "name" text NOT NULL,
+          "description" text,
+          "price" real NOT NULL,
+          "duration_minutes" integer NOT NULL,
+          "category" text,
+          "is_active" boolean DEFAULT true,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "appointments" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "customer_name" text NOT NULL,
+          "customer_email" text NOT NULL,
+          "customer_phone" text,
+          "service_id" text NOT NULL,
+          "appointment_date" timestamp NOT NULL,
+          "start_time" text NOT NULL,
+          "end_time" text NOT NULL,
+          "status" text DEFAULT 'SCHEDULED' NOT NULL,
+          "notes" text,
+          "total_price" real NOT NULL,
+          "payment_method" text DEFAULT 'CASH',
+          "payment_status" text DEFAULT 'PENDING',
+          "payment_intent_id" text,
+          "email_confirmation" boolean DEFAULT true,
+          "sms_confirmation" boolean DEFAULT false,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "appointment_slots" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "day_of_week" integer NOT NULL,
+          "start_time" text NOT NULL,
+          "end_time" text NOT NULL,
+          "slot_duration" integer NOT NULL,
+          "is_active" boolean DEFAULT true,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "leads" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "name" text NOT NULL,
+          "email" text NOT NULL,
+          "phone" text,
+          "source" text NOT NULL,
+          "status" text DEFAULT 'NEW' NOT NULL,
+          "notes" text,
+          "interested_services" text[] DEFAULT ARRAY[]::text[],
+          "estimated_value" real,
+          "follow_up_date" timestamp,
+          "converted_to_appointment" boolean DEFAULT false,
+          "appointment_id" text,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "team_members" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "name" text NOT NULL,
+          "email" text NOT NULL,
+          "phone" text,
+          "role" text DEFAULT 'STAFF' NOT NULL,
+          "permissions" text[] DEFAULT ARRAY[]::text[],
+          "is_active" boolean DEFAULT true,
+          "hourly_rate" real,
+          "specializations" text[] DEFAULT ARRAY[]::text[],
+          "working_hours" text,
+          "password" text NOT NULL,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
       
       console.log("✅ Database tables created successfully");
     } catch (error) {
