@@ -2397,6 +2397,41 @@ class PostgreSQLStorage implements IStorage {
           "updated_at" timestamp DEFAULT now()
         );
       `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "payments" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "appointment_id" text,
+          "amount" real NOT NULL,
+          "tip" real,
+          "total_amount" real NOT NULL,
+          "payment_method" text NOT NULL,
+          "payment_status" text DEFAULT 'PENDING' NOT NULL,
+          "stripe_payment_intent_id" text,
+          "paypal_order_id" text,
+          "description" text,
+          "customer_name" text NOT NULL,
+          "customer_email" text NOT NULL,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "contact_messages" (
+          "id" text PRIMARY KEY NOT NULL,
+          "name" text NOT NULL,
+          "email" text NOT NULL,
+          "subject" text NOT NULL,
+          "message" text NOT NULL,
+          "source" text DEFAULT 'website',
+          "status" text DEFAULT 'NEW',
+          "notes" text,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
       
       console.log("✅ Database tables created successfully");
     } catch (error) {
@@ -2697,7 +2732,11 @@ class PostgreSQLStorage implements IStorage {
     if (result.length === 0) throw new Error("Onboarding session not found");
     return result[0];
   }
-  async getClients(): Promise<Client[]> { return []; }
+  async getClients(): Promise<Client[]> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance.select().from(clients);
+    return result;
+  }
   async getClient(id: string): Promise<Client | undefined> { 
     const dbInstance = this.ensureDB();
     const result = await dbInstance
@@ -2708,7 +2747,16 @@ class PostgreSQLStorage implements IStorage {
     
     return result.length > 0 ? result[0] : undefined;
   }
-  async getClientByEmail(email: string): Promise<Client | undefined> { return undefined; }
+  async getClientByEmail(email: string): Promise<Client | undefined> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(clients)
+      .where(eq(clients.email, email))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
   async createClient(client: InsertClient): Promise<Client> {
     const dbInstance = this.ensureDB();
     const clientId = `client_${Date.now()}`;
@@ -2759,7 +2807,10 @@ class PostgreSQLStorage implements IStorage {
     if (!updatedClient) throw new Error("Client not found");
     return updatedClient;
   }
-  async deleteClient(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async deleteClient(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(clients).where(eq(clients.id, id));
+  }
   async getServices(): Promise<Service[]> { return []; }
   async getService(id: number): Promise<Service | undefined> { return undefined; }
   async createService(service: InsertService): Promise<Service> { throw new Error("Not implemented"); }
@@ -2803,8 +2854,43 @@ class PostgreSQLStorage implements IStorage {
     
     return clientAppointments;
   }
-  async getAppointment(id: string): Promise<Appointment | undefined> { return undefined; }
-  async createAppointment(appointment: InsertAppointment): Promise<Appointment> { throw new Error("Not implemented"); }
+  async getAppointment(id: string): Promise<Appointment | undefined> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, id))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const dbInstance = this.ensureDB();
+    const appointmentId = `appt_${Date.now()}`;
+    
+    const [newAppointment] = await dbInstance.insert(appointments).values({
+      id: appointmentId,
+      clientId: appointment.clientId,
+      customerName: appointment.customerName,
+      customerEmail: appointment.customerEmail,
+      customerPhone: appointment.customerPhone || null,
+      serviceId: appointment.serviceId,
+      appointmentDate: appointment.appointmentDate,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
+      status: appointment.status || "SCHEDULED",
+      notes: appointment.notes || null,
+      totalPrice: appointment.totalPrice,
+      paymentMethod: appointment.paymentMethod || "CASH",
+      paymentStatus: appointment.paymentStatus || "PENDING",
+      paymentIntentId: appointment.paymentIntentId || null,
+      emailConfirmation: appointment.emailConfirmation !== undefined ? appointment.emailConfirmation : true,
+      smsConfirmation: appointment.smsConfirmation !== undefined ? appointment.smsConfirmation : false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newAppointment;
+  }
   async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> { throw new Error("Not implemented"); }
   async deleteAppointment(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
@@ -2961,22 +3047,212 @@ class PostgreSQLStorage implements IStorage {
   async createWebsiteTestimonial(testimonial: InsertWebsiteTestimonial): Promise<WebsiteTestimonial> { throw new Error("Not implemented"); }
   async updateWebsiteTestimonial(id: string, updates: Partial<InsertWebsiteTestimonial>): Promise<WebsiteTestimonial> { throw new Error("Not implemented"); }
   async deleteWebsiteTestimonial(id: string): Promise<void> { throw new Error("Not implemented"); }
-  async getPayments(clientId: string): Promise<Payment[]> { return []; }
-  async getPayment(id: string): Promise<Payment | undefined> { return undefined; }
-  async createPayment(payment: InsertPayment): Promise<Payment> { throw new Error("Not implemented"); }
+  async getPayments(clientId: string): Promise<Payment[]> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(payments)
+      .where(eq(payments.clientId, clientId));
+    
+    return result;
+  }
+  async getPayment(id: string): Promise<Payment | undefined> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(payments)
+      .where(eq(payments.id, id))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const dbInstance = this.ensureDB();
+    const paymentId = `payment_${Date.now()}`;
+    
+    const [newPayment] = await dbInstance.insert(payments).values({
+      id: paymentId,
+      clientId: payment.clientId,
+      appointmentId: payment.appointmentId || null,
+      amount: payment.amount,
+      tip: payment.tip || null,
+      totalAmount: payment.totalAmount,
+      paymentMethod: payment.paymentMethod,
+      paymentStatus: payment.paymentStatus || "PENDING",
+      stripePaymentIntentId: payment.stripePaymentIntentId || null,
+      paypalOrderId: payment.paypalOrderId || null,
+      description: payment.description || null,
+      customerName: payment.customerName,
+      customerEmail: payment.customerEmail,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newPayment;
+  }
   async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> { throw new Error("Not implemented"); }
-  async getPaymentsByAppointment(appointmentId: string): Promise<Payment[]> { return []; }
+  async getPaymentsByAppointment(appointmentId: string): Promise<Payment[]> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(payments)
+      .where(eq(payments.appointmentId, appointmentId));
+    
+    return result;
+  }
   async calculateServiceAmount(clientId: string, serviceId: string): Promise<number> { return 0; }
   async calculateTotalWithTip(baseAmount: number, tipPercentage?: number): Promise<number> { return baseAmount; }
-  async updateStripeConfig(clientId: string, publicKey: string, secretKey: string): Promise<void> { throw new Error("Not implemented"); }
-  async getStripePublicKey(clientId: string): Promise<string | null> { return null; }
-  async getStripeSecretKey(clientId: string): Promise<string | null> { return null; }
-  async validateStripeConfig(clientId: string): Promise<boolean> { return false; }
-  async clearStripeConfig(clientId: string): Promise<void> { throw new Error("Not implemented"); }
-  async updateSmtpConfig(clientId: string, config: any): Promise<void> { throw new Error("Not implemented"); }
-  async getSmtpConfig(clientId: string): Promise<any> { return { isConfigured: false, smtpHost: null, smtpPort: null, smtpUsername: null, smtpPassword: null, smtpFromEmail: null, smtpFromName: null, smtpSecure: null, smtpEnabled: null }; }
-  async testSmtpConfig(clientId: string): Promise<boolean> { return false; }
-  async clearSmtpConfig(clientId: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateStripeConfig(clientId: string, publicKey: string, secretKey: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    
+    const [updatedClient] = await dbInstance
+      .update(clients)
+      .set({ 
+        stripePublicKey: publicKey,
+        stripeSecretKey: secretKey, // Note: In production, this should be encrypted
+        updatedAt: new Date()
+      })
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    if (!updatedClient) throw new Error("Client not found");
+  }
+  async getStripePublicKey(clientId: string): Promise<string | null> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select({ stripePublicKey: clients.stripePublicKey })
+      .from(clients)
+      .where(eq(clients.id, clientId))
+      .limit(1);
+    
+    return result.length > 0 ? result[0].stripePublicKey : null;
+  }
+  async getStripeSecretKey(clientId: string): Promise<string | null> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select({ stripeSecretKey: clients.stripeSecretKey })
+      .from(clients)
+      .where(eq(clients.id, clientId))
+      .limit(1);
+    
+    return result.length > 0 ? result[0].stripeSecretKey : null;
+  }
+  async validateStripeConfig(clientId: string): Promise<boolean> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select({ 
+        stripePublicKey: clients.stripePublicKey,
+        stripeSecretKey: clients.stripeSecretKey 
+      })
+      .from(clients)
+      .where(eq(clients.id, clientId))
+      .limit(1);
+    
+    // Check client-specific Stripe configuration first, then fall back to global env variables
+    const hasClientConfig = result.length > 0 && !!(result[0].stripePublicKey && result[0].stripeSecretKey);
+    const hasGlobalConfig = !!(process.env.STRIPE_SECRET_KEY && process.env.VITE_STRIPE_PUBLIC_KEY);
+    return hasClientConfig || hasGlobalConfig;
+  }
+  async clearStripeConfig(clientId: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    
+    const [updatedClient] = await dbInstance
+      .update(clients)
+      .set({ 
+        stripePublicKey: null,
+        stripeSecretKey: null,
+        updatedAt: new Date()
+      })
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    if (!updatedClient) throw new Error("Client not found");
+  }
+  async updateSmtpConfig(clientId: string, config: {
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUsername?: string;
+    smtpPassword?: string;
+    smtpFromEmail?: string;
+    smtpFromName?: string;
+    smtpSecure?: boolean;
+    smtpEnabled?: boolean;
+  }): Promise<void> {
+    const dbInstance = this.ensureDB();
+    
+    const [updatedClient] = await dbInstance
+      .update(clients)
+      .set({ 
+        ...config,
+        updatedAt: new Date()
+      })
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    if (!updatedClient) throw new Error("Client not found");
+  }
+  async getSmtpConfig(clientId: string): Promise<any> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select({
+        smtpHost: clients.smtpHost,
+        smtpPort: clients.smtpPort,
+        smtpUsername: clients.smtpUsername,
+        smtpPassword: clients.smtpPassword,
+        smtpFromEmail: clients.smtpFromEmail,
+        smtpFromName: clients.smtpFromName,
+        smtpSecure: clients.smtpSecure,
+        smtpEnabled: clients.smtpEnabled
+      })
+      .from(clients)
+      .where(eq(clients.id, clientId))
+      .limit(1);
+    
+    if (result.length === 0) {
+      return { isConfigured: false, smtpHost: null, smtpPort: null, smtpUsername: null, smtpPassword: null, smtpFromEmail: null, smtpFromName: null, smtpSecure: null, smtpEnabled: null };
+    }
+    
+    const client = result[0];
+    const isConfigured = !!(client.smtpHost && client.smtpPort && client.smtpUsername && client.smtpPassword && client.smtpFromEmail);
+    
+    return {
+      isConfigured,
+      smtpHost: client.smtpHost,
+      smtpPort: client.smtpPort,
+      smtpUsername: client.smtpUsername,
+      smtpPassword: client.smtpPassword,
+      smtpFromEmail: client.smtpFromEmail,
+      smtpFromName: client.smtpFromName,
+      smtpSecure: client.smtpSecure,
+      smtpEnabled: client.smtpEnabled
+    };
+  }
+  async testSmtpConfig(clientId: string): Promise<boolean> { 
+    // Note: In a real implementation, this would attempt to send a test email
+    // For now, we'll just validate that the configuration exists
+    const config = await this.getSmtpConfig(clientId);
+    return config.isConfigured;
+  }
+  async clearSmtpConfig(clientId: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    
+    const [updatedClient] = await dbInstance
+      .update(clients)
+      .set({ 
+        smtpHost: null,
+        smtpPort: null,
+        smtpUsername: null,
+        smtpPassword: null,
+        smtpFromEmail: null,
+        smtpFromName: null,
+        smtpSecure: null,
+        smtpEnabled: false,
+        updatedAt: new Date()
+      })
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    if (!updatedClient) throw new Error("Client not found");
+  }
 }
 
 // Environment-aware storage factory
