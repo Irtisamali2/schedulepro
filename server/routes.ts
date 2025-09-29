@@ -1032,6 +1032,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set payment method as default
+  app.post("/api/client/:clientId/payment-methods/:paymentMethodId/set-default", requirePermission('payments.edit'), async (req, res) => {
+    try {
+      const { clientId, paymentMethodId } = req.params;
+
+      if (!stripe) {
+        return res.status(500).json({ error: "Stripe not configured" });
+      }
+
+      // Get current client
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      if (!client.stripeCustomerId) {
+        return res.status(400).json({ error: "Client has no Stripe customer ID" });
+      }
+
+      // Set as default payment method
+      await stripe.customers.update(client.stripeCustomerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId
+        }
+      });
+
+      res.json({
+        success: true,
+        message: "Default payment method updated successfully"
+      });
+    } catch (error) {
+      console.error("Error setting default payment method:", error);
+      res.status(500).json({ error: "Failed to set default payment method" });
+    }
+  });
+
+  // Delete payment method
+  app.delete("/api/client/:clientId/payment-methods/:paymentMethodId", requirePermission('payments.edit'), async (req, res) => {
+    try {
+      const { clientId, paymentMethodId } = req.params;
+
+      if (!stripe) {
+        return res.status(500).json({ error: "Stripe not configured" });
+      }
+
+      // Get current client
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      // Detach payment method from customer
+      await stripe.paymentMethods.detach(paymentMethodId);
+
+      res.json({
+        success: true,
+        message: "Payment method removed successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting payment method:", error);
+      res.status(500).json({ error: "Failed to delete payment method" });
+    }
+  });
+
   // =============================================================================
   // AUTHENTICATION ROUTES
   // =============================================================================

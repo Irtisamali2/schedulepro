@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -26,7 +27,10 @@ import {
   Star,
   Users,
   HardDrive,
-  Zap
+  Zap,
+  MoreVertical,
+  Trash2,
+  Edit3
 } from 'lucide-react';
 import { format } from 'date-fns';
 import SecurePaymentMethodSetup from '../payment/SecurePaymentMethodSetup';
@@ -97,6 +101,7 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
   const [showUpdatePaymentDialog, setShowUpdatePaymentDialog] = useState(false);
   const [showPlanUpgradeConfirm, setShowPlanUpgradeConfirm] = useState(false);
   const [pendingPlanChange, setPendingPlanChange] = useState<string | null>(null);
+  const [processingPaymentMethodId, setProcessingPaymentMethodId] = useState<string | null>(null);
 
   // Fetch subscription details
   const { data: subscription, isLoading: subscriptionLoading } = useQuery<SubscriptionDetails>({
@@ -180,6 +185,64 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
       });
     }
   });
+
+  // Set payment method as default mutation
+  const setDefaultPaymentMethodMutation = useMutation({
+    mutationFn: async ({ paymentMethodId }: { paymentMethodId: string }) => {
+      const response = await apiRequest(`/api/client/${clientId}/payment-methods/${paymentMethodId}/set-default`, 'POST');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/payment-methods`] });
+      setProcessingPaymentMethodId(null);
+      toast({ 
+        title: 'Default Payment Method Updated', 
+        description: 'Your default payment method has been updated successfully.' 
+      });
+    },
+    onError: (error: any) => {
+      setProcessingPaymentMethodId(null);
+      toast({ 
+        title: 'Update Failed', 
+        description: error.message || 'Failed to update default payment method.',
+        variant: 'destructive' 
+      });
+    }
+  });
+
+  // Delete payment method mutation
+  const deletePaymentMethodMutation = useMutation({
+    mutationFn: async ({ paymentMethodId }: { paymentMethodId: string }) => {
+      const response = await apiRequest(`/api/client/${clientId}/payment-methods/${paymentMethodId}`, 'DELETE');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/payment-methods`] });
+      setProcessingPaymentMethodId(null);
+      toast({ 
+        title: 'Payment Method Removed', 
+        description: 'Your payment method has been removed successfully.' 
+      });
+    },
+    onError: (error: any) => {
+      setProcessingPaymentMethodId(null);
+      toast({ 
+        title: 'Removal Failed', 
+        description: error.message || 'Failed to remove payment method.',
+        variant: 'destructive' 
+      });
+    }
+  });
+
+  const handleSetDefaultPaymentMethod = (paymentMethodId: string) => {
+    setProcessingPaymentMethodId(paymentMethodId);
+    setDefaultPaymentMethodMutation.mutate({ paymentMethodId });
+  };
+
+  const handleDeletePaymentMethod = (paymentMethodId: string) => {
+    setProcessingPaymentMethodId(paymentMethodId);
+    deletePaymentMethodMutation.mutate({ paymentMethodId });
+  };
 
   const handlePaymentMethodSuccess = () => {
     queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/payment-methods`] });
@@ -540,13 +603,48 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                             {method.isDefault && (
                               <Badge variant="secondary">Default</Badge>
                             )}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              data-testid={`button-edit-payment-${method.id}`}
-                            >
-                              Edit
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  disabled={processingPaymentMethodId === method.id}
+                                  data-testid={`button-payment-actions-${method.id}`}
+                                >
+                                  {processingPaymentMethodId === method.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <MoreVertical className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {!method.isDefault && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleSetDefaultPaymentMethod(method.id)}
+                                    disabled={processingPaymentMethodId === method.id}
+                                    data-testid={`action-set-default-${method.id}`}
+                                  >
+                                    <Edit3 className="w-4 h-4 mr-2" />
+                                    Set as Default
+                                  </DropdownMenuItem>
+                                )}
+                                {paymentMethods.length > 1 && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleDeletePaymentMethod(method.id)}
+                                      disabled={processingPaymentMethodId === method.id}
+                                      className="text-red-600 focus:text-red-600"
+                                      data-testid={`action-delete-${method.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Remove Payment Method
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </CardContent>
