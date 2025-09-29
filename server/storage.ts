@@ -2698,7 +2698,16 @@ class PostgreSQLStorage implements IStorage {
     return result[0];
   }
   async getClients(): Promise<Client[]> { return []; }
-  async getClient(id: string): Promise<Client | undefined> { return undefined; }
+  async getClient(id: string): Promise<Client | undefined> { 
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(clients)
+      .where(eq(clients.id, id))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
   async getClientByEmail(email: string): Promise<Client | undefined> { return undefined; }
   async createClient(client: InsertClient): Promise<Client> {
     const dbInstance = this.ensureDB();
@@ -2739,41 +2748,167 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newClient;
   }
-  async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> { throw new Error("Not implemented"); }
+  async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> {
+    const dbInstance = this.ensureDB();
+    const [updatedClient] = await dbInstance
+      .update(clients)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clients.id, id))
+      .returning();
+    
+    if (!updatedClient) throw new Error("Client not found");
+    return updatedClient;
+  }
   async deleteClient(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getServices(): Promise<Service[]> { return []; }
   async getService(id: number): Promise<Service | undefined> { return undefined; }
   async createService(service: InsertService): Promise<Service> { throw new Error("Not implemented"); }
   async getReviews(): Promise<Review[]> { return []; }
   async createReview(review: InsertReview): Promise<Review> { throw new Error("Not implemented"); }
-  async getClientServices(clientId: string): Promise<ClientService[]> { return []; }
-  async createClientService(service: InsertClientService): Promise<ClientService> { throw new Error("Not implemented"); }
+  async getClientServices(clientId: string): Promise<ClientService[]> { 
+    const dbInstance = this.ensureDB();
+    const services = await dbInstance
+      .select()
+      .from(clientServices)
+      .where(eq(clientServices.clientId, clientId));
+    
+    return services;
+  }
+  async createClientService(service: InsertClientService): Promise<ClientService> {
+    const dbInstance = this.ensureDB();
+    const serviceId = `service_${Date.now()}`;
+    
+    const [newService] = await dbInstance.insert(clientServices).values({
+      id: serviceId,
+      clientId: service.clientId,
+      name: service.name,
+      description: service.description || null,
+      price: service.price,
+      durationMinutes: service.durationMinutes,
+      category: service.category || null,
+      isActive: service.isActive !== undefined ? service.isActive : true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newService;
+  }
   async updateClientService(id: string, updates: Partial<InsertClientService>): Promise<ClientService> { throw new Error("Not implemented"); }
   async deleteClientService(id: string): Promise<void> { throw new Error("Not implemented"); }
-  async getAppointments(clientId: string): Promise<Appointment[]> { return []; }
+  async getAppointments(clientId: string): Promise<Appointment[]> { 
+    const dbInstance = this.ensureDB();
+    const clientAppointments = await dbInstance
+      .select()
+      .from(appointments)
+      .where(eq(appointments.clientId, clientId));
+    
+    return clientAppointments;
+  }
   async getAppointment(id: string): Promise<Appointment | undefined> { return undefined; }
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> { throw new Error("Not implemented"); }
   async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> { throw new Error("Not implemented"); }
   async deleteAppointment(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
   async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> { return []; }
-  async getLeads(clientId: string): Promise<Lead[]> { return []; }
+  async getLeads(clientId: string): Promise<Lead[]> { 
+    const dbInstance = this.ensureDB();
+    const clientLeads = await dbInstance
+      .select()
+      .from(leads)
+      .where(eq(leads.clientId, clientId));
+    
+    return clientLeads;
+  }
   async getLead(id: string): Promise<Lead | undefined> { return undefined; }
-  async createLead(lead: InsertLead): Promise<Lead> { throw new Error("Not implemented"); }
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const dbInstance = this.ensureDB();
+    const leadId = `lead_${Date.now()}`;
+    
+    const [newLead] = await dbInstance.insert(leads).values({
+      id: leadId,
+      clientId: lead.clientId,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone || null,
+      source: lead.source,
+      status: lead.status || "NEW",
+      notes: lead.notes || null,
+      interestedServices: lead.interestedServices || [],
+      estimatedValue: lead.estimatedValue || null,
+      followUpDate: lead.followUpDate || null,
+      convertedToAppointment: lead.convertedToAppointment || false,
+      appointmentId: lead.appointmentId || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newLead;
+  }
   async updateLead(id: string, updates: Partial<InsertLead>): Promise<Lead> { throw new Error("Not implemented"); }
   async deleteLead(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getClientWebsite(clientId: string): Promise<ClientWebsite | undefined> { return undefined; }
   async createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite> { throw new Error("Not implemented"); }
   async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> { throw new Error("Not implemented"); }
   async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> { return undefined; }
-  async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> { return []; }
-  async createAppointmentSlot(slot: InsertAppointmentSlot): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
+  async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> { 
+    const dbInstance = this.ensureDB();
+    const slots = await dbInstance
+      .select()
+      .from(appointmentSlots)
+      .where(eq(appointmentSlots.clientId, clientId));
+    
+    return slots;
+  }
+  async createAppointmentSlot(slot: InsertAppointmentSlot): Promise<AppointmentSlot> {
+    const dbInstance = this.ensureDB();
+    const slotId = `slot_${Date.now()}`;
+    
+    const [newSlot] = await dbInstance.insert(appointmentSlots).values({
+      id: slotId,
+      clientId: slot.clientId,
+      dayOfWeek: slot.dayOfWeek,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      slotDuration: slot.slotDuration,
+      isActive: slot.isActive !== undefined ? slot.isActive : true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newSlot;
+  }
   async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
   async deleteAppointmentSlot(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getAvailableSlots(clientId: string, date: string): Promise<string[]> { return []; }
-  async getTeamMembers(clientId: string): Promise<TeamMember[]> { return []; }
+  async getTeamMembers(clientId: string): Promise<TeamMember[]> { 
+    const dbInstance = this.ensureDB();
+    const members = await dbInstance
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.clientId, clientId));
+    
+    return members;
+  }
   async getTeamMember(id: string): Promise<TeamMember | undefined> { return undefined; }
-  async createTeamMember(member: InsertTeamMember): Promise<TeamMember> { throw new Error("Not implemented"); }
+  async createTeamMember(member: InsertTeamMember): Promise<TeamMember> {
+    const dbInstance = this.ensureDB();
+    const memberId = `team_${Date.now()}`;
+    
+    const [newMember] = await dbInstance.insert(teamMembers).values({
+      id: memberId,
+      clientId: member.clientId,
+      name: member.name,
+      email: member.email,
+      phone: member.phone || null,
+      role: member.role || "STAFF",
+      permissions: member.permissions || [],
+      isActive: member.isActive !== undefined ? member.isActive : true,
+      hourlyRate: member.hourlyRate || null,
+      specializations: member.specializations || [],
+      workingHours: member.workingHours || null,
+      password: member.password, // Should be hashed before calling this method
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newMember;
+  }
   async updateTeamMember(id: string, updates: Partial<InsertTeamMember>): Promise<TeamMember> { throw new Error("Not implemented"); }
   async deleteTeamMember(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getReviewPlatforms(): Promise<ReviewPlatform[]> { return []; }
