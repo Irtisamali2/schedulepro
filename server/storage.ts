@@ -2253,14 +2253,50 @@ class PostgreSQLStorage implements IStorage {
       const dbInstance = this.ensureDB();
       console.log("🔄 Initializing PostgreSQL database tables...");
       
-      // First create tables, then seed data
+      // First create tables, then ensure super admin, then seed data
       await this.createTables();
+      await this.ensureSuperAdmin();
       await this.seedDemoData();
       
       this.initialized = true;
       console.log("✅ PostgreSQL database initialized successfully");
     } catch (error) {
       console.error("❌ Database initialization failed:", error);
+      // Don't throw - let the app try to continue
+    }
+  }
+
+  private async ensureSuperAdmin() {
+    const dbInstance = this.ensureDB();
+    
+    try {
+      // Check if super admin already exists
+      const existingAdmin = await dbInstance
+        .select()
+        .from(users)
+        .where(eq(users.email, "admin@scheduled-platform.com"))
+        .limit(1);
+      
+      if (existingAdmin.length > 0) {
+        console.log("👤 Super admin user already exists, skipping creation");
+        return;
+      }
+
+      // Create super admin user for deployment access
+      const adminPassword = "SecurePlatform2025!@#$%";
+      console.log("👤 Creating super admin user...");
+      
+      await this.createUser({
+        email: "admin@scheduled-platform.com",
+        password: adminPassword,
+        role: "SUPER_ADMIN"
+      });
+      
+      console.log("✅ Super admin user created successfully");
+      console.log(`📧 Admin Email: admin@scheduled-platform.com`);
+      console.log(`🔑 Admin Password: ${adminPassword}`);
+    } catch (error) {
+      console.error("❌ Super admin creation failed:", error);
       // Don't throw - let the app try to continue
     }
   }
@@ -2332,18 +2368,6 @@ class PostgreSQLStorage implements IStorage {
           sortOrder: 1
         }
       ]);
-
-      // Create super admin user for deployment access
-      const adminPassword = "SecurePlatform2025!@#$%";
-      console.log("👤 Creating super admin user...");
-      await this.createUser({
-        email: "admin@scheduled-platform.com",
-        password: adminPassword,
-        role: "SUPER_ADMIN"
-      });
-      console.log("✅ Super admin user created successfully");
-      console.log(`📧 Admin Email: admin@scheduled-platform.com`);
-      console.log(`🔑 Admin Password: ${adminPassword}`);
 
       console.log("✅ Demo data seeded successfully");
     } catch (error) {
