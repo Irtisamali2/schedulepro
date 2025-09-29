@@ -35,6 +35,7 @@ interface AppointmentDetailsProps {
   updateBookingData: (updates: Partial<BookingData>) => void;
   selectedService?: ClientService;
   selectedStylist?: Stylist;
+  clientId?: string;
 }
 
 
@@ -42,17 +43,28 @@ export default function AppointmentDetails({
   bookingData, 
   updateBookingData, 
   selectedService, 
-  selectedStylist 
+  selectedStylist,
+  clientId: propClientId
 }: AppointmentDetailsProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [location] = useLocation();
   
-  // Get clientId from URL or localStorage
+  // Get clientId from props, URL, or localStorage
   const getClientId = () => {
-    // First try to extract from URL (e.g., /client-website/client_1)
-    const urlMatch = location.match(/\/client-website\/([^\/]+)/);
-    if (urlMatch) {
-      return urlMatch[1];
+    // First priority: clientId passed as prop
+    if (propClientId) {
+      return propClientId;
+    }
+    
+    // Second: try to extract from URL patterns
+    const bookingMatch = location.match(/\/booking\/([^\/]+)/);
+    if (bookingMatch) {
+      return bookingMatch[1];
+    }
+    
+    const clientWebsiteMatch = location.match(/\/client-website\/([^\/]+)/);
+    if (clientWebsiteMatch) {
+      return clientWebsiteMatch[1];
     }
     
     // Fallback to localStorage
