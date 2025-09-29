@@ -1,0 +1,100 @@
+2025-09-29T21:11:45.830Z POST /api/public/client/client_1759159759942/book 500 in 8ms :: {"error":"Faile…
+Booking validation - clientId: client_1759159759942, appointmentDate: 2025-09-29, startTime: 11:00
+DBStorage.getAvailableSlots: date=2025-09-29, parsed=(2025,9,29), dayOfWeek=1
+Found 1 slot configurations for dayOfWeek 1
+DBStorage.getAvailableSlots returning 16 slots: [
+  '09:00', '09:30', '10:00',
+  '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00',
+  '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00',
+  '16:30'
+]
+Available slots for 2025-09-29: [
+  '09:00', '09:30', '10:00',
+  '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00',
+  '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00',
+  '16:30'
+]
+Checking if '11:00' is in available slots: true
+BOOKING SUCCESS: Time slot 11:00 is available!
+2025-09-29T21:11:46.015Z POST /api/public/client/client_1759159759942/book 500 in 5ms :: {"error":"Faile…
+Booking validation - clientId: client_1759159759942, appointmentDate: 2025-09-29, startTime: 11:00
+DBStorage.getAvailableSlots: date=2025-09-29, parsed=(2025,9,29), dayOfWeek=1
+Found 1 slot configurations for dayOfWeek 1
+DBStorage.getAvailableSlots returning 16 slots: [
+  '09:00', '09:30', '10:00',
+  '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00',
+  '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00',
+  '16:30'
+]
+Available slots for 2025-09-29: [
+  '09:00', '09:30', '10:00',
+  '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00',
+  '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00',
+  '16:30'
+]
+Checking if '11:00' is in available slots: true
+BOOKING SUCCESS: Time slot 11:00 is available!
+2025-09-29T21:11:46.198Z POST /api/public/client/client_1759159759942/book 500 in 5ms :: {"error":"Faile…
+Booking validation - clientId: client_1759159759942, appointmentDate: 2025-09-29, startTime: 11:00
+DBStorage.getAvailableSlots: date=2025-09-29, parsed=(2025,9,29), dayOfWeek=1
+Found 1 slot configurations for dayOfWeek 1
+DBStorage.getAvailableSlots returning 16 slots: [
+  '09:00', '09:30', '10:00',
+  '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00',
+  '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00',
+  '16:30'
+]
+Available slots for 2025-09-29: [
+  '09:00', '09:30', '10:00',
+  '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00',
+  '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00',
+  '16:30'
+]
+Checking if '11:00' is in available slots: true
+BOOKING SUCCESS: Time slot 11:00 is available!
+2025-09-29T21:11:46.381Z POST /api/public/client/client_1759159759942/book 500 in 6ms :: {"error":"Faile…
+Error booking appointment: TypeError: value.toISOString is not a function
+    at PgTimestamp.mapToDriverValue (file:///app/node_modules/drizzle-orm/pg-core/columns/timestamp.js:34:18)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:131:73
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:92:21
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+Error booking appointment: TypeError: value.toISOString is not a function
+    at PgTimestamp.mapToDriverValue (file:///app/node_modules/drizzle-orm/pg-core/columns/timestamp.js:34:18)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:131:73
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:92:21
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+Error booking appointment: TypeError: value.toISOString is not a function
+    at PgTimestamp.mapToDriverValue (file:///app/node_modules/drizzle-orm/pg-core/columns/timestamp.js:34:18)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:131:73
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:92:21
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)
+    at file:///app/node_modules/drizzle-orm/sql/sql.js:95:21
+    at Array.map (<anonymous>)
+    at SQL.buildQueryFromSourceParams (file:///app/node_modules/drizzle-orm/sql/sql.js:73:32)

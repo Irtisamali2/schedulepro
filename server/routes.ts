@@ -3205,6 +3205,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endMinutes = startMinutes + selectedService.durationMinutes;
       const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`;
 
+      // Convert appointmentDate string (YYYY-MM-DD) to Date object for database
+      const appointmentDateObj = new Date(appointmentDate + 'T00:00:00');
+
       // Create appointment
       const appointment = await storage.createAppointment({
         clientId,
@@ -3212,7 +3215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerName,
         customerEmail,
         customerPhone: customerPhone || "",
-        appointmentDate,
+        appointmentDate: appointmentDateObj,
         startTime,
         endTime,
         notes: notes || "",
