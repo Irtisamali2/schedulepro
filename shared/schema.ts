@@ -678,7 +678,7 @@ export const insertDomainConfigurationSchema = createInsertSchema(domainConfigur
   sslExpiresAt: true,
   dnsRecords: true,
   redirectToHttps: true,
-  customSettings: true,
+  // customSettings: true, // Temporarily disabled until database migration
   lastCheckedAt: true,
   verifiedAt: true,
 });
