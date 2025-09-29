@@ -1,0 +1,100 @@
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '104',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+2025-09-29T16:30:00.196Z GET /api/client/client_1759159759942/dashboard 500 in 21ms :: {"error":"Failed …
+Business owner access granted for services.view
+2025-09-29T16:30:00.201Z GET /api/client/client_1759159759942/services 500 in 3ms :: {"error":"Failed to…
+2025-09-29T16:30:00.242Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for services.view
+2025-09-29T16:30:01.568Z GET /api/client/client_1759159759942/services 500 in 5ms :: {"error":"Failed to…
+Business owner access granted for services.create
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+Service creation error: error: column "stripe_product_id" of relation "client_services" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createClientService (file:///app/dist/index.js:3795:26)
+    at async file:///app/dist/index.js:6044:23 {
+  length: 146,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '128',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+2025-09-29T16:30:15.462Z POST /api/client/client_1759159759942/services 500 in 19ms :: {"error":"Failed …
+Business owner access granted for services.create
+2025-09-29T16:30:16.347Z POST /api/client/client_1759159759942/services 500 in 17ms :: {"error":"Failed …
+Business owner access granted for services.create
+2025-09-29T16:30:17.058Z POST /api/client/client_1759159759942/services 500 in 16ms :: {"error":"Failed …
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+Service creation error: error: column "stripe_product_id" of relation "client_services" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createClientService (file:///app/dist/index.js:3795:26)
+    at async file:///app/dist/index.js:6044:23 {
+  length: 146,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '128',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+Service creation error: error: column "stripe_product_id" of relation "client_services" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createClientService (file:///app/dist/index.js:3795:26)
+    at async file:///app/dist/index.js:6044:23 {
+  length: 146,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '128',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
