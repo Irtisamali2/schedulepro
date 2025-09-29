@@ -35,20 +35,14 @@ const domainFormSchema = z.object({
 
 type DomainFormData = z.infer<typeof domainFormSchema>;
 
-export default function DomainConfig() {
+interface DomainConfigProps {
+  clientId: string;
+}
+
+export default function DomainConfig({ clientId }: DomainConfigProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [clientId, setClientId] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Get client ID from localStorage (same as ClientDashboard)
-  useEffect(() => {
-    const storedClient = localStorage.getItem('clientData');
-    if (storedClient) {
-      const clientData = JSON.parse(storedClient);
-      setClientId(clientData.id);
-    }
-  }, []);
 
   const form = useForm<DomainFormData>({
     resolver: zodResolver(domainFormSchema),

@@ -1812,7 +1812,7 @@ export default function ClientDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <DomainConfig />
+                <DomainConfig clientId={clientData?.id || ''} />
               </CardContent>
             </Card>
             
