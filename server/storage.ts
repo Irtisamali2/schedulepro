@@ -3174,13 +3174,39 @@ class PostgreSQLStorage implements IStorage {
   }
   async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> {
     const dbInstance = this.ensureDB();
+    
+    // First, try to update existing website
     const [updatedWebsite] = await dbInstance
       .update(clientWebsites)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(clientWebsites.clientId, clientId))
       .returning();
     
-    if (!updatedWebsite) throw new Error("Client website not found");
+    // If no website exists, create a new one
+    if (!updatedWebsite) {
+      const websiteId = `website_${Date.now()}`;
+      const [newWebsite] = await dbInstance
+        .insert(clientWebsites)
+        .values({
+          id: websiteId,
+          clientId,
+          title: "My Business",
+          description: "Professional services",
+          primaryColor: "#3B82F6",
+          showServices: true,
+          showBooking: true,
+          contactEmail: "",
+          contactPhone: "",
+          subdomain: `client-${clientId.replace('client_', '')}`,
+          isPublished: false,
+          ...updates,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return newWebsite;
+    }
+    
     return updatedWebsite;
   }
   async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> { return undefined; }
