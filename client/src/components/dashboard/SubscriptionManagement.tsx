@@ -85,63 +85,7 @@ interface SubscriptionManagementProps {
   onClose: () => void;
 }
 
-const availablePlans: PlanOption[] = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    price: 29,
-    billing: 'MONTHLY',
-    description: 'Perfect for individual service providers getting started',
-    features: [
-      'Up to 50 appointments per month',
-      'Client management',
-      'Online scheduling',
-      'Email notifications',
-      '1 industry template'
-    ],
-    maxUsers: 1,
-    storageGB: 5
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: 79,
-    billing: 'MONTHLY',
-    description: 'For growing businesses with multiple service providers',
-    features: [
-      'Unlimited appointments',
-      'Advanced client management',
-      'Custom branding options',
-      'SMS notifications',
-      'All industry templates',
-      'Google review automation',
-      'Team management (up to 5)',
-      'Payment processing integration'
-    ],
-    maxUsers: 5,
-    storageGB: 50,
-    isPopular: true
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 199,
-    billing: 'MONTHLY',
-    description: 'For larger organizations with advanced needs',
-    features: [
-      'Everything in Professional',
-      'Unlimited team members',
-      'Advanced analytics & reporting',
-      'API access',
-      'Priority support',
-      'Dedicated account manager',
-      'Custom integrations',
-      'Multi-location support'
-    ],
-    maxUsers: 999,
-    storageGB: 500
-  }
-];
+// Plans are fetched from super admin configuration
 
 export default function SubscriptionManagement({ clientId, isOpen, onClose }: SubscriptionManagementProps) {
   const { toast } = useToast();
@@ -151,6 +95,8 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showUpdatePaymentDialog, setShowUpdatePaymentDialog] = useState(false);
+  const [showPlanUpgradeConfirm, setShowPlanUpgradeConfirm] = useState(false);
+  const [pendingPlanChange, setPendingPlanChange] = useState<string | null>(null);
 
   // Fetch subscription details
   const { data: subscription, isLoading: subscriptionLoading } = useQuery<SubscriptionDetails>({
@@ -168,6 +114,24 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
   const { data: billingHistory = [], isLoading: billingHistoryLoading } = useQuery<BillingHistory[]>({
     queryKey: [`/api/client/${clientId}/billing-history`],
     enabled: !!clientId && isOpen
+  });
+
+  // Fetch available plans from super admin configuration
+  const { data: availablePlans = [], isLoading: plansLoading } = useQuery<PlanOption[]>({
+    queryKey: ['/api/public/plans'],
+    enabled: isOpen,
+    select: (data) => data.map((plan: any) => ({
+      id: plan.id,
+      name: plan.name,
+      price: plan.monthlyPrice || 0,
+      billing: 'MONTHLY' as const,
+      description: plan.description || '',
+      features: plan.features || [],
+      maxUsers: plan.maxUsers || 1,
+      storageGB: plan.storageGB || 5,
+      isPopular: plan.isPopular || false,
+      stripePriceId: plan.monthlyStripePriceId
+    }))
   });
 
   // Change plan mutation
@@ -244,13 +208,23 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
   };
 
   const handlePlanChange = (planId: string) => {
-    setSelectedPlan(planId);
-    changePlanMutation.mutate({ planId });
+    // Show confirmation dialog before upgrading
+    setPendingPlanChange(planId);
+    setShowPlanUpgradeConfirm(true);
+  };
+
+  const confirmPlanChange = () => {
+    if (pendingPlanChange) {
+      setSelectedPlan(pendingPlanChange);
+      changePlanMutation.mutate({ planId: pendingPlanChange });
+      setShowPlanUpgradeConfirm(false);
+      setPendingPlanChange(null);
+    }
   };
 
   const currentPlan = availablePlans.find(plan => plan.id === subscription?.planId);
 
-  if (subscriptionLoading) {
+  if (subscriptionLoading || plansLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl h-[600px] flex items-center justify-center">
@@ -262,6 +236,8 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
       </Dialog>
     );
   }
+
+  const pendingPlan = availablePlans.find(plan => plan.id === pendingPlanChange);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -678,6 +654,61 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
             </TabsContent>
           </div>
         </Tabs>
+
+        {/* Plan Upgrade Confirmation Dialog */}
+        <AlertDialog open={showPlanUpgradeConfirm} onOpenChange={setShowPlanUpgradeConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Plan Upgrade</AlertDialogTitle>
+              <AlertDialogDescription>
+                {pendingPlan && (
+                  <div className="space-y-3">
+                    <p>
+                      You are about to upgrade to the <strong>{pendingPlan.name}</strong> plan at {formatPrice(pendingPlan.price)}/month.
+                    </p>
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <h4 className="font-medium text-blue-900 mb-2">What happens next:</h4>
+                      <ul className="text-sm text-blue-800 space-y-1">
+                        <li>• Your plan will be upgraded immediately</li>
+                        <li>• You'll be charged a prorated amount for the upgrade</li>
+                        <li>• Payment will be processed using the super admin's secure Stripe account</li>
+                        <li>• Your next billing date will remain the same</li>
+                      </ul>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      The payment will be securely processed through our platform's payment system.
+                    </p>
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                onClick={() => {
+                  setShowPlanUpgradeConfirm(false);
+                  setPendingPlanChange(null);
+                }}
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmPlanChange}
+                disabled={changePlanMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-confirm-upgrade"
+              >
+                {changePlanMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Confirm Upgrade to ${pendingPlan?.name}`
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
