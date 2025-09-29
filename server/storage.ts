@@ -2297,7 +2297,7 @@ class PostgreSQLStorage implements IStorage {
 
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "services" (
-          "id" serial PRIMARY KEY,
+          "id" text PRIMARY KEY NOT NULL,
           "name" text NOT NULL,
           "description" text NOT NULL,
           "price" text NOT NULL,
@@ -2406,18 +2406,21 @@ class PostgreSQLStorage implements IStorage {
           "id" text PRIMARY KEY NOT NULL,
           "client_id" text NOT NULL,
           "appointment_id" text,
-          "amount" real NOT NULL,
-          "tip" real,
-          "total_amount" real NOT NULL,
           "payment_method" text NOT NULL,
-          "payment_status" text DEFAULT 'PENDING' NOT NULL,
-          "stripe_payment_intent_id" text,
-          "paypal_order_id" text,
-          "description" text,
+          "payment_provider" text,
+          "payment_intent_id" text,
+          "amount" real NOT NULL,
+          "currency" text DEFAULT 'USD',
+          "status" text DEFAULT 'PENDING' NOT NULL,
           "customer_name" text NOT NULL,
           "customer_email" text NOT NULL,
+          "description" text,
+          "metadata" text,
+          "processing_fee" real,
+          "net_amount" real,
           "created_at" timestamp DEFAULT now(),
-          "updated_at" timestamp DEFAULT now()
+          "updated_at" timestamp DEFAULT now(),
+          "paid_at" timestamp
         );
       `);
 
@@ -3431,12 +3434,19 @@ function createStorage(): IStorage {
   // Detect environment
   const isReplit = !!process.env.REPL_ID || process.env.DEPLOY_TARGET === 'replit';
   const isVercel = !!process.env.VERCEL || process.env.DEPLOY_TARGET === 'vercel';
-  const isCoolify = process.env.DEPLOY_TARGET === 'coolify';
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isCoolify = process.env.DEPLOY_TARGET === 'coolify' || !!process.env.COOLIFY_BRANCH || !!process.env.COOLIFY_PROJECT_UUID;
+  const isProduction = process.env.NODE_ENV === 'production' || isCoolify;
   const hasDatabaseUrl = !!process.env.DATABASE_URL;
   
-  // Use PostgreSQL for production environments (Coolify or Vercel with database)
-  const useDatabase = (isCoolify || isVercel) && hasDatabaseUrl && !isReplit;
+  // Enhanced detection logging
+  console.log(`🔧 Database Environment Detection:`);
+  console.log(`  - Replit: ${isReplit ? 'Yes' : 'No'}`);
+  console.log(`  - Coolify: ${isCoolify ? 'Yes' : 'No'}`);
+  console.log(`  - Production: ${isProduction ? 'Yes' : 'No'}`);
+  console.log(`  - DATABASE_URL present: ${hasDatabaseUrl ? 'Yes' : 'No'}`);
+  
+  // Use PostgreSQL for production environments (Coolify, Vercel, or any production with database)
+  const useDatabase = (isCoolify || isVercel || isProduction) && hasDatabaseUrl;
   
   const storageType = useDatabase ? 'PostgreSQL' : 'MemStorage';
   const environment = isReplit ? 'Replit' : (isCoolify ? 'Coolify' : (isVercel ? 'Vercel' : 'Unknown'));
