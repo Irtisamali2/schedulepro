@@ -3238,7 +3238,78 @@ class PostgreSQLStorage implements IStorage {
   }
   async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
   async deleteAppointmentSlot(id: string): Promise<void> { throw new Error("Not implemented"); }
-  async getAvailableSlots(clientId: string, date: string): Promise<string[]> { return []; }
+  
+  async getAvailableSlots(clientId: string, date: string): Promise<string[]> {
+    const dbInstance = this.ensureDB();
+    
+    // Parse date as local calendar date to avoid UTC/timezone issues
+    const [year, month, day] = date.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day); // month is 0-indexed
+    const dayOfWeek = localDate.getDay(); // 0-6 (Sunday-Saturday)
+    
+    console.log(`DBStorage.getAvailableSlots: date=${date}, parsed=(${year},${month},${day}), dayOfWeek=${dayOfWeek}`);
+    
+    // Get slot configurations for this day from database
+    const daySlots = await dbInstance
+      .select()
+      .from(appointmentSlots)
+      .where(
+        and(
+          eq(appointmentSlots.clientId, clientId),
+          eq(appointmentSlots.dayOfWeek, dayOfWeek),
+          eq(appointmentSlots.isActive, true)
+        )
+      );
+    
+    console.log(`Found ${daySlots.length} slot configurations for dayOfWeek ${dayOfWeek}`);
+    
+    if (daySlots.length === 0) return [];
+    
+    // Get existing appointments for this date from database
+    const existingAppointments = await dbInstance
+      .select()
+      .from(appointments)
+      .where(eq(appointments.clientId, clientId));
+    
+    // Filter appointments by date (compare date strings to avoid timezone issues)
+    const bookedTimes = existingAppointments
+      .filter((apt: typeof appointments.$inferSelect) => {
+        const aptDate = new Date(apt.appointmentDate);
+        return aptDate.toDateString() === localDate.toDateString();
+      })
+      .map((apt: typeof appointments.$inferSelect) => apt.startTime);
+    
+    // Generate available time slots using Set to prevent duplicates
+    const availableSlots = new Set<string>();
+    
+    for (const slotConfig of daySlots) {
+      const start = this.timeToMinutes(slotConfig.startTime);
+      const end = this.timeToMinutes(slotConfig.endTime);
+      const duration = slotConfig.slotDuration || 30;
+      
+      for (let time = start; time < end; time += duration) {
+        const timeString = this.minutesToTime(time);
+        if (!bookedTimes.includes(timeString)) {
+          availableSlots.add(timeString);
+        }
+      }
+    }
+    
+    const result = Array.from(availableSlots).sort();
+    console.log(`DBStorage.getAvailableSlots returning ${result.length} slots:`, result);
+    return result;
+  }
+  
+  private timeToMinutes(timeString: string): number {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+  
+  private minutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  }
   async getTeamMembers(clientId: string): Promise<TeamMember[]> { 
     const dbInstance = this.ensureDB();
     const members = await dbInstance
