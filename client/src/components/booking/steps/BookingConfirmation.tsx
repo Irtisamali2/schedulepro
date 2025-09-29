@@ -61,13 +61,21 @@ export default function BookingConfirmation({
         return `${endHours.toString().padStart(2, "0")}:${endMins.toString().padStart(2, "0")}`;
       };
 
+      // Format date in local timezone to avoid UTC conversion issues
+      const formatLocalDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       // Use public booking endpoint - no authentication required  
       return apiRequest(`/api/public/client/${clientId}/book`, "POST", {
         serviceId: bookingData.serviceId,
         customerName: bookingData.clientName,
         customerEmail: bookingData.clientEmail,
         customerPhone: bookingData.clientPhone,
-        appointmentDate: bookingData.appointmentDate?.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+        appointmentDate: bookingData.appointmentDate ? formatLocalDate(bookingData.appointmentDate) : '',
         startTime: bookingData.timeSlot,
         notes: bookingData.specialRequests || "",
         source: "website-booking"
