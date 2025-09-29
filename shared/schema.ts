@@ -656,7 +656,7 @@ export const domainConfigurations = pgTable("domain_configurations", {
   sslExpiresAt: timestamp("ssl_expires_at"),
   dnsRecords: text("dns_records"), // JSON string of required DNS records
   redirectToHttps: boolean("redirect_to_https").default(true),
-  customSettings: text("custom_settings"), // JSON string for additional domain settings
+  // customSettings: text("custom_settings"), // JSON string for additional domain settings - REMOVED: column doesn't exist in production DB
   lastCheckedAt: timestamp("last_checked_at"),
   verifiedAt: timestamp("verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
