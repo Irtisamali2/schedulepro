@@ -1474,8 +1474,8 @@ class MemStorage implements IStorage {
       sslExpiresAt: domainConfig.sslExpiresAt || null,
       dnsRecords: domainConfig.dnsRecords || this.generateDnsRecords(domainConfig.domain),
       redirectToHttps: domainConfig.redirectToHttps ?? true,
-      // customSettings: domainConfig.customSettings || null, // Temporarily disabled until database migration
-      lastCheckedAt: null,
+      // customSettings: domainConfig.customSettings || null, // Column doesn't exist in Coolify production DB
+      // lastCheckedAt: null, // Column doesn't exist in Coolify production DB
       verifiedAt: domainConfig.verifiedAt || null,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -3326,8 +3326,8 @@ class PostgreSQLStorage implements IStorage {
         sslExpiresAt: domain.sslExpiresAt,
         dnsRecords: domain.dnsRecords,
         redirectToHttps: domain.redirectToHttps,
-        // customSettings: domain.customSettings, // Temporarily disabled until database migration
-        lastCheckedAt: domain.lastCheckedAt,
+        // customSettings: domain.customSettings, // Column doesn't exist in Coolify production DB
+        // lastCheckedAt: domain.lastCheckedAt, // Column doesn't exist in Coolify production DB
         verifiedAt: domain.verifiedAt,
       })
       .returning();

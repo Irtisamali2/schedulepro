@@ -656,8 +656,8 @@ export const domainConfigurations = pgTable("domain_configurations", {
   sslExpiresAt: timestamp("ssl_expires_at"),
   dnsRecords: text("dns_records"), // JSON string of required DNS records
   redirectToHttps: boolean("redirect_to_https").default(true),
-  // customSettings: text("custom_settings"), // JSON string for additional domain settings - REMOVED: column doesn't exist in production DB
-  lastCheckedAt: timestamp("last_checked_at"),
+  // customSettings: text("custom_settings"), // Column doesn't exist in Coolify production DB
+  // lastCheckedAt: timestamp("last_checked_at"), // Column doesn't exist in Coolify production DB
   verifiedAt: timestamp("verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -678,8 +678,8 @@ export const insertDomainConfigurationSchema = createInsertSchema(domainConfigur
   sslExpiresAt: true,
   dnsRecords: true,
   redirectToHttps: true,
-  // customSettings: true, // Temporarily disabled until database migration
-  lastCheckedAt: true,
+  // customSettings: true, // Column doesn't exist in Coolify production DB
+  // lastCheckedAt: true, // Column doesn't exist in Coolify production DB
   verifiedAt: true,
 });
 

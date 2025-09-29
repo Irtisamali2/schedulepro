@@ -257,7 +257,7 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
             <p className="text-xl mb-8 opacity-90" data-testid="hero-description">
               {heroContent}
             </p>
-            <Link href="/booking">
+            <Link href={`/booking/${clientId}`}>
               <Button 
                 className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold"
                 data-testid="hero-cta-button"
@@ -354,7 +354,7 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
                         </li>
                       ))}
                     </ul>
-                    <Link href="/booking">
+                    <Link href={`/booking/${clientId}`}>
                       <Button 
                         className={`w-full ${
                           tier.isPopular 
