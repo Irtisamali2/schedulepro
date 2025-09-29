@@ -57,6 +57,9 @@ function App() {
           {/* Public Client Booking with Client ID */}
           <Route path="/booking/:clientId" component={MultiStepBooking} />
           
+          {/* Client-specific booking route (for URLs like /5000/booking) */}
+          <Route path="/:clientId/booking" component={MultiStepBooking} />
+          
           {/* Public Client Websites */}
           <Route path="/client-website/:clientId" component={ClientWebsite} />
           

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -64,6 +65,7 @@ const stepConfig = [
 ];
 
 export default function MultiStepBooking() {
+  const { clientId } = useParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>({
     serviceId: null,
@@ -86,11 +88,13 @@ export default function MultiStepBooking() {
 
   // Fetch services and stylists data
   const { data: services, isLoading: servicesLoading } = useQuery<ClientService[]>({
-    queryKey: ["/api/public/client/client_1/services"],
+    queryKey: [`/api/public/client/${clientId}/services`],
+    enabled: !!clientId
   });
   
   const { data: stylists, isLoading: stylistsLoading } = useQuery<Stylist[]>({
-    queryKey: ["/api/public/clients/client_1/website-staff"],
+    queryKey: [`/api/public/clients/${clientId}/website-staff`],
+    enabled: !!clientId
   });
 
   // Update booking data helper
