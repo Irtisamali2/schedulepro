@@ -2527,6 +2527,47 @@ class PostgreSQLStorage implements IStorage {
     }
   }
 
+  private async runMigrations() {
+    const dbInstance = this.ensureDB();
+    
+    try {
+      console.log("🔧 Running database migrations for missing columns...");
+      
+      // Check if client_services table has required columns and add them if missing
+      const clientServicesColumns = await dbInstance.execute(sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'client_services' 
+          AND column_name IN ('stripe_product_id', 'stripe_price_id', 'enable_online_payments');
+      `);
+      
+      const existingColumns = new Set(clientServicesColumns.rows.map((row: any) => row.column_name));
+      
+      if (!existingColumns.has('stripe_product_id')) {
+        console.log("Adding stripe_product_id to client_services table...");
+        await dbInstance.execute(sql`ALTER TABLE client_services ADD COLUMN stripe_product_id text;`);
+      }
+      
+      if (!existingColumns.has('stripe_price_id')) {
+        console.log("Adding stripe_price_id to client_services table...");
+        await dbInstance.execute(sql`ALTER TABLE client_services ADD COLUMN stripe_price_id text;`);
+      }
+      
+      if (!existingColumns.has('enable_online_payments')) {
+        console.log("Adding enable_online_payments to client_services table...");
+        await dbInstance.execute(sql`ALTER TABLE client_services ADD COLUMN enable_online_payments boolean DEFAULT false;`);
+        // Update existing records to have default value
+        await dbInstance.execute(sql`UPDATE client_services SET enable_online_payments = false WHERE enable_online_payments IS NULL;`);
+      }
+      
+      console.log("✅ Database migrations completed successfully");
+    } catch (error) {
+      console.error("❌ Migration failed:", error);
+      // Don't throw error here - migrations should be non-blocking if they fail
+      console.log("⚠️ Continuing with initialization despite migration errors...");
+    }
+  }
+
   private async initializeDatabase() {
     if (this.initialized) return;
     
@@ -2534,8 +2575,9 @@ class PostgreSQLStorage implements IStorage {
       const dbInstance = this.ensureDB();
       console.log("🔄 Initializing PostgreSQL database tables...");
       
-      // First create tables, then ensure super admin, then seed data
+      // First create tables, run migrations, then ensure super admin, then seed data
       await this.createTables();
+      await this.runMigrations();
       await this.ensureSuperAdmin();
       await this.seedDemoData();
       
