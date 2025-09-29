@@ -787,7 +787,22 @@ export default function LandingPage() {
                     placeholder="Enter your email here" 
                     className="flex-1 p-2 rounded-lg sm:rounded-l-lg sm:rounded-r-none bg-white/20 text-white placeholder-white/70 focus:outline-none text-xs sm:text-sm"
                   />
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-l-none sm:rounded-r-lg">
+                  <Button 
+                    className="text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-l-none sm:rounded-r-lg transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #EEAF7C, #E0647D)',
+                      transform: 'translateY(0px)',
+                      boxShadow: '0 2px 8px rgba(238, 175, 124, 0.2)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(238, 175, 124, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0px)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(238, 175, 124, 0.2)';
+                    }}
+                  >
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                 </div>
@@ -799,8 +814,12 @@ export default function LandingPage() {
                 © 2025 Scheduled Pro. Copyright and rights reserved
               </p>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6">
-                <a href="#" className="text-white/60 hover:text-white text-xs sm:text-sm text-center">Terms and Conditions</a>
-                <a href="#" className="text-white/60 hover:text-white text-xs sm:text-sm text-center">Privacy Policy</a>
+                <Link href="/terms-and-conditions">
+                  <span className="text-white/60 hover:text-white text-xs sm:text-sm text-center cursor-pointer">Terms and Conditions</span>
+                </Link>
+                <Link href="/privacy-policy">
+                  <span className="text-white/60 hover:text-white text-xs sm:text-sm text-center cursor-pointer">Privacy Policy</span>
+                </Link>
               </div>
             </div>
           </div>

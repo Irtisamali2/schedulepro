@@ -12,6 +12,8 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import ClientWebsite from "@/pages/ClientWebsite";
 import ReviewPlatformConnections from "@/pages/ReviewPlatformConnections";
 import MultiStepBooking from "@/pages/MultiStepBooking";
+import TermsAndConditions from "@/pages/TermsAndConditions";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/not-found";
 
 function App() {
@@ -59,6 +61,10 @@ function App() {
           
           {/* Client-specific booking route (for URLs like /5000/booking) */}
           <Route path="/:clientId/booking" component={MultiStepBooking} />
+          
+          {/* Legal Pages */}
+          <Route path="/terms-and-conditions" component={TermsAndConditions} />
+          <Route path="/privacy-policy" component={PrivacyPolicy} />
           
           {/* Public Client Websites */}
           <Route path="/client-website/:clientId" component={ClientWebsite} />
