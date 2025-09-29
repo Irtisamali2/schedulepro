@@ -70,5 +70,17 @@
     "notes": null,
     "createdAt": "2025-09-23T18:01:26.990Z",
     "updatedAt": "2025-09-23T18:01:26.990Z"
+  },
+  {
+    "id": "contact_1759150495417",
+    "name": "QA Tester",
+    "email": "qa+contact@example.com",
+    "subject": "Test message",
+    "message": "This is a test contact message from automated test.",
+    "source": "website",
+    "status": "NEW",
+    "notes": null,
+    "createdAt": "2025-09-29T12:54:55.417Z",
+    "updatedAt": "2025-09-29T12:54:55.417Z"
   }
 ]
