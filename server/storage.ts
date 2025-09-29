@@ -2843,8 +2843,21 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newService;
   }
-  async updateClientService(id: string, updates: Partial<InsertClientService>): Promise<ClientService> { throw new Error("Not implemented"); }
-  async deleteClientService(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateClientService(id: string, updates: Partial<InsertClientService>): Promise<ClientService> {
+    const dbInstance = this.ensureDB();
+    const [updatedService] = await dbInstance
+      .update(clientServices)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clientServices.id, id))
+      .returning();
+    
+    if (!updatedService) throw new Error("Client service not found");
+    return updatedService;
+  }
+  async deleteClientService(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(clientServices).where(eq(clientServices.id, id));
+  }
   async getAppointments(clientId: string): Promise<Appointment[]> { 
     const dbInstance = this.ensureDB();
     const clientAppointments = await dbInstance
@@ -2891,8 +2904,21 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newAppointment;
   }
-  async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> { throw new Error("Not implemented"); }
-  async deleteAppointment(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> {
+    const dbInstance = this.ensureDB();
+    const [updatedAppointment] = await dbInstance
+      .update(appointments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(appointments.id, id))
+      .returning();
+    
+    if (!updatedAppointment) throw new Error("Appointment not found");
+    return updatedAppointment;
+  }
+  async deleteAppointment(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(appointments).where(eq(appointments.id, id));
+  }
   async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
   async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> { return []; }
   async getLeads(clientId: string): Promise<Lead[]> { 
@@ -2928,8 +2954,21 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newLead;
   }
-  async updateLead(id: string, updates: Partial<InsertLead>): Promise<Lead> { throw new Error("Not implemented"); }
-  async deleteLead(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateLead(id: string, updates: Partial<InsertLead>): Promise<Lead> {
+    const dbInstance = this.ensureDB();
+    const [updatedLead] = await dbInstance
+      .update(leads)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    
+    if (!updatedLead) throw new Error("Lead not found");
+    return updatedLead;
+  }
+  async deleteLead(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(leads).where(eq(leads.id, id));
+  }
   async getClientWebsite(clientId: string): Promise<ClientWebsite | undefined> { return undefined; }
   async createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite> { throw new Error("Not implemented"); }
   async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> { throw new Error("Not implemented"); }
@@ -2995,8 +3034,21 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newMember;
   }
-  async updateTeamMember(id: string, updates: Partial<InsertTeamMember>): Promise<TeamMember> { throw new Error("Not implemented"); }
-  async deleteTeamMember(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateTeamMember(id: string, updates: Partial<InsertTeamMember>): Promise<TeamMember> {
+    const dbInstance = this.ensureDB();
+    const [updatedMember] = await dbInstance
+      .update(teamMembers)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(teamMembers.id, id))
+      .returning();
+    
+    if (!updatedMember) throw new Error("Team member not found");
+    return updatedMember;
+  }
+  async deleteTeamMember(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(teamMembers).where(eq(teamMembers.id, id));
+  }
   async getReviewPlatforms(): Promise<ReviewPlatform[]> { return []; }
   async getReviewPlatform(id: string): Promise<ReviewPlatform | undefined> { return undefined; }
   async createReviewPlatform(platform: InsertReviewPlatform): Promise<ReviewPlatform> { throw new Error("Not implemented"); }
@@ -3089,7 +3141,17 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newPayment;
   }
-  async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> { throw new Error("Not implemented"); }
+  async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> {
+    const dbInstance = this.ensureDB();
+    const [updatedPayment] = await dbInstance
+      .update(payments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(payments.id, id))
+      .returning();
+    
+    if (!updatedPayment) throw new Error("Payment not found");
+    return updatedPayment;
+  }
   async getPaymentsByAppointment(appointmentId: string): Promise<Payment[]> { 
     const dbInstance = this.ensureDB();
     const result = await dbInstance
