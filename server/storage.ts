@@ -2499,9 +2499,22 @@ class PostgreSQLStorage implements IStorage {
   // Note: For brevity, implementing key methods first. Other methods would follow same pattern
   // using Drizzle ORM operations instead of in-memory arrays
   
-  // Placeholder implementations for other interface methods (would need full implementation)
-  async getOnboardingSessions(): Promise<OnboardingSession[]> { return []; }
-  async getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined> { return undefined; }
+  // Onboarding session implementations 
+  async getOnboardingSessions(): Promise<OnboardingSession[]> { 
+    const dbInstance = this.ensureDB();
+    const sessions = await dbInstance.select().from(onboardingSessions);
+    return sessions;
+  }
+  async getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined> { 
+    const dbInstance = this.ensureDB();
+    const sessions = await dbInstance
+      .select()
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.sessionId, sessionId))
+      .limit(1);
+    
+    return sessions.length > 0 ? sessions[0] : undefined;
+  }
   async createOnboardingSession(session: InsertOnboardingSession): Promise<OnboardingSession> {
     const dbInstance = this.ensureDB();
     const sessionId = `onb_${Date.now()}`;
