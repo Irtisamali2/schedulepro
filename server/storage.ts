@@ -2161,6 +2161,11 @@ class MemStorage implements IStorage {
 class PostgreSQLStorage implements IStorage {
   private initialized = false;
 
+  constructor() {
+    // Initialize database when storage is created
+    this.initializeDatabase();
+  }
+
   private ensureDB() {
     if (!db) {
       throw new Error("Database connection not available. Please check your DATABASE_URL configuration.");
