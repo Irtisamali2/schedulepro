@@ -56,7 +56,7 @@ const getStartedFormSchema = z.object({
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const { toast } = useToast();
 
   // Fetch plans from API
@@ -72,7 +72,7 @@ export default function LandingPage() {
       const discount = billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0);
       const enabled = billingPeriod === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
       
-      if (!enabled || !price) return null;
+      if (!enabled || price === null || price === undefined) return null;
       
       if (discount > 0) {
         return price * (1 - discount / 100);

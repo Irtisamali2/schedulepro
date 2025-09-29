@@ -14,79 +14,86 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
-const pricingPlans = [
-  {
-    name: "Basic",
-    price: 29,
-    billingPeriod: "month",
-    description: "Perfect for individual service providers getting started",
-    features: [
-      "Up to 50 appointments per month",
-      "Client management",
-      "Online scheduling",
-      "Email notifications",
-      "1 industry template"
-    ],
-    limitations: [
-      "Basic analytics",
-      "Single user only",
-      "Email support"
-    ],
-    highlighted: false,
-    cta: "Start Basic"
-  },
-  {
-    name: "Professional",
-    price: 79,
-    billingPeriod: "month",
-    description: "For growing businesses with multiple service providers",
-    features: [
-      "Unlimited appointments",
-      "Advanced client management",
-      "Custom branding options",
-      "SMS notifications",
-      "All industry templates",
-      "Google review automation",
-      "Team management (up to 5)",
-      "Payment processing integration"
-    ],
-    limitations: [],
-    highlighted: true,
-    mostPopular: true,
-    cta: "Start Professional"
-  },
-  {
-    name: "Enterprise",
-    price: 199,
-    billingPeriod: "month",
-    description: "For larger organizations with advanced needs",
-    features: [
-      "Everything in Professional",
-      "Unlimited team members",
-      "Advanced analytics & reporting",
-      "API access",
-      "Priority support",
-      "Dedicated account manager",
-      "Custom integrations",
-      "Multi-location support"
-    ],
-    limitations: [],
-    highlighted: false,
-    cta: "Contact Sales"
-  }
-];
+interface PlanFromAPI {
+  id: string;
+  name: string;
+  monthlyPrice: number;
+  features: string[];
+  maxUsers: number;
+  storageGB: number;
+  isActive: boolean;
+}
+
+interface TransformedPlan {
+  id: string;
+  name: string;
+  price: number;
+  billingPeriod: string;
+  description: string;
+  features: string[];
+  limitations: string[];
+  highlighted: boolean;
+  mostPopular?: boolean;
+  cta: string;
+}
 
 export default function Pricing() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<typeof pricingPlans[0] | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<TransformedPlan | null>(null);
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
 
-  const handleSelectPlan = (plan: typeof pricingPlans[0]) => {
+  // Fetch plans from super admin configuration
+  const { data: apiPlans = [], isLoading: plansLoading, error } = useQuery<PlanFromAPI[]>({
+    queryKey: ['/api/public/plans'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Transform API plans to UI format
+  const pricingPlans: TransformedPlan[] = apiPlans.map((plan, index) => ({
+    id: plan.id,
+    name: plan.name,
+    price: plan.monthlyPrice || 0,
+    billingPeriod: "month",
+    description: getPlanDescription(plan.name),
+    features: plan.features || [],
+    limitations: getPlanLimitations(plan.name),
+    highlighted: plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('professional'),
+    mostPopular: plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('professional'),
+    cta: plan.monthlyPrice === 0 ? "Start Free" : `Start ${plan.name}`
+  }));
+
+  function getPlanDescription(planName: string): string {
+    const name = planName.toLowerCase();
+    if (name.includes('free') || name.includes('demo')) {
+      return "Perfect for trying out our platform";
+    } else if (name.includes('basic')) {
+      return "Perfect for individual service providers getting started";
+    } else if (name.includes('pro') || name.includes('professional')) {
+      return "For growing businesses with multiple service providers";
+    } else if (name.includes('enterprise') || name.includes('premium')) {
+      return "For larger organizations with advanced needs";
+    }
+    return "Professional scheduling solution for your business";
+  }
+
+  function getPlanLimitations(planName: string): string[] {
+    const name = planName.toLowerCase();
+    if (name.includes('free') || name.includes('demo')) {
+      return ["Limited features", "Basic support", "Trial period"];
+    } else if (name.includes('basic')) {
+      return ["Basic analytics", "Email support"];
+    }
+    return [];
+  }
+
+  const handleSelectPlan = (plan: TransformedPlan) => {
     setSelectedPlan(plan);
     
-    if (plan.name === "Enterprise") {
+    if (plan.name.toLowerCase().includes('enterprise') || plan.name.toLowerCase().includes('premium')) {
       toast({
         title: "Contact our sales team",
         description: "Our team will reach out to discuss your enterprise needs."
@@ -111,6 +118,34 @@ export default function Pricing() {
     }, 1500);
   };
 
+  if (plansLoading) {
+    return (
+      <section className="py-16 bg-neutral">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span>Loading pricing plans...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-16 bg-neutral">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Pricing</h1>
+            <p className="text-xl text-red-600">Failed to load pricing plans. Please try again later.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-neutral">
       <div className="container mx-auto px-4">
@@ -124,10 +159,11 @@ export default function Pricing() {
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {pricingPlans.map((plan, index) => (
             <Card 
-              key={index} 
+              key={plan.id || index} 
               className={`relative overflow-hidden ${
                 plan.highlighted ? 'shadow-xl border-primary' : 'shadow-md'
               }`}
+              data-testid={`pricing-card-${plan.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               {plan.mostPopular && (
                 <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
@@ -140,8 +176,15 @@ export default function Pricing() {
                 <CardDescription>{plan.description}</CardDescription>
                 
                 <div className="mt-4">
-                  <span className="text-4xl font-bold">${plan.price}</span>
-                  <span className="text-neutral-600">/{plan.billingPeriod}</span>
+                  <span className="text-4xl font-bold">
+                    ${plan.price}
+                  </span>
+                  {plan.price > 0 && (
+                    <span className="text-neutral-600">/{plan.billingPeriod}</span>
+                  )}
+                  {plan.price === 0 && (
+                    <span className="text-neutral-600"> Free</span>
+                  )}
                 </div>
               </CardHeader>
               
@@ -177,11 +220,11 @@ export default function Pricing() {
                     </h4>
                     <ul className="space-y-2">
                       {plan.limitations.map((limitation, i) => (
-                        <li key={i} className="text-sm flex items-start text-neutral-600">
+                        <li key={i} className="text-sm text-neutral-600 flex items-start">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 mt-0.5 text-neutral-400">
                             <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="12" />
-                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
                           </svg>
                           {limitation}
                         </li>
@@ -193,9 +236,10 @@ export default function Pricing() {
               
               <CardFooter>
                 <Button 
-                  className="w-full"
+                  className="w-full" 
                   variant={plan.highlighted ? "default" : "outline"}
                   onClick={() => handleSelectPlan(plan)}
+                  data-testid={`button-select-${plan.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {plan.cta}
                 </Button>
@@ -204,68 +248,62 @@ export default function Pricing() {
           ))}
         </div>
         
-        <div className="mt-16 text-center">
-          <h3 className="text-2xl font-bold mb-4">Need a custom solution?</h3>
-          <p className="mb-6 text-neutral-600 max-w-2xl mx-auto">
-            We offer flexible options for larger organizations with specific requirements. 
-            Contact our sales team to discuss your needs.
+        <div className="text-center mt-12">
+          <p className="text-neutral-600 mb-4">
+            All plans include 24/7 support, data migration assistance, and a 30-day money-back guarantee.
           </p>
-          <Button variant="outline" size="lg">Contact Sales</Button>
+          <p className="text-sm text-neutral-500">
+            Questions about pricing? <a href="/contact" className="text-primary hover:underline">Contact our sales team</a>
+          </p>
         </div>
       </div>
-      
+
       {/* Payment Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Subscribe to {selectedPlan?.name} Plan</DialogTitle>
+            <DialogTitle>Complete Your Purchase</DialogTitle>
             <DialogDescription>
-              Enter your payment details to start your subscription
+              You're about to subscribe to the {selectedPlan?.name} plan for ${selectedPlan?.price}/{selectedPlan?.billingPeriod}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="card-number">Card Number</Label>
-              <Input id="card-number" placeholder="1234 5678 9012 3456" />
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email address</Label>
+              <Input id="email" type="email" placeholder="Enter your email" />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiration">Expiration Date</Label>
-                <Input id="expiration" placeholder="MM/YY" />
+            <div>
+              <Label htmlFor="card">Card information</Label>
+              <Input id="card" placeholder="1234 5678 9012 3456" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Input placeholder="MM / YY" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cvc">CVC</Label>
-                <Input id="cvc" placeholder="123" />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="name">Cardholder Name</Label>
-              <Input id="name" placeholder="John Doe" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="billing-zip">Billing Zip Code</Label>
-              <Input id="billing-zip" placeholder="10001" />
-            </div>
-            
-            <div className="mt-2 p-3 bg-neutral-50 rounded-md">
-              <div className="flex justify-between text-sm mb-1">
-                <span>{selectedPlan?.name} Plan</span>
-                <span>${selectedPlan?.price}.00/{selectedPlan?.billingPeriod}</span>
-              </div>
-              <div className="flex justify-between font-medium border-t pt-2 mt-2">
-                <span>Total</span>
-                <span>${selectedPlan?.price}.00</span>
+              <div>
+                <Input placeholder="CVC" />
               </div>
             </div>
           </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>Cancel</Button>
-            <Button onClick={handlePayment}>Subscribe Now</Button>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsPaymentModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePayment}
+              className="w-full sm:w-auto"
+              data-testid="button-complete-payment"
+            >
+              Complete Purchase
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
