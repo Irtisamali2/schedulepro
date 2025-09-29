@@ -1793,12 +1793,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const businessData = session.businessData ? JSON.parse(session.businessData) : {};
       
-      // Create user account
-      const user = await storage.createUser({
-        email: businessData.step3?.adminEmail || businessData.step2?.businessEmail,
-        password: businessData.step3?.password,
-        role: "CLIENT"
-      });
+      // Create or get existing user account
+      const userEmail = businessData.step3?.adminEmail || businessData.step2?.businessEmail;
+      let user = await storage.getUserByEmail(userEmail);
+      
+      if (!user) {
+        // Create new user if doesn't exist
+        user = await storage.createUser({
+          email: userEmail,
+          password: businessData.step3?.password,
+          role: "CLIENT"
+        });
+      }
       
       // Create client
       const client = await storage.createClient({
