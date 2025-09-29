@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, ExternalLink, Check, X, AlertTriangle, Loader2, Trash2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,6 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-const clientId = "client_1"; // This would come from auth context
-
 const domainFormSchema = z.object({
   domain: z.string().min(1, "Domain is required").refine(
     (domain) => {
@@ -39,8 +37,18 @@ type DomainFormData = z.infer<typeof domainFormSchema>;
 
 export default function DomainConfig() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [clientId, setClientId] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get client ID from localStorage (same as ClientDashboard)
+  useEffect(() => {
+    const storedClient = localStorage.getItem('clientData');
+    if (storedClient) {
+      const clientData = JSON.parse(storedClient);
+      setClientId(clientData.id);
+    }
+  }, []);
 
   const form = useForm<DomainFormData>({
     resolver: zodResolver(domainFormSchema),
@@ -54,6 +62,7 @@ export default function DomainConfig() {
   // Fetch domains
   const { data: domains = [], isLoading: isLoadingDomains } = useQuery({
     queryKey: [`/api/clients/${clientId}/domains`],
+    enabled: !!clientId
   });
 
   // Create domain mutation
