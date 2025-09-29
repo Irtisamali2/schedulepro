@@ -179,7 +179,20 @@ export default function Contact() {
                 
                 <Button
                   type="submit"
-                  className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-md transition"
+                  className="text-white font-semibold py-3 px-6 rounded-md transition"
+                  style={{
+                    background: 'linear-gradient(135deg, #EEAF7C, #E0647D)',
+                    transform: 'translateY(0px)',
+                    boxShadow: '0 2px 8px rgba(238, 175, 124, 0.2)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(238, 175, 124, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0px)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(238, 175, 124, 0.2)';
+                  }}
                   disabled={mutation.isPending}
                 >
                   {mutation.isPending ? "Sending..." : "Send Message"}

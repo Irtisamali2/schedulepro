@@ -187,7 +187,20 @@ export default function LandingPage() {
             
             <div className="flex items-center space-x-2 md:space-x-4">
               <Button 
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 md:px-6 py-2 text-sm md:text-base"
+                className="text-white px-4 md:px-6 py-2 text-sm md:text-base transition-all duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #EEAF7C, #E0647D)',
+                  transform: 'translateY(0px)',
+                  boxShadow: '0 2px 8px rgba(238, 175, 124, 0.2)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(238, 175, 124, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(238, 175, 124, 0.2)';
+                }}
                 onClick={() => handleGetStarted('plan_1')}
               >
                 Get Started
@@ -733,7 +746,22 @@ export default function LandingPage() {
                 <Button 
                   type="submit" 
                   disabled={contactMutation.isPending}
-                  className="w-full bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white py-2 sm:py-3 text-sm sm:text-lg rounded-lg disabled:opacity-50"
+                  className="w-full text-white py-2 sm:py-3 text-sm sm:text-lg rounded-lg disabled:opacity-50 transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, #EEAF7C, #E0647D)',
+                    transform: 'translateY(0px)',
+                    boxShadow: '0 2px 8px rgba(238, 175, 124, 0.2)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!contactMutation.isPending) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(238, 175, 124, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0px)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(238, 175, 124, 0.2)';
+                  }}
                   data-testid="button-get-started-submit"
                 >
                   {contactMutation.isPending ? "Sending..." : "Send Message"}

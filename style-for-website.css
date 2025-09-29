@@ -66,7 +66,7 @@ nav {
 }
 
 .cta-button {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #EEAF7C, #E0647D);
     color: white !important;
     padding: 12px 24px;
     border: none;
@@ -78,7 +78,7 @@ nav {
 
 .cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px rgba(238, 175, 124, 0.3);
 }
 
 /* Hero Section */
