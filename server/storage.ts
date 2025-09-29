@@ -1545,12 +1545,12 @@ class MemStorage implements IStorage {
           verificationStatus: "VERIFIED",
           isActive: true,
           verifiedAt: new Date(),
-          lastCheckedAt: new Date()
+          // lastCheckedAt: new Date() // Column doesn't exist in Coolify production DB
         });
       } else {
         return this.updateDomainConfiguration(id, {
           verificationStatus: "FAILED",
-          lastCheckedAt: new Date()
+          // lastCheckedAt: new Date() // Column doesn't exist in Coolify production DB
         });
       }
     } catch (error: any) {
@@ -1572,7 +1572,7 @@ class MemStorage implements IStorage {
 
       return this.updateDomainConfiguration(id, {
         verificationStatus: "FAILED",
-        lastCheckedAt: new Date()
+        // lastCheckedAt: new Date() // Column doesn't exist in Coolify production DB
       });
     }
   }
