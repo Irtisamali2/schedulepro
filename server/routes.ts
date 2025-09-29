@@ -698,15 +698,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // In production, update Stripe subscription here
-      if (stripe && client.stripeSubscriptionId) {
+      if (stripe && client.stripeSubscriptionId && newPlan.monthlyStripePriceId) {
         try {
-          await stripe.subscriptions.update(client.stripeSubscriptionId, {
-            items: [{
-              id: client.stripeSubscriptionId, // This would be the subscription item ID
-              price: newPlan.monthlyStripePriceId || undefined
-            }],
-            proration_behavior: 'always_invoice'
-          });
+          // Retrieve the subscription to get the subscription item ID
+          const subscription = await stripe.subscriptions.retrieve(client.stripeSubscriptionId);
+          const subscriptionItemId = subscription.items.data[0]?.id;
+          
+          if (subscriptionItemId) {
+            await stripe.subscriptions.update(client.stripeSubscriptionId, {
+              items: [{
+                id: subscriptionItemId,
+                price: newPlan.monthlyStripePriceId
+              }],
+              proration_behavior: 'always_invoice'
+            });
+            console.log(`Stripe subscription updated: ${client.stripeSubscriptionId} -> ${newPlan.monthlyStripePriceId}`);
+          }
         } catch (stripeError) {
           console.error("Stripe subscription update error:", stripeError);
           // Could rollback the database change here if needed
