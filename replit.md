@@ -51,6 +51,16 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Database Schema & Production Deployment Fixes (September 29, 2025)
+- **CRITICAL PRODUCTION FIX**: Resolved database schema mismatches preventing CRUD operations in Coolify deployment
+- Fixed missing columns in `client_services` table: `stripe_product_id`, `stripe_price_id`, `enable_online_payments`
+- Corrected `payments` table schema to match shared/schema.ts definitions (amount vs tip/totalAmount, status vs paymentStatus, etc.)
+- Added missing table creation statements for `domain_configurations` and `client_websites` with proper IF NOT EXISTS handling
+- Enhanced Coolify environment detection with additional environment variable checks (COOLIFY_CONTAINER_NAME, COOLIFY_APP_NAME)
+- **Plan Synchronization System**: Implemented complete plan management with `syncClientPlans`, `updatePlanPricing`, and `updateClientPlan` methods
+- Added new API routes: `/api/plans/:id/pricing`, `/api/plans/:id/sync`, `/api/clients/:clientId/plan`
+- All table creation now uses `CREATE TABLE IF NOT EXISTS` to prevent data loss on redeployment
+
 ### Security & Permissions Implementation (September 1, 2025)
 - **CRITICAL SECURITY FIX**: Implemented comprehensive server-side permission validation system
 - Added `requirePermission()` middleware that validates team member permissions before API execution
