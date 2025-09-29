@@ -3310,7 +3310,26 @@ class PostgreSQLStorage implements IStorage {
     const id = `domain_${Date.now()}`;
     const [createdDomain] = await dbInstance
       .insert(domainConfigurations)
-      .values({ ...domain, id })
+      .values({ 
+        id,
+        clientId: domain.clientId,
+        domainType: domain.domainType,
+        domain: domain.domain,
+        subdomain: domain.subdomain,
+        isActive: domain.isActive,
+        verificationStatus: domain.verificationStatus,
+        verificationToken: domain.verificationToken,
+        verificationMethod: domain.verificationMethod,
+        sslStatus: domain.sslStatus,
+        sslCertificateId: domain.sslCertificateId,
+        sslIssuedAt: domain.sslIssuedAt,
+        sslExpiresAt: domain.sslExpiresAt,
+        dnsRecords: domain.dnsRecords,
+        redirectToHttps: domain.redirectToHttps,
+        // customSettings: domain.customSettings, // Temporarily disabled until database migration
+        lastCheckedAt: domain.lastCheckedAt,
+        verifiedAt: domain.verifiedAt,
+      })
       .returning();
     return createdDomain;
   }
