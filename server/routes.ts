@@ -1146,6 +1146,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update plan pricing (with client synchronization)
+  app.put("/api/plans/:id/pricing", async (req, res) => {
+    try {
+      const updates = req.body; // { monthlyPrice?, yearlyPrice?, stripeProductId?, monthlyStripePriceId?, yearlyStripePriceId? }
+      const plan = await storage.updatePlanPricing(req.params.id, updates);
+      res.json(plan);
+    } catch (error) {
+      console.error("Error updating plan pricing:", error);
+      res.status(500).json({ error: "Failed to update plan pricing" });
+    }
+  });
+
+  // Sync clients with plan changes
+  app.post("/api/plans/:id/sync", async (req, res) => {
+    try {
+      await storage.syncClientPlans(req.params.id);
+      res.json({ success: true, message: "Plan synchronized with all clients" });
+    } catch (error) {
+      console.error("Error syncing plan:", error);
+      res.status(500).json({ error: "Failed to sync plan" });
+    }
+  });
+
+  // Update client plan
+  app.put("/api/clients/:clientId/plan", async (req, res) => {
+    try {
+      const { planId } = req.body;
+      const client = await storage.updateClientPlan(req.params.clientId, planId);
+      res.json(client);
+    } catch (error) {
+      console.error("Error updating client plan:", error);
+      res.status(500).json({ error: "Failed to update client plan" });
+    }
+  });
+
   // =============================================================================
   // SUPER ADMIN ROUTES - Contact Messages / Website Leads
   // =============================================================================

@@ -45,6 +45,11 @@ export interface IStorage {
   updatePlan(id: string, updates: Partial<InsertPlan>): Promise<Plan>;
   deletePlan(id: string): Promise<void>;
   
+  // Plan Synchronization
+  syncClientPlans(planId: string): Promise<void>;
+  updatePlanPricing(planId: string, updates: { monthlyPrice?: number; yearlyPrice?: number; stripeProductId?: string; monthlyStripePriceId?: string; yearlyStripePriceId?: string }): Promise<Plan>;
+  updateClientPlan(clientId: string, planId: string): Promise<Client>;
+  
   // Onboarding Management
   getOnboardingSessions(): Promise<OnboardingSession[]>;
   getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined>;
@@ -710,6 +715,36 @@ class MemStorage implements IStorage {
     const index = this.plans.findIndex(p => p.id === id);
     if (index === -1) throw new Error("Plan not found");
     this.plans.splice(index, 1);
+  }
+  
+  // Plan synchronization methods
+  async syncClientPlans(planId: string): Promise<void> {
+    // In memory storage - plans are already synced since they reference the same objects
+    console.log(`🔄 Syncing plan ${planId} for all clients (MemStorage - no action needed)`);
+  }
+  
+  async updatePlanPricing(planId: string, updates: { monthlyPrice?: number; yearlyPrice?: number; stripeProductId?: string; monthlyStripePriceId?: string; yearlyStripePriceId?: string }): Promise<Plan> {
+    const planIndex = this.plans.findIndex(p => p.id === planId);
+    if (planIndex === -1) throw new Error("Plan not found");
+    
+    this.plans[planIndex] = { ...this.plans[planIndex], ...updates };
+    
+    // Auto-sync all clients using this plan
+    await this.syncClientPlans(planId);
+    
+    return this.plans[planIndex];
+  }
+  
+  async updateClientPlan(clientId: string, planId: string): Promise<Client> {
+    const clientIndex = this.clients.findIndex(c => c.id === clientId);
+    if (clientIndex === -1) throw new Error("Client not found");
+    
+    const plan = this.plans.find(p => p.id === planId);
+    if (!plan) throw new Error("Plan not found");
+    
+    this.clients[clientIndex] = { ...this.clients[clientIndex], planId, updatedAt: new Date() };
+    
+    return this.clients[clientIndex];
   }
 
   // Onboarding methods
@@ -2682,6 +2717,62 @@ class PostgreSQLStorage implements IStorage {
   async deletePlan(id: string): Promise<void> {
     const dbInstance = this.ensureDB();
     await dbInstance.delete(plans).where(eq(plans.id, id));
+  }
+  
+  // Plan synchronization methods
+  async syncClientPlans(planId: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    
+    // Find all clients using this plan
+    const affectedClients = await dbInstance
+      .select()
+      .from(clients)
+      .where(eq(clients.planId, planId));
+    
+    console.log(`🔄 Syncing plan ${planId} for ${affectedClients.length} clients`);
+    
+    // In PostgreSQL, the plan data is already updated, clients automatically get the latest plan data
+    // when they query their plan information since they reference it by planId
+  }
+  
+  async updatePlanPricing(planId: string, updates: { monthlyPrice?: number; yearlyPrice?: number; stripeProductId?: string; monthlyStripePriceId?: string; yearlyStripePriceId?: string }): Promise<Plan> {
+    const dbInstance = this.ensureDB();
+    
+    const [updatedPlan] = await dbInstance
+      .update(plans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(plans.id, planId))
+      .returning();
+    
+    if (!updatedPlan) throw new Error("Plan not found");
+    
+    // Auto-sync all clients using this plan
+    await this.syncClientPlans(planId);
+    
+    return updatedPlan;
+  }
+  
+  async updateClientPlan(clientId: string, planId: string): Promise<Client> {
+    const dbInstance = this.ensureDB();
+    
+    // Verify plan exists
+    const plan = await dbInstance
+      .select()
+      .from(plans)
+      .where(eq(plans.id, planId))
+      .limit(1);
+    
+    if (plan.length === 0) throw new Error("Plan not found");
+    
+    const [updatedClient] = await dbInstance
+      .update(clients)
+      .set({ planId, updatedAt: new Date() })
+      .where(eq(clients.id, clientId))
+      .returning();
+    
+    if (!updatedClient) throw new Error("Client not found");
+    
+    return updatedClient;
   }
 
   // Contact Messages / Super Admin Leads  
