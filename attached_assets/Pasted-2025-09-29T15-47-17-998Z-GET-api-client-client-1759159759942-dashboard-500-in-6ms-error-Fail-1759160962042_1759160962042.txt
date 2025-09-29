@@ -1,0 +1,100 @@
+2025-09-29T15:47:17.998Z GET /api/client/client_1759159759942/dashboard 500 in 6ms :: {"error":"Failed t…
+Business owner access granted for services.view
+2025-09-29T15:47:18.163Z GET /api/client/client_1759159759942/services 500 in 2ms :: {"error":"Failed to…
+Business owner access granted for leads.create
+2025-09-29T15:47:30.129Z POST /api/client/client_1759159759942/leads 500 in 2ms :: {"error":"Failed to c…
+Business owner access granted for leads.create
+2025-09-29T15:47:33.130Z POST /api/client/client_1759159759942/leads 500 in 1ms :: {"error":"Failed to c…
+2025-09-29T15:47:38.001Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for appointments.view
+Business owner access granted for services.view
+Business owner access granted for leads.view
+2025-09-29T15:47:45.493Z GET /api/client/client_1759159759942/services 500 in 45ms :: {"error":"Failed t…
+2025-09-29T15:47:45.513Z GET /api/client/client_1759159759942/dashboard 500 in 66ms :: {"error":"Failed …
+2025-09-29T15:47:45.520Z GET /api/client/client_1759159759942/appointments 304 in 75ms :: []
+2025-09-29T15:47:45.521Z GET /api/client/client_1759159759942/appointment-slots 304 in 69ms :: [{"id":"s…
+2025-09-29T15:47:45.522Z GET /api/client/client_1759159759942/leads 304 in 71ms :: []
+Business owner access granted for team.view
+2025-09-29T15:47:47.384Z GET /api/client/client_1/team 304 in 3ms :: []
+2025-09-29T15:48:04.064Z POST /api/client/client_1/team 200 in 21ms :: {"id":"team_1759160884044","clien…
+Business owner access granted for team.view
+2025-09-29T15:48:04.261Z GET /api/client/client_1/team 200 in 4ms :: [{"id":"team_1759160884044","client…
+Business owner access granted for payments.view
+2025-09-29T15:48:07.339Z GET /api/client/client_1759159759942/stripe-config 200 in 4ms :: {"stripePublic…
+2025-09-29T15:48:08.079Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for google_business.view
+2025-09-29T15:48:10.360Z GET /api/clients/client_1759159759942/google-business 200 in 3ms
+Business owner access granted for domains.view
+2025-09-29T15:48:15.191Z GET /api/clients/client_1/domains 200 in 2ms :: []
+Business owner access granted for domains.create
+2025-09-29T15:48:26.826Z POST /api/clients/client_1/domains 500 in 4ms :: {"error":"Failed to create dom…
+2025-09-29T15:48:38.148Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for services.view
+Business owner access granted for appointments.view
+Business owner access granted for leads.view
+2025-09-29T15:48:41.962Z GET /api/client/client_1759159759942/dashboard 500 in 32ms :: {"error":"Failed …
+2025-09-29T15:48:41.964Z GET /api/client/client_1759159759942/services 500 in 31ms :: {"error":"Failed t…
+2025-09-29T15:48:41.974Z GET /api/client/client_1759159759942/appointments 304 in 34ms :: []
+2025-09-29T15:48:41.976Z GET /api/client/client_1759159759942/leads 304 in 34ms :: []
+2025-09-29T15:48:41.983Z GET /api/client/client_1759159759942/appointment-slots 304 in 36ms :: [{"id":"s…
+Business owner access granted for payments.view
+Business owner access granted for payments.view
+Business owner access granted for subscription.view
+2025-09-29T15:48:43.640Z GET /api/client/client_1759159759942/payment-methods 200 in 20ms :: [{"id":"pm_…
+2025-09-29T15:48:43.641Z GET /api/client/client_1759159759942/billing-history 200 in 9ms :: [{"id":"inv_…
+2025-09-29T15:48:43.647Z GET /api/client/client_1759159759942/subscription 200 in 11ms :: {"id":"sub_cli…
+2025-09-29T15:49:08.212Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+  routine: 'errorMissingColumn'
+}
+Error fetching client dashboard: error: column "stripe_product_id" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.getClientServices (file:///app/dist/index.js:3696:23)
+    at async file:///app/dist/index.js:5847:25 {
+  length: 118,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '104',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+Error creating domain configuration: Error: Not implemented
+    at PostgreSQLStorage.createDomainConfiguration (file:///app/dist/index.js:3958:11)
+    at file:///app/dist/index.js:7004:36
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Error fetching client dashboard: error: column "stripe_product_id" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.getClientServices (file:///app/dist/index.js:3696:23)
+    at async file:///app/dist/index.js:5847:25 {
+  length: 118,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '104',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}

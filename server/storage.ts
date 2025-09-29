@@ -2316,6 +2316,9 @@ class PostgreSQLStorage implements IStorage {
           "duration_minutes" integer NOT NULL,
           "category" text,
           "is_active" boolean DEFAULT true,
+          "stripe_product_id" text,
+          "stripe_price_id" text,
+          "enable_online_payments" boolean DEFAULT false,
           "created_at" timestamp DEFAULT now(),
           "updated_at" timestamp DEFAULT now()
         );
@@ -2813,7 +2816,15 @@ class PostgreSQLStorage implements IStorage {
   }
   async getServices(): Promise<Service[]> { return []; }
   async getService(id: number): Promise<Service | undefined> { return undefined; }
-  async createService(service: InsertService): Promise<Service> { throw new Error("Not implemented"); }
+  async createService(service: InsertService): Promise<Service> {
+    const dbInstance = this.ensureDB();
+    const id = `service_${Date.now()}`;
+    const [createdService] = await dbInstance
+      .insert(services)
+      .values({ ...service, id })
+      .returning();
+    return createdService;
+  }
   async getReviews(): Promise<Review[]> { return []; }
   async createReview(review: InsertReview): Promise<Review> { throw new Error("Not implemented"); }
   async getClientServices(clientId: string): Promise<ClientService[]> { 
@@ -2970,8 +2981,26 @@ class PostgreSQLStorage implements IStorage {
     await dbInstance.delete(leads).where(eq(leads.id, id));
   }
   async getClientWebsite(clientId: string): Promise<ClientWebsite | undefined> { return undefined; }
-  async createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite> { throw new Error("Not implemented"); }
-  async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> { throw new Error("Not implemented"); }
+  async createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite> {
+    const dbInstance = this.ensureDB();
+    const id = `website_${Date.now()}`;
+    const [createdWebsite] = await dbInstance
+      .insert(clientWebsites)
+      .values({ ...website, id })
+      .returning();
+    return createdWebsite;
+  }
+  async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> {
+    const dbInstance = this.ensureDB();
+    const [updatedWebsite] = await dbInstance
+      .update(clientWebsites)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clientWebsites.clientId, clientId))
+      .returning();
+    
+    if (!updatedWebsite) throw new Error("Client website not found");
+    return updatedWebsite;
+  }
   async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> { return undefined; }
   async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> { 
     const dbInstance = this.ensureDB();
@@ -3068,10 +3097,41 @@ class PostgreSQLStorage implements IStorage {
   async getDomainConfigurations(clientId: string): Promise<DomainConfiguration[]> { return []; }
   async getDomainConfiguration(id: string): Promise<DomainConfiguration | undefined> { return undefined; }
   async getDomainConfigurationByDomain(domain: string): Promise<DomainConfiguration | undefined> { return undefined; }
-  async createDomainConfiguration(domain: InsertDomainConfiguration): Promise<DomainConfiguration> { throw new Error("Not implemented"); }
-  async updateDomainConfiguration(id: string, updates: Partial<InsertDomainConfiguration>): Promise<DomainConfiguration> { throw new Error("Not implemented"); }
-  async deleteDomainConfiguration(id: string): Promise<void> { throw new Error("Not implemented"); }
-  async verifyDomain(id: string): Promise<DomainConfiguration> { throw new Error("Not implemented"); }
+  async createDomainConfiguration(domain: InsertDomainConfiguration): Promise<DomainConfiguration> {
+    const dbInstance = this.ensureDB();
+    const id = `domain_${Date.now()}`;
+    const [createdDomain] = await dbInstance
+      .insert(domainConfigurations)
+      .values({ ...domain, id })
+      .returning();
+    return createdDomain;
+  }
+  async updateDomainConfiguration(id: string, updates: Partial<InsertDomainConfiguration>): Promise<DomainConfiguration> {
+    const dbInstance = this.ensureDB();
+    const [updatedDomain] = await dbInstance
+      .update(domainConfigurations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(domainConfigurations.id, id))
+      .returning();
+    
+    if (!updatedDomain) throw new Error("Domain configuration not found");
+    return updatedDomain;
+  }
+  async deleteDomainConfiguration(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(domainConfigurations).where(eq(domainConfigurations.id, id));
+  }
+  async verifyDomain(id: string): Promise<DomainConfiguration> {
+    const dbInstance = this.ensureDB();
+    const [domain] = await dbInstance
+      .update(domainConfigurations)
+      .set({ status: 'VERIFIED', verifiedAt: new Date(), updatedAt: new Date() })
+      .where(eq(domainConfigurations.id, id))
+      .returning();
+    
+    if (!domain) throw new Error("Domain configuration not found");
+    return domain;
+  }
   async getGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile | undefined> { return undefined; }
   async createGoogleBusinessProfile(profile: InsertGoogleBusinessProfile): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
   async updateGoogleBusinessProfile(clientId: string, updates: Partial<InsertGoogleBusinessProfile>): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
