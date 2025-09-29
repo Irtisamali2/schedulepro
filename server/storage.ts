@@ -1043,7 +1043,7 @@ class MemStorage implements IStorage {
 
   async createLead(lead: InsertLead): Promise<Lead> {
     const newLead: Lead = {
-      id: `lead_${this.leads.length + 1}`,
+      id: `lead_${Date.now()}`,
       clientId: lead.clientId,
       name: lead.name,
       email: lead.email,

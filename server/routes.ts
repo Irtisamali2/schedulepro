@@ -2550,9 +2550,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId } = req.params;
       const leadData = { ...insertLeadSchema.parse(req.body), clientId };
+      console.log("Creating lead with data:", leadData);
       const lead = await storage.createLead(leadData);
+      console.log("Lead created successfully:", lead.id);
       res.json(lead);
     } catch (error) {
+      console.error("Lead creation error:", error);
       res.status(500).json({ error: "Failed to create lead" });
     }
   });
