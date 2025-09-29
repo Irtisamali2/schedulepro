@@ -2259,6 +2259,42 @@ class PostgreSQLStorage implements IStorage {
         );
       `);
       
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "clients" (
+          "id" text PRIMARY KEY NOT NULL,
+          "business_name" text NOT NULL,
+          "contact_person" text NOT NULL,
+          "email" text NOT NULL UNIQUE,
+          "phone" text,
+          "business_address" text,
+          "industry" text,
+          "business_description" text,
+          "logo_url" text,
+          "operating_hours" text,
+          "time_zone" text,
+          "plan_id" text NOT NULL,
+          "status" text DEFAULT 'TRIAL' NOT NULL,
+          "user_id" text NOT NULL UNIQUE,
+          "onboarding_session_id" text,
+          "stripe_customer_id" text,
+          "stripe_subscription_id" text,
+          "stripe_public_key" text,
+          "stripe_secret_key" text,
+          "stripe_account_id" text,
+          "smtp_host" text,
+          "smtp_port" integer,
+          "smtp_username" text,
+          "smtp_password" text,
+          "smtp_from_email" text,
+          "smtp_from_name" text,
+          "smtp_secure" boolean DEFAULT true,
+          "smtp_enabled" boolean DEFAULT false,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now(),
+          "last_login" timestamp
+        );
+      `);
+      
       console.log("✅ Database tables created successfully");
     } catch (error) {
       console.error("❌ Table creation failed:", error);
@@ -2561,7 +2597,45 @@ class PostgreSQLStorage implements IStorage {
   async getClients(): Promise<Client[]> { return []; }
   async getClient(id: string): Promise<Client | undefined> { return undefined; }
   async getClientByEmail(email: string): Promise<Client | undefined> { return undefined; }
-  async createClient(client: InsertClient): Promise<Client> { throw new Error("Not implemented"); }
+  async createClient(client: InsertClient): Promise<Client> {
+    const dbInstance = this.ensureDB();
+    const clientId = `client_${Date.now()}`;
+    
+    const [newClient] = await dbInstance.insert(clients).values({
+      id: clientId,
+      businessName: client.businessName,
+      contactPerson: client.contactPerson,
+      email: client.email,
+      phone: client.phone || null,
+      businessAddress: client.businessAddress || null,
+      industry: client.industry || null,
+      businessDescription: client.businessDescription || null,
+      logoUrl: client.logoUrl || null,
+      operatingHours: client.operatingHours || null,
+      timeZone: client.timeZone || null,
+      planId: client.planId,
+      status: client.status || "TRIAL",
+      userId: client.userId,
+      onboardingSessionId: client.onboardingSessionId || null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      stripePublicKey: null,
+      stripeSecretKey: null,
+      stripeAccountId: null,
+      smtpHost: null,
+      smtpPort: null,
+      smtpUsername: null,
+      smtpPassword: null,
+      smtpFromEmail: null,
+      smtpFromName: null,
+      smtpSecure: true,
+      smtpEnabled: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLogin: null
+    }).returning();
+    return newClient;
+  }
   async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> { throw new Error("Not implemented"); }
   async deleteClient(id: string): Promise<void> { throw new Error("Not implemented"); }
   async getServices(): Promise<Service[]> { return []; }

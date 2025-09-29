@@ -1,0 +1,73 @@
+Only Show Number of Lines
+*
+100
+Refresh
+Stream Logs
+Include Timestamps
+
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+
+🔧 Database Environment Detection:
+  - Replit: No
+  - Coolify: Yes
+  - Production: Yes
+  - DATABASE_URL present: Yes
+✅ Initializing Coolify PostgreSQL connection
+🔧 Environment: Coolify
+💾 Storage: PostgreSQL
+🗄️  Database URL present: Yes
+🚀 Production mode: Yes
+📊 Demo data: Disabled (Production)
+✅ Using PostgreSQL database for production data
+🔄 Initializing PostgreSQL database tables...
+🔧 Creating database tables if they don't exist...
+2025-09-29T14:19:16.072Z serving on port 5000
+✅ Database tables created successfully
+👤 Super admin user already exists, skipping creation
+📊 Demo data already exists, skipping seed
+✅ PostgreSQL database initialized successfully
+2025-09-29T14:19:20.036Z GET /api/health 200 in 7ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T14:19:50.112Z GET /api/health 200 in 2ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T14:20:14.640Z GET /api/public/plans 304 in 26ms :: [{"id":"plan_2","name":"Basic","monthlyPri…
+2025-09-29T14:20:14.693Z GET /api/onboarding/5610df05-6c72-4bdd-a3fc-4d127cb5b111 304 in 9ms :: {"id":"o…
+2025-09-29T14:20:17.337Z GET /api/public/plans 304 in 5ms :: [{"id":"plan_2","name":"Basic","monthlyPric…
+2025-09-29T14:20:19.260Z POST /api/onboarding/start 200 in 6ms :: {"sessionId":"67e47321-e1b6-4f62-9cc6-…
+2025-09-29T14:20:19.461Z GET /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120 200 in 5ms :: {"id":"o…
+2025-09-29T14:20:20.178Z GET /api/health 200 in 0ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T14:20:26.516Z PUT /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/step/2 200 in 6ms :: {…
+2025-09-29T14:20:43.527Z PUT /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/step/3 200 in 22ms :: …
+2025-09-29T14:20:46.707Z PUT /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/step/4 200 in 5ms :: {…
+2025-09-29T14:20:48.859Z PUT /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/step/5 200 in 4ms :: {…
+2025-09-29T14:20:49.159Z POST /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/complete 500 in 100ms…
+2025-09-29T14:20:50.267Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T14:20:53.824Z PUT /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/step/5 200 in 5ms :: {…
+2025-09-29T14:20:54.086Z POST /api/onboarding/67e47321-e1b6-4f62-9cc6-c561d7da8120/complete 500 in 93ms …
+Error completing onboarding: Error: Not implemented
+    at PostgreSQLStorage.createClient (file:///app/dist/index.js:3461:11)
+    at file:///app/dist/index.js:5358:36
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Error completing onboarding: error: duplicate key value violates unique constraint "users_email_key"
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createUser (file:///app/dist/index.js:3338:23)
+    at async file:///app/dist/index.js:5353:20 {
+  length: 214,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (email)=(irtisam.ali2@gmail.com) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'users_email_key',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
