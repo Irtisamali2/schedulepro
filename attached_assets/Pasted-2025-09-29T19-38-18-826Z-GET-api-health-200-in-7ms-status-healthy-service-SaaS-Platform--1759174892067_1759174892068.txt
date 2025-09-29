@@ -1,0 +1,55 @@
+2025-09-29T19:38:18.826Z GET /api/health 200 in 7ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T19:38:48.898Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T19:39:18.986Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T19:39:41.115Z GET /api/public/clients/client_1/website-staff 304 in 7ms :: []
+2025-09-29T19:39:41.131Z GET /api/public/client/client_1/services 304 in 33ms :: []
+Business owner access granted for services.view
+2025-09-29T19:39:41.948Z GET /api/client/client_1759159759942/dashboard 304 in 16ms :: {"client":{"id":"…
+2025-09-29T19:39:41.963Z GET /api/client/client_1759159759942/services 304 in 29ms :: [{"id":"service_17…
+Business owner access granted for leads.view
+2025-09-29T19:39:42.120Z GET /api/client/client_1759159759942/leads 304 in 6ms :: [{"id":"lead_175916624…
+Business owner access granted for domains.view
+2025-09-29T19:39:42.123Z GET /api/clients/client_1/domains 304 in 2ms :: []
+Business owner access granted for appointments.view
+2025-09-29T19:39:42.126Z GET /api/client/client_1759159759942/appointment-slots 304 in 10ms :: [{"id":"s…
+2025-09-29T19:39:42.129Z GET /api/client/client_1759159759942/appointments 304 in 6ms :: []
+Business owner access granted for domains.create
+2025-09-29T19:39:43.125Z POST /api/clients/client_1/domains 500 in 12ms :: {"error":"Failed to create do…
+2025-09-29T19:39:49.056Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T19:39:57.875Z GET /api/review-platforms 304 in 1ms :: []
+2025-09-29T19:39:57.898Z GET /api/public/plans 304 in 22ms :: [{"id":"plan_1","name":"Free Demo","monthl…
+2025-09-29T19:40:07.156Z GET /api/public/clients/client_1759159759942/pricing-tiers 304 in 2ms :: []
+2025-09-29T19:40:07.157Z GET /api/public/client/client_1759159759942/website 404 in 1ms :: {"error":"Web…
+2025-09-29T19:40:07.160Z GET /api/public/clients/client_1759159759942/website-staff 304 in 1ms :: []
+2025-09-29T19:40:07.164Z GET /api/public/client/client_1759159759942 304 in 7ms :: {"id":"client_1759159…
+2025-09-29T19:40:07.165Z GET /api/public/clients/client_1759159759942/website-testimonials 304 in 1ms ::…
+2025-09-29T19:40:07.178Z GET /api/public/client/client_1759159759942/services 304 in 20ms :: [{"id":"ser…
+2025-09-29T19:40:10.195Z GET /api/public/client/client_1759159759942/website 404 in 1ms :: {"error":"Web…
+2025-09-29T19:40:19.119Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T19:40:29.275Z GET /api/public/client/client_1759159759942/website 404 in 0ms :: {"error":"Web…
+2025-09-29T19:40:49.181Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-09-29T19:41:19.245Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+Error creating domain configuration: error: column "custom_settings" of relation "domain_configurations" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createDomainConfiguration (file:///app/dist/index.js:4109:29)
+    at async file:///app/dist/index.js:7273:22 {
+  length: 150,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '283',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
