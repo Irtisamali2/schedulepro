@@ -2244,6 +2244,21 @@ class PostgreSQLStorage implements IStorage {
         );
       `);
       
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "contact_messages" (
+          "id" text PRIMARY KEY NOT NULL,
+          "name" text NOT NULL,
+          "email" text NOT NULL,
+          "subject" text NOT NULL,
+          "message" text NOT NULL,
+          "source" text DEFAULT 'website',
+          "status" text DEFAULT 'NEW',
+          "notes" text,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+      
       console.log("✅ Database tables created successfully");
     } catch (error) {
       console.error("❌ Table creation failed:", error);

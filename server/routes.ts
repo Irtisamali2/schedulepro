@@ -1184,6 +1184,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Alternative endpoint with underscore for consistency (used by some frontend components)
+  app.post("/api/contact_messages", createRateLimitMiddleware(contactFormLimiter), async (req, res) => {
+    try {
+      const messageData = insertContactMessageSchema.parse(req.body);
+      const message = await storage.createContactMessage(messageData);
+      
+      console.log("📧 New contact form submission:", {
+        id: message.id,
+        name: message.name,
+        email: message.email,
+        subject: message.subject
+      });
+      
+      res.json({ 
+        message: "Contact form submitted successfully",
+        id: message.id 
+      });
+    } catch (error) {
+      console.error("Error processing contact form:", error);
+      res.status(500).json({ error: "Failed to submit contact form" });
+    }
+  });
+
+  // Alternative GET endpoint with underscore for consistency
+  app.get("/api/contact_messages", async (req, res) => {
+    try {
+      const messages = await storage.getContactMessages();
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching contact messages:", error);
+      res.status(500).json({ error: "Failed to fetch contact messages" });
+    }
+  });
+
   // Update contact message status/notes (for super admin)
   app.put("/api/contact-messages/:id", async (req, res) => {
     try {
