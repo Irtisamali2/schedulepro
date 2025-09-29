@@ -2436,6 +2436,52 @@ class PostgreSQLStorage implements IStorage {
         );
       `);
       
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "domain_configurations" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL,
+          "domain_type" text NOT NULL,
+          "domain" text NOT NULL,
+          "subdomain" text,
+          "is_active" boolean DEFAULT false,
+          "verification_status" text DEFAULT 'PENDING',
+          "verification_token" text,
+          "verification_method" text DEFAULT 'DNS_TXT',
+          "ssl_status" text DEFAULT 'PENDING',
+          "ssl_certificate_id" text,
+          "ssl_issued_at" timestamp,
+          "ssl_expires_at" timestamp,
+          "dns_records" text,
+          "redirect_to_https" boolean DEFAULT true,
+          "status" text DEFAULT 'PENDING',
+          "verified_at" timestamp,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
+      await dbInstance.execute(sql`
+        CREATE TABLE IF NOT EXISTS "client_websites" (
+          "id" text PRIMARY KEY NOT NULL,
+          "client_id" text NOT NULL UNIQUE,
+          "subdomain" text NOT NULL UNIQUE,
+          "custom_domain" text,
+          "title" text NOT NULL,
+          "description" text,
+          "hero_image" text,
+          "primary_color" text DEFAULT '#3B82F6',
+          "secondary_color" text DEFAULT '#F3F4F6',
+          "contact_info" text,
+          "social_links" text,
+          "sections" text,
+          "show_prices" boolean DEFAULT true,
+          "allow_online_booking" boolean DEFAULT true,
+          "is_published" boolean DEFAULT false,
+          "created_at" timestamp DEFAULT now(),
+          "updated_at" timestamp DEFAULT now()
+        );
+      `);
+
       console.log("✅ Database tables created successfully");
     } catch (error) {
       console.error("❌ Table creation failed:", error);
@@ -3187,17 +3233,20 @@ class PostgreSQLStorage implements IStorage {
       clientId: payment.clientId,
       appointmentId: payment.appointmentId || null,
       amount: payment.amount,
-      tip: payment.tip || null,
-      totalAmount: payment.totalAmount,
       paymentMethod: payment.paymentMethod,
-      paymentStatus: payment.paymentStatus || "PENDING",
-      stripePaymentIntentId: payment.stripePaymentIntentId || null,
-      paypalOrderId: payment.paypalOrderId || null,
+      paymentProvider: payment.paymentProvider || null,
+      paymentIntentId: payment.paymentIntentId || null,
+      status: payment.status || "PENDING",
+      currency: payment.currency || "USD",
       description: payment.description || null,
       customerName: payment.customerName,
       customerEmail: payment.customerEmail,
+      metadata: payment.metadata || null,
+      processingFee: payment.processingFee || null,
+      netAmount: payment.netAmount || null,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      paidAt: payment.paidAt || null
     }).returning();
     return newPayment;
   }
