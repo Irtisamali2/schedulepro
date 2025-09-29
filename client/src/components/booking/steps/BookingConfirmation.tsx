@@ -14,6 +14,7 @@ interface BookingConfirmationProps {
   selectedService?: ClientService;
   selectedStylist?: Stylist;
   onNavigateBack?: () => void;
+  clientId?: string;
 }
 
 export default function BookingConfirmation({ 
@@ -21,7 +22,8 @@ export default function BookingConfirmation({
   updateBookingData, 
   selectedService, 
   selectedStylist,
-  onNavigateBack
+  onNavigateBack,
+  clientId = 'client_1'
 }: BookingConfirmationProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -60,7 +62,7 @@ export default function BookingConfirmation({
       };
 
       // Use public booking endpoint - no authentication required  
-      return apiRequest("/api/public/client/client_1/book", "POST", {
+      return apiRequest(`/api/public/client/${clientId}/book`, "POST", {
         serviceId: bookingData.serviceId,
         customerName: bookingData.clientName,
         customerEmail: bookingData.clientEmail,
@@ -113,7 +115,7 @@ export default function BookingConfirmation({
             if (selectedDate) {
               const dateStr = selectedDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
               queryClient.invalidateQueries({ 
-                queryKey: [`/api/public/client/client_1/available-slots`, dateStr]
+                queryKey: [`/api/public/client/${clientId}/available-slots`, dateStr]
               });
             }
             

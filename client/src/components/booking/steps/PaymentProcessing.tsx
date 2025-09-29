@@ -18,6 +18,7 @@ interface PaymentProcessingProps {
   updateBookingData: (updates: Partial<BookingData>) => void;
   selectedService?: ClientService;
   selectedStylist?: Stylist;
+  clientId?: string;
 }
 
 interface PaymentFormProps extends PaymentProcessingProps {
@@ -246,7 +247,8 @@ export default function PaymentProcessing({
   bookingData, 
   updateBookingData, 
   selectedService, 
-  selectedStylist 
+  selectedStylist,
+  clientId = 'client_1'
 }: PaymentProcessingProps) {
   const [clientSecret, setClientSecret] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
@@ -257,7 +259,7 @@ export default function PaymentProcessing({
       const servicePrice = selectedService?.price || 0;
 
       return apiRequest("/api/bookings/payment-intent", "POST", {
-        clientId: "client_1", // This would be dynamic in a real app
+        clientId: clientId,
         serviceId: bookingData.serviceId,
         tipPercentage: 0, // Could be added as a feature
         customerEmail: bookingData.clientEmail,
