@@ -13,7 +13,6 @@ export default function PrivacyPolicy() {
             <Link href="/">
               <div className="flex items-center space-x-2 cursor-pointer">
                 <img src="/scheduled-pro-logo.png" alt="Scheduled Pro" className="h-8 w-auto" />
-                <span className="text-xl font-bold text-primary">Scheduled Pro</span>
               </div>
             </Link>
             <Link href="/">
