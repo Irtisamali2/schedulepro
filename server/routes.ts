@@ -2549,7 +2549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/client/:clientId/leads", requirePermission('leads.create'), async (req, res) => {
     try {
       const { clientId } = req.params;
-      const leadData = { ...insertLeadSchema.parse(req.body), clientId };
+      const leadData = insertLeadSchema.parse({ ...req.body, clientId });
       console.log("Creating lead with data:", leadData);
       const lead = await storage.createLead(leadData);
       console.log("Lead created successfully:", lead.id);
