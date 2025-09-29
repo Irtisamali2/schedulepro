@@ -1,0 +1,84 @@
+🔄 Initializing PostgreSQL database tables...
+🔧 Creating database tables if they don't exist...
+2025-09-29T19:33:58.606Z serving on port 5000
+✅ Database tables created successfully
+🔧 Running database migrations for missing columns...
+✅ Database migrations completed successfully
+👤 Super admin user already exists, skipping creation
+📊 Demo data already exists, skipping seed
+✅ PostgreSQL database initialized successfully
+2025-09-29T19:34:02.784Z GET /api/health 200 in 8ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for services.view
+Business owner access granted for appointments.view
+Business owner access granted for leads.view
+2025-09-29T19:34:08.332Z GET /api/client/client_1759159759942/dashboard 304 in 29ms :: {"client":{"id":"…
+Business owner access granted for domains.view
+2025-09-29T19:34:08.336Z GET /api/clients/client_1/domains 304 in 3ms :: []
+2025-09-29T19:34:08.351Z GET /api/client/client_1759159759942/services 304 in 40ms :: [{"id":"service_17…
+2025-09-29T19:34:08.352Z GET /api/client/client_1759159759942/appointments 304 in 31ms :: []
+2025-09-29T19:34:08.363Z GET /api/client/client_1759159759942/appointment-slots 304 in 38ms :: [{"id":"s…
+2025-09-29T19:34:08.367Z GET /api/client/client_1759159759942/leads 304 in 39ms :: [{"id":"lead_17591662…
+Business owner access granted for domains.create
+Error creating domain configuration: error: column "custom_settings" of relation "domain_configurations" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createDomainConfiguration (file:///app/dist/index.js:4109:29)
+    at async file:///app/dist/index.js:7273:22 {
+  length: 150,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '283',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+2025-09-29T19:34:10.763Z POST /api/clients/client_1/domains 500 in 12ms :: {"error":"Failed to create do…
+Business owner access granted for services.view
+}
+2025-09-29T19:34:19.072Z GET /api/client/client_1759159759942/services 304 in 30ms :: [{"id":"service_17…
+2025-09-29T19:34:19.073Z GET /api/client/client_1759159759942/dashboard 304 in 27ms :: {"client":{"id":"…
+Business owner access granted for appointments.view
+2025-09-29T19:34:19.211Z GET /api/client/client_1759159759942/appointments 304 in 2ms :: []
+Business owner access granted for leads.view
+2025-09-29T19:34:19.216Z GET /api/client/client_1759159759942/leads 304 in 3ms :: [{"id":"lead_175916624…
+2025-09-29T19:34:19.254Z GET /api/client/client_1759159759942/appointment-slots 304 in 2ms :: [{"id":"sl…
+2025-09-29T19:34:32.848Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for domains.view
+2025-09-29T19:34:49.090Z GET /api/clients/client_1/domains 304 in 1ms :: []
+Business owner access granted for domains.create
+Error creating domain configuration: error: column "custom_settings" of relation "domain_configurations" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgreSQLStorage.createDomainConfiguration (file:///app/dist/index.js:4109:29)
+    at async file:///app/dist/index.js:7273:22 {
+  length: 150,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+2025-09-29T19:34:53.715Z POST /api/clients/client_1/domains 500 in 18ms :: {"error":"Failed to create do…
+2025-09-29T19:35:03.001Z GET /api/health 200 in 2ms :: {"status":"healthy","service":"SaaS Platform API"}
+  hint: undefined,
+  position: '283',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}

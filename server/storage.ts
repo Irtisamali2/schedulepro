@@ -1474,7 +1474,7 @@ class MemStorage implements IStorage {
       sslExpiresAt: domainConfig.sslExpiresAt || null,
       dnsRecords: domainConfig.dnsRecords || this.generateDnsRecords(domainConfig.domain),
       redirectToHttps: domainConfig.redirectToHttps ?? true,
-      customSettings: domainConfig.customSettings || null,
+      // customSettings: domainConfig.customSettings || null, // Temporarily disabled until database migration
       lastCheckedAt: null,
       verifiedAt: domainConfig.verifiedAt || null,
       createdAt: new Date(),

@@ -141,5 +141,5 @@ export const enhancedDomainConfigurationSchema = z.object({
   }),
   verificationMethod: z.enum(['DNS_TXT', 'FILE_UPLOAD', 'CNAME']).default('DNS_TXT'),
   redirectToHttps: z.boolean().default(true),
-  customSettings: z.string().optional()
+  // customSettings: z.string().optional() // Temporarily disabled until database migration
 });
