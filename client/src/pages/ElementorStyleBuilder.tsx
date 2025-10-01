@@ -66,6 +66,19 @@ export default function ElementorStyleBuilder() {
     enabled: !!clientId
   });
 
+  // Initialize sections from websiteData
+  useEffect(() => {
+    if (websiteData?.sections) {
+      try {
+        const parsedSections = JSON.parse(websiteData.sections);
+        setSections(parsedSections);
+      } catch (e) {
+        console.error('Error parsing sections:', e);
+        setSections([]);
+      }
+    }
+  }, [websiteData]);
+
   // Save website mutation
   const saveWebsiteMutation = useMutation({
     mutationFn: async (data: any) => {

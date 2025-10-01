@@ -230,6 +230,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
   const heroImageUrl = websiteSections.find(s => s.type === 'hero')?.settings?.heroImage || websiteData?.heroImage || heroImage;
   const pricingTitle = websiteSections.find(s => s.type === 'pricing')?.title || 'Summer Hair Hair Offers';
   const pricingDescription = websiteSections.find(s => s.type === 'pricing')?.description || 'Choose the perfect service for your hair care needs';
+  const newsletterTitle = websiteSections.find(s => s.type === 'newsletter')?.title || 'Subscribe to the Hair Newsletter';
+  const newsletterDescription = websiteSections.find(s => s.type === 'newsletter')?.description || 'Get exclusive tips, offers, and updates straight to your inbox';
+  const footerDescription = websiteSections.find(s => s.type === 'footer')?.description || 'Your trusted partner for beautiful, healthy hair';
   const primaryColor = websiteData?.primaryColor || '#a855f7'; // Default purple
   const secondaryColor = websiteData?.secondaryColor || '#ec4899'; // Default pink
 
@@ -270,29 +273,46 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
   return (
     <div className="min-h-screen bg-white" data-testid="figma-designed-website">
       {/* Header */}
-      <header className="bg-white shadow-sm" data-testid="header">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900" data-testid="business-name">
-                {client?.businessName || 'Graceful Hair'}
-              </h1>
+      <EditableSection
+        sectionId="header"
+        sectionName="Header"
+        isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('header') : undefined}
+        onSettings={onEditSection ? () => onEditSection('header') : undefined}
+      >
+        <header className="bg-white shadow-sm" data-testid="header">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <EditableText
+                  element="h1"
+                  className="text-2xl font-bold text-gray-900"
+                  data-testid="business-name"
+                  sectionId="header"
+                  elementId="business-name"
+                  onUpdate={(newText) => {
+                    updateContentMutation.mutate({ sectionId: 'header', field: 'businessName', value: newText });
+                  }}
+                >
+                  {client?.businessName || 'Graceful Hair'}
+                </EditableText>
+              </div>
+              <nav className="hidden md:flex space-x-8" data-testid="navigation">
+                <a href="#home" className="text-gray-700 hover:text-gray-900">Home</a>
+                <a href="#staff" className="text-gray-700 hover:text-gray-900">Staff</a>
+                <a href="#pricing" className="text-gray-700 hover:text-gray-900">Pricing</a>
+                <a href="#contact" className="text-gray-700 hover:text-gray-900">Contact</a>
+              </nav>
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full"
+                data-testid="contact-button"
+              >
+                Contact Us
+              </Button>
             </div>
-            <nav className="hidden md:flex space-x-8" data-testid="navigation">
-              <a href="#home" className="text-gray-700 hover:text-gray-900">Home</a>
-              <a href="#staff" className="text-gray-700 hover:text-gray-900">Staff</a>
-              <a href="#pricing" className="text-gray-700 hover:text-gray-900">Pricing</a>
-              <a href="#contact" className="text-gray-700 hover:text-gray-900">Contact</a>
-            </nav>
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full"
-              data-testid="contact-button"
-            >
-              Contact Us
-            </Button>
           </div>
-        </div>
-      </header>
+        </header>
+      </EditableSection>
 
       {/* Hero Section */}
       <EditableSection
@@ -522,177 +542,297 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
       </EditableSection>
 
       {/* Testimonial Section */}
-      <section 
-        className="py-20 relative"
-        style={{
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #581c87 100%)'
-        }}
-        data-testid="testimonial-section"
+      <EditableSection
+        sectionId="testimonials"
+        sectionName="Testimonials"
+        isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('testimonials') : undefined}
+        onSettings={onEditSection ? () => onEditSection('testimonials') : undefined}
       >
-        <div className="absolute inset-0 opacity-20">
-          <img src={contentsLogo} alt="" className="w-full h-full object-cover" />
-        </div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {displayTestimonials.length > 0 && (
-            <div className="text-center">
-              <div className="flex justify-center mb-8">
-                <div className="flex">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className="h-6 w-6 text-yellow-400 fill-yellow-400" 
-                      data-testid={`testimonial-star-${i}`}
-                    />
-                  ))}
+        <section 
+          className="py-20 relative"
+          style={{
+            background: 'linear-gradient(135deg, #1e1b4b 0%, #581c87 100%)'
+          }}
+          data-testid="testimonial-section"
+        >
+          <div className="absolute inset-0 opacity-20">
+            <img src={contentsLogo} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            {displayTestimonials.length > 0 && (
+              <div className="text-center">
+                <div className="flex justify-center mb-8">
+                  <div className="flex">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star 
+                        key={i} 
+                        className="h-6 w-6 text-yellow-400 fill-yellow-400" 
+                        data-testid={`testimonial-star-${i}`}
+                      />
+                    ))}
+                  </div>
                 </div>
+                <EditableText
+                  element="p"
+                  className="text-2xl lg:text-3xl text-white mb-8 italic leading-relaxed"
+                  data-testid="testimonial-quote"
+                  sectionId="testimonials"
+                  elementId={`testimonial-quote-${currentTestimonial}`}
+                  onUpdate={(newText) => {
+                    toast({ title: "Update Testimonial", description: "Testimonial editing coming soon", variant: "default" });
+                  }}
+                >
+                  {`"${displayTestimonials[currentTestimonial].testimonialText}"`}
+                </EditableText>
+                <div className="flex items-center justify-center">
+                  <img 
+                    src={displayTestimonials[currentTestimonial].customerImage} 
+                    alt={displayTestimonials[currentTestimonial].customerName}
+                    className="w-16 h-16 rounded-full mr-4"
+                    data-testid="testimonial-avatar"
+                  />
+                  <div className="text-left">
+                    <EditableText
+                      element="p"
+                      className="font-bold text-white"
+                      data-testid="testimonial-name"
+                      sectionId="testimonials"
+                      elementId={`testimonial-name-${currentTestimonial}`}
+                      onUpdate={(newText) => {
+                        toast({ title: "Update Testimonial", description: "Testimonial editing coming soon", variant: "default" });
+                      }}
+                    >
+                      {displayTestimonials[currentTestimonial].customerName}
+                    </EditableText>
+                    <EditableText
+                      element="p"
+                      className="text-pink-300"
+                      data-testid="testimonial-title"
+                      sectionId="testimonials"
+                      elementId={`testimonial-title-${currentTestimonial}`}
+                      onUpdate={(newText) => {
+                        toast({ title: "Update Testimonial", description: "Testimonial editing coming soon", variant: "default" });
+                      }}
+                    >
+                      {displayTestimonials[currentTestimonial].customerTitle}
+                    </EditableText>
+                  </div>
+                </div>
+                
+                {displayTestimonials.length > 1 && (
+                  <div className="flex justify-center mt-8 space-x-4">
+                    <button
+                      onClick={prevTestimonial}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-3 transition-colors"
+                      data-testid="testimonial-prev-button"
+                    >
+                      <ChevronLeft className="h-6 w-6 text-white" />
+                    </button>
+                    <button
+                      onClick={nextTestimonial}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-3 transition-colors"
+                      data-testid="testimonial-next-button"
+                    >
+                      <ChevronRight className="h-6 w-6 text-white" />
+                    </button>
+                  </div>
+                )}
               </div>
-              <blockquote className="text-2xl lg:text-3xl text-white mb-8 italic leading-relaxed" data-testid="testimonial-quote">
-                "{displayTestimonials[currentTestimonial].testimonialText}"
-              </blockquote>
-              <div className="flex items-center justify-center">
-                <img 
-                  src={displayTestimonials[currentTestimonial].customerImage} 
-                  alt={displayTestimonials[currentTestimonial].customerName}
-                  className="w-16 h-16 rounded-full mr-4"
-                  data-testid="testimonial-avatar"
-                />
-                <div className="text-left">
-                  <p className="font-bold text-white" data-testid="testimonial-name">
-                    {displayTestimonials[currentTestimonial].customerName}
-                  </p>
-                  <p className="text-pink-300" data-testid="testimonial-title">
-                    {displayTestimonials[currentTestimonial].customerTitle}
-                  </p>
-                </div>
-              </div>
-              
-              {displayTestimonials.length > 1 && (
-                <div className="flex justify-center mt-8 space-x-4">
-                  <button
-                    onClick={prevTestimonial}
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-3 transition-colors"
-                    data-testid="testimonial-prev-button"
-                  >
-                    <ChevronLeft className="h-6 w-6 text-white" />
-                  </button>
-                  <button
-                    onClick={nextTestimonial}
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-3 transition-colors"
-                    data-testid="testimonial-next-button"
-                  >
-                    <ChevronRight className="h-6 w-6 text-white" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      </EditableSection>
 
       {/* Newsletter Section */}
-      <section className="py-20 bg-gray-50" data-testid="newsletter-section">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="w-20 h-20 bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-6" data-testid="newsletter-logo">
-              <span className="text-white text-2xl font-bold">HS</span>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4" data-testid="newsletter-title">
-              Subscribe to the Hair Newsletter
-            </h2>
-            <p className="text-gray-600 mb-8" data-testid="newsletter-description">
-              Get exclusive tips, offers, and updates straight to your inbox
-            </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="flex-1"
-                required
-                data-testid="newsletter-email-input"
-              />
-              <Button 
-                type="submit" 
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2"
-                disabled={newsletterMutation.isPending}
-                data-testid="newsletter-submit-button"
+      <EditableSection
+        sectionId="newsletter"
+        sectionName="Newsletter"
+        isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('newsletter') : undefined}
+        onSettings={onEditSection ? () => onEditSection('newsletter') : undefined}
+      >
+        <section className="py-20 bg-gray-50" data-testid="newsletter-section">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="w-20 h-20 bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-6" data-testid="newsletter-logo">
+                <span className="text-white text-2xl font-bold">HS</span>
+              </div>
+              <EditableText
+                element="h2"
+                className="text-3xl font-bold text-gray-900 mb-4"
+                data-testid="newsletter-title"
+                sectionId="newsletter"
+                elementId="newsletter-title"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'newsletter', field: 'title', value: newText });
+                }}
               >
-                {newsletterMutation.isPending ? 'Subscribing...' : 'Subscribe'}
-              </Button>
-            </form>
+                {newsletterTitle}
+              </EditableText>
+              <EditableText
+                element="p"
+                className="text-gray-600 mb-8"
+                data-testid="newsletter-description"
+                sectionId="newsletter"
+                elementId="newsletter-description"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'newsletter', field: 'description', value: newText });
+                }}
+              >
+                {newsletterDescription}
+              </EditableText>
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="flex-1"
+                  required
+                  data-testid="newsletter-email-input"
+                />
+                <Button 
+                  type="submit" 
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2"
+                  disabled={newsletterMutation.isPending}
+                  data-testid="newsletter-submit-button"
+                >
+                  {newsletterMutation.isPending ? 'Subscribing...' : 'Subscribe'}
+                </Button>
+              </form>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </EditableSection>
 
 
       {/* Footer */}
-      <footer className="bg-purple-900 text-white py-16" data-testid="footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4" data-testid="footer-logo">
-                {client?.businessName || 'Graceful Hair'}
-              </h3>
-              <p className="text-purple-200 mb-4" data-testid="footer-description">
-                Your trusted partner for beautiful, healthy hair
+      <EditableSection
+        sectionId="footer"
+        sectionName="Footer"
+        isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('footer') : undefined}
+        onSettings={onEditSection ? () => onEditSection('footer') : undefined}
+      >
+        <footer className="bg-purple-900 text-white py-16" data-testid="footer">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div>
+                <EditableText
+                  element="h3"
+                  className="text-xl font-bold mb-4"
+                  data-testid="footer-logo"
+                  sectionId="footer"
+                  elementId="footer-logo"
+                  onUpdate={(newText) => {
+                    updateContentMutation.mutate({ sectionId: 'footer', field: 'businessName', value: newText });
+                  }}
+                >
+                  {client?.businessName || 'Graceful Hair'}
+                </EditableText>
+                <EditableText
+                  element="p"
+                  className="text-purple-200 mb-4"
+                  data-testid="footer-description"
+                  sectionId="footer"
+                  elementId="footer-description"
+                  onUpdate={(newText) => {
+                    updateContentMutation.mutate({ sectionId: 'footer', field: 'description', value: newText });
+                  }}
+                >
+                  {footerDescription}
+                </EditableText>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold mb-4" data-testid="footer-contact-title">Contact Info</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center" data-testid="footer-phone">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <EditableText
+                      element="span"
+                      className=""
+                      data-testid="footer-phone-text"
+                      sectionId="footer"
+                      elementId="footer-phone"
+                      onUpdate={(newText) => {
+                        updateContentMutation.mutate({ sectionId: 'footer', field: 'phone', value: newText });
+                      }}
+                    >
+                      {client?.phone || '(555) 123-4567'}
+                    </EditableText>
+                  </div>
+                  <div className="flex items-center" data-testid="footer-email">
+                    <Mail className="h-4 w-4 mr-2" />
+                    <EditableText
+                      element="span"
+                      className=""
+                      data-testid="footer-email-text"
+                      sectionId="footer"
+                      elementId="footer-email"
+                      onUpdate={(newText) => {
+                        updateContentMutation.mutate({ sectionId: 'footer', field: 'email', value: newText });
+                      }}
+                    >
+                      {client?.email || 'info@gracefulhair.com'}
+                    </EditableText>
+                  </div>
+                  <div className="flex items-center" data-testid="footer-address">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    <EditableText
+                      element="span"
+                      className=""
+                      data-testid="footer-address-text"
+                      sectionId="footer"
+                      elementId="footer-address"
+                      onUpdate={(newText) => {
+                        updateContentMutation.mutate({ sectionId: 'footer', field: 'address', value: newText });
+                      }}
+                    >
+                      {client?.businessAddress || '123 Beauty St, Hair City'}
+                    </EditableText>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold mb-4" data-testid="footer-services-title">Services</h4>
+                <ul className="space-y-2 text-purple-200">
+                  <li data-testid="footer-service-1">Hair Cutting</li>
+                  <li data-testid="footer-service-2">Hair Coloring</li>
+                  <li data-testid="footer-service-3">Hair Styling</li>
+                  <li data-testid="footer-service-4">Hair Treatments</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold mb-4" data-testid="footer-social-title">Follow Us</h4>
+                <div className="flex space-x-4">
+                  <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-facebook">
+                    <Facebook className="h-6 w-6" />
+                  </a>
+                  <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-instagram">
+                    <Instagram className="h-6 w-6" />
+                  </a>
+                  <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-twitter">
+                    <Twitter className="h-6 w-6" />
+                  </a>
+                  <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-youtube">
+                    <Youtube className="h-6 w-6" />
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-t border-purple-800 mt-12 pt-8 text-center">
+              <p className="text-purple-200" data-testid="footer-copyright">
+                © 2024 {client?.businessName || 'Graceful Hair'}. All rights reserved.
               </p>
             </div>
-            
-            <div>
-              <h4 className="text-lg font-semibold mb-4" data-testid="footer-contact-title">Contact Info</h4>
-              <div className="space-y-2">
-                <div className="flex items-center" data-testid="footer-phone">
-                  <Phone className="h-4 w-4 mr-2" />
-                  <span>{client?.phone || '(555) 123-4567'}</span>
-                </div>
-                <div className="flex items-center" data-testid="footer-email">
-                  <Mail className="h-4 w-4 mr-2" />
-                  <span>{client?.email || 'info@gracefulhair.com'}</span>
-                </div>
-                <div className="flex items-center" data-testid="footer-address">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <span>{client?.businessAddress || '123 Beauty St, Hair City'}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="text-lg font-semibold mb-4" data-testid="footer-services-title">Services</h4>
-              <ul className="space-y-2 text-purple-200">
-                <li data-testid="footer-service-1">Hair Cutting</li>
-                <li data-testid="footer-service-2">Hair Coloring</li>
-                <li data-testid="footer-service-3">Hair Styling</li>
-                <li data-testid="footer-service-4">Hair Treatments</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-lg font-semibold mb-4" data-testid="footer-social-title">Follow Us</h4>
-              <div className="flex space-x-4">
-                <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-facebook">
-                  <Facebook className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-instagram">
-                  <Instagram className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-twitter">
-                  <Twitter className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-purple-200 hover:text-white" data-testid="footer-youtube">
-                  <Youtube className="h-6 w-6" />
-                </a>
-              </div>
-            </div>
           </div>
-          
-          <div className="border-t border-purple-800 mt-12 pt-8 text-center">
-            <p className="text-purple-200" data-testid="footer-copyright">
-              © 2024 {client?.businessName || 'Graceful Hair'}. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </EditableSection>
 
     </div>
   );
