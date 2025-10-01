@@ -19,6 +19,7 @@ import {
   Youtube
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import EditableSection from '@/components/EditableSection';
 
 // Import Figma assets
 import heroImage from '@assets/Image (3)_1757807495639.png';
@@ -241,143 +242,161 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
       </header>
 
       {/* Hero Section */}
-      <section 
-        id="home" 
-        className="relative min-h-screen flex items-center"
-        style={{
-          background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
-        }}
-        data-testid="hero-section"
+      <EditableSection
+        sectionId="hero"
+        sectionName="Hero Section"
+        isEditable={isBuilderPreview}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="text-white">
-            <h1 className="text-5xl lg:text-7xl font-bold mb-6" data-testid="hero-title">
-              {heroTitle}
-            </h1>
-            <p className="text-xl mb-8 opacity-90" data-testid="hero-description">
-              {heroContent}
-            </p>
-            <Link href={`/booking/${clientId}`}>
-              <Button 
-                className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold"
-                data-testid="hero-cta-button"
-              >
-                Book Appointment
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+        <section 
+          id="home" 
+          className="relative min-h-screen flex items-center"
+          style={{
+            background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
+          }}
+          data-testid="hero-section"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="text-white">
+              <h1 className="text-5xl lg:text-7xl font-bold mb-6" data-testid="hero-title">
+                {heroTitle}
+              </h1>
+              <p className="text-xl mb-8 opacity-90" data-testid="hero-description">
+                {heroContent}
+              </p>
+              <Link href={`/booking/${clientId}`}>
+                <Button 
+                  className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold"
+                  data-testid="hero-cta-button"
+                >
+                  Book Appointment
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+            <div className="relative" data-testid="hero-image">
+              <img 
+                src={heroImageUrl} 
+                alt="Woman with beautiful hair" 
+                className="w-full h-auto rounded-lg shadow-2xl"
+              />
+            </div>
           </div>
-          <div className="relative" data-testid="hero-image">
-            <img 
-              src={heroImageUrl} 
-              alt="Woman with beautiful hair" 
-              className="w-full h-auto rounded-lg shadow-2xl"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      </EditableSection>
 
       {/* Staff Section */}
-      <section id="staff" className="py-20 bg-gray-50" data-testid="staff-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4" data-testid="staff-title">
-              Meet With Our Professional Staff
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {displayStaff.map((member, index) => (
-              <div key={member.id} className="text-center" data-testid={`staff-member-${index}`}>
-                <div className="relative w-48 h-48 mx-auto mb-6">
-                  <img 
-                    src={member.profileImage} 
-                    alt={member.name}
-                    className="w-full h-full rounded-full object-cover shadow-lg"
-                    data-testid={`staff-image-${index}`}
-                  />
+      <EditableSection
+        sectionId="staff"
+        sectionName="Staff Section"
+        isEditable={isBuilderPreview}
+      >
+        <section id="staff" className="py-20 bg-gray-50" data-testid="staff-section">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4" data-testid="staff-title">
+                Meet With Our Professional Staff
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {displayStaff.map((member, index) => (
+                <div key={member.id} className="text-center" data-testid={`staff-member-${index}`}>
+                  <div className="relative w-48 h-48 mx-auto mb-6">
+                    <img 
+                      src={member.profileImage} 
+                      alt={member.name}
+                      className="w-full h-full rounded-full object-cover shadow-lg"
+                      data-testid={`staff-image-${index}`}
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2" data-testid={`staff-name-${index}`}>
+                    {member.name}
+                  </h3>
+                  <p className="text-gray-600 mb-1" data-testid={`staff-title-${index}`}>
+                    {member.title}
+                  </p>
+                  <p className="text-sm text-gray-500" data-testid={`staff-experience-${index}`}>
+                    {member.experience}
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2" data-testid={`staff-name-${index}`}>
-                  {member.name}
-                </h3>
-                <p className="text-gray-600 mb-1" data-testid={`staff-title-${index}`}>
-                  {member.title}
-                </p>
-                <p className="text-sm text-gray-500" data-testid={`staff-experience-${index}`}>
-                  {member.experience}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white" data-testid="pricing-section">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4" data-testid="pricing-title">
-              Summer Hair Hair Offers
-            </h2>
-            <p className="text-gray-600" data-testid="pricing-description">
-              Choose the perfect service for your hair care needs
-            </p>
-          </div>
-          {allDisplayPricing.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {allDisplayPricing.map((tier, index) => (
-                <Card 
-                  key={tier.id} 
-                  className={`relative ${tier.isPopular ? 'bg-purple-600 text-white scale-105 shadow-xl' : 'bg-white'}`}
-                  data-testid={`pricing-tier-${index}`}
-                >
-                  {tier.isPopular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-                  <CardContent className="p-6 text-center">
-                    <h3 className={`text-xl font-bold mb-4 ${tier.isPopular ? 'text-white' : 'text-gray-900'}`} data-testid={`tier-name-${index}`}>
-                      {tier.name}
-                    </h3>
-                    <div className="mb-6">
-                      <span className={`text-4xl font-bold ${tier.isPopular ? 'text-white' : 'text-gray-900'}`} data-testid={`tier-price-${index}`}>
-                        ${tier.price}
-                      </span>
-                    </div>
-                    <ul className="space-y-3 mb-8">
-                      {tier.features?.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-center" data-testid={`tier-feature-${index}-${featureIndex}`}>
-                          <CheckCircle className={`h-5 w-5 mr-3 ${tier.isPopular ? 'text-pink-300' : 'text-green-500'}`} />
-                          <span className={tier.isPopular ? 'text-white' : 'text-gray-600'}>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href={`/booking/${clientId}`}>
-                      <Button 
-                        className={`w-full ${
-                          tier.isPopular 
-                            ? 'bg-pink-500 hover:bg-pink-600 text-white' 
-                            : 'bg-purple-600 hover:bg-purple-700 text-white'
-                        }`}
-                        data-testid={`tier-button-${index}`}
-                      >
-                        {tier.buttonText || 'Book Now'}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-medium text-gray-600 mb-2">No Pricing Tiers Available</h3>
-              <p className="text-sm text-gray-500">Add pricing tiers in your admin dashboard to display services here</p>
+          </div>
+        </section>
+      </EditableSection>
+
+      {/* Pricing Section */}
+      <EditableSection
+        sectionId="pricing"
+        sectionName="Pricing Section"
+        isEditable={isBuilderPreview}
+      >
+        <section id="pricing" className="py-20 bg-white" data-testid="pricing-section">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4" data-testid="pricing-title">
+                Summer Hair Hair Offers
+              </h2>
+              <p className="text-gray-600" data-testid="pricing-description">
+                Choose the perfect service for your hair care needs
+              </p>
             </div>
-          )}
-        </div>
-      </section>
+            {allDisplayPricing.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {allDisplayPricing.map((tier, index) => (
+                  <Card 
+                    key={tier.id} 
+                    className={`relative ${tier.isPopular ? 'bg-purple-600 text-white scale-105 shadow-xl' : 'bg-white'}`}
+                    data-testid={`pricing-tier-${index}`}
+                  >
+                    {tier.isPopular && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="bg-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+                    <CardContent className="p-6 text-center">
+                      <h3 className={`text-xl font-bold mb-4 ${tier.isPopular ? 'text-white' : 'text-gray-900'}`} data-testid={`tier-name-${index}`}>
+                        {tier.name}
+                      </h3>
+                      <div className="mb-6">
+                        <span className={`text-4xl font-bold ${tier.isPopular ? 'text-white' : 'text-gray-900'}`} data-testid={`tier-price-${index}`}>
+                          ${tier.price}
+                        </span>
+                      </div>
+                      <ul className="space-y-3 mb-8">
+                        {tier.features?.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-center" data-testid={`tier-feature-${index}-${featureIndex}`}>
+                            <CheckCircle className={`h-5 w-5 mr-3 ${tier.isPopular ? 'text-pink-300' : 'text-green-500'}`} />
+                            <span className={tier.isPopular ? 'text-white' : 'text-gray-600'}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link href={`/booking/${clientId}`}>
+                        <Button 
+                          className={`w-full ${
+                            tier.isPopular 
+                              ? 'bg-pink-500 hover:bg-pink-600 text-white' 
+                              : 'bg-purple-600 hover:bg-purple-700 text-white'
+                          }`}
+                          data-testid={`tier-button-${index}`}
+                        >
+                          {tier.buttonText || 'Book Now'}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-600 mb-2">No Pricing Tiers Available</h3>
+                <p className="text-sm text-gray-500">Add pricing tiers in your admin dashboard to display services here</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </EditableSection>
 
       {/* Testimonial Section */}
       <section 
