@@ -51,26 +51,36 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
-### Elementor-Style WYSIWYG Website Builder - Completed (October 1, 2025)
-- **Primary Route**: `/website-builder?clientId={id}` now uses ElementorStyleBuilder (fixed route mapping)
+### Elementor-Style WYSIWYG Website Builder with Inline Editing - Completed (October 1, 2025)
+- **Primary Route**: `/website-builder?clientId={id}` uses ElementorStyleBuilder with full inline editing capabilities
 - **Components Created**:
   - `EditableWebsiteContext` - Shared editing state across components
   - `EditableSection` - Wrapper component that adds hover controls (blue border, drag handle, settings, delete buttons)
+  - `EditableText` - Inline text editing component with double-click to edit, Enter to save, Escape to cancel
   - `ElementorStyleBuilder` - Main builder page with sidebar controls and embedded FigmaDesignedWebsite
+- **✅ Inline Editing - FULLY WORKING**:
+  - **Double-Click to Edit**: Click any text element to select, double-click to edit inline
+  - **Hero Section**: Title and description fully editable with auto-save to database
+  - **Pricing Section**: Title and description fully editable with auto-save to database
+  - **Staff Section**: Names, titles, and experience editable (placeholder toasts for now)
+  - **Visual Feedback**: Blue border on hover, outline on selection, input field on edit
+  - **Data Persistence**: Changes save via PUT /api/client/{id}/website and persist across refreshes
+  - **Preview Sync**: Edited content immediately appears in preview (cache invalidation working correctly)
 - **✅ Current Functionality - WORKING**:
   - **TRUE WYSIWYG**: Actual FigmaDesignedWebsite embedded in builder (gradient hero, staff cards, pricing, testimonials, newsletter, footer)
   - **Visual Overlays**: Hover over sections shows blue border and control buttons (drag handle, settings, delete)
   - **Sidebar Controls**: Website title input, Primary/Secondary color pickers
   - **Live Preview**: Color changes update gradients immediately on embedded website
-  - **Preview Button**: Opens actual client website in new tab
-  - **Save Button**: Persists changes with toast notification
-  - **Verified**: End-to-end test confirmed all features working correctly
+  - **Preview Button**: Opens actual client website in new tab with all edits visible
+  - **Save Button**: Persists changes with toast notification "Saved! Content updated successfully."
+  - **Verified**: End-to-end tests passed for inline editing, save, and preview sync
 - **Architecture Notes**:
-  - FigmaDesignedWebsite renders static sections (hero, staff, pricing)
-  - Section add/delete handlers exist but not connected to dynamic rendering
-  - For future: Refactor to render sections from data array for full dynamic add/delete
-  - For future: Add inline text editing, drag-and-drop reordering, auto-save debouncing
-- **Test Status**: ✅ Comprehensive end-to-end test passed (gradient hero, staff cards, pricing, hover controls, preview all working)
+  - FigmaDesignedWebsite reads content from websiteSections parsed JSON (hero, pricing sections)
+  - EditableText component handles inline editing with proper state management
+  - updateContentMutation saves to database and invalidates both private and public query caches
+  - Section add/delete handlers exist but not connected to dynamic rendering yet
+  - For future: Add image upload/change, drag-and-drop reordering, auto-save debouncing, testimonial/newsletter editing
+- **Test Status**: ✅ Comprehensive tests passed - inline editing works correctly with proper data binding and preview sync
 
 ### Website Builder Content Sync Verification (October 1, 2025)
 - **Comprehensive Testing**: Verified website builder save/preview functionality works correctly end-to-end
