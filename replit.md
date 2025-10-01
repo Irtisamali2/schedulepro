@@ -51,6 +51,14 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Website Builder Architecture Fix - Background Color Persistence (October 1, 2025)
+- **CRITICAL FIX**: Fixed state synchronization between ElementorStyleBuilder and FigmaDesignedWebsite
+- **Root Cause**: ElementorStyleBuilder had local `sections` state that was stale, causing Save button to overwrite background color changes
+- **Solution**: Removed local state, made React Query cache the single source of truth at `/api/public/client/${clientId}/website`
+- **Implementation**: Both components now read from and write to the same React Query cache
+- **Result**: Background color changes via FigmaDesignedWebsite's Palette button persist correctly through Save button clicks
+- **Deployment-Ready**: Architectural fix tested and ready for Coolify production
+
 ### Website Builder Security Enhancement (October 1, 2025)
 - **CRITICAL FIX**: Added authentication protection to website management API endpoints
 - All `/api/client/:clientId/website` endpoints now require `requirePermission` middleware
