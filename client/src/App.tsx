@@ -50,9 +50,10 @@ function App() {
           <Route path="/team-dashboard" component={TeamDashboard} />
           
           {/* Website Builder */}
-          <Route path="/website-builder" component={AdvancedWebsiteBuilder} />
+          <Route path="/website-builder" component={ElementorStyleBuilder} />
           <Route path="/wysiwyg-builder" component={WYSIWYGWebsiteBuilder} />
           <Route path="/elementor-builder" component={ElementorStyleBuilder} />
+          <Route path="/advanced-builder" component={AdvancedWebsiteBuilder} />
           
           {/* Checkout */}
           <Route path="/checkout" component={CheckoutPage} />
