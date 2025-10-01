@@ -381,15 +381,43 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
                       data-testid={`staff-image-${index}`}
                     />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2" data-testid={`staff-name-${index}`}>
+                  <EditableText
+                    element="h3"
+                    className="text-xl font-bold text-gray-900 mb-2"
+                    data-testid={`staff-name-${index}`}
+                    sectionId={`staff-${member.id}`}
+                    elementId={`staff-name-${index}`}
+                    onUpdate={(newText) => {
+                      // Update staff member name via API
+                      toast({ title: "Update Staff", description: "Staff name editing coming soon", variant: "default" });
+                    }}
+                  >
                     {member.name}
-                  </h3>
-                  <p className="text-gray-600 mb-1" data-testid={`staff-title-${index}`}>
+                  </EditableText>
+                  <EditableText
+                    element="p"
+                    className="text-gray-600 mb-1"
+                    data-testid={`staff-title-${index}`}
+                    sectionId={`staff-${member.id}`}
+                    elementId={`staff-title-${index}`}
+                    onUpdate={(newText) => {
+                      toast({ title: "Update Staff", description: "Staff title editing coming soon", variant: "default" });
+                    }}
+                  >
                     {member.title}
-                  </p>
-                  <p className="text-sm text-gray-500" data-testid={`staff-experience-${index}`}>
+                  </EditableText>
+                  <EditableText
+                    element="p"
+                    className="text-sm text-gray-500"
+                    data-testid={`staff-experience-${index}`}
+                    sectionId={`staff-${member.id}`}
+                    elementId={`staff-experience-${index}`}
+                    onUpdate={(newText) => {
+                      toast({ title: "Update Staff", description: "Staff experience editing coming soon", variant: "default" });
+                    }}
+                  >
                     {member.experience}
-                  </p>
+                  </EditableText>
                 </div>
               ))}
             </div>
@@ -408,12 +436,30 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         <section id="pricing" className="py-20 bg-white" data-testid="pricing-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4" data-testid="pricing-title">
+              <EditableText
+                element="h2"
+                className="text-4xl font-bold text-gray-900 mb-4"
+                data-testid="pricing-title"
+                sectionId="pricing"
+                elementId="pricing-title"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'pricing', field: 'title', value: newText });
+                }}
+              >
                 Summer Hair Hair Offers
-              </h2>
-              <p className="text-gray-600" data-testid="pricing-description">
+              </EditableText>
+              <EditableText
+                element="p"
+                className="text-gray-600"
+                data-testid="pricing-description"
+                sectionId="pricing"
+                elementId="pricing-description"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'pricing', field: 'description', value: newText });
+                }}
+              >
                 Choose the perfect service for your hair care needs
-              </p>
+              </EditableText>
             </div>
             {allDisplayPricing.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
