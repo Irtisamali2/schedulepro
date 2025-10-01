@@ -8,6 +8,7 @@ import ClientLogin from "@/pages/ClientLogin";
 import TeamLogin from "@/pages/TeamLogin";
 import TeamDashboard from "@/pages/TeamDashboard";
 import AdvancedWebsiteBuilder from "@/pages/AdvancedWebsiteBuilder";
+import WYSIWYGWebsiteBuilder from "@/pages/WYSIWYGWebsiteBuilder";
 import CheckoutPage from "@/pages/CheckoutPage";
 import ClientWebsite from "@/pages/ClientWebsite";
 import ReviewPlatformConnections from "@/pages/ReviewPlatformConnections";
@@ -49,6 +50,7 @@ function App() {
           
           {/* Website Builder */}
           <Route path="/website-builder" component={AdvancedWebsiteBuilder} />
+          <Route path="/wysiwyg-builder" component={WYSIWYGWebsiteBuilder} />
           
           {/* Checkout */}
           <Route path="/checkout" component={CheckoutPage} />
