@@ -48,6 +48,9 @@ interface FigmaDesignedWebsiteProps {
   isBuilderPreview?: boolean;
   onDeleteSection?: (sectionId: string) => void;
   onEditSection?: (sectionId: string) => void;
+  onDragStart?: (sectionId: string) => void;
+  onDragOver?: (e: React.DragEvent, sectionId: string) => void;
+  onDragEnd?: () => void;
 }
 
 interface WebsiteStaff {
@@ -91,9 +94,20 @@ interface FigmaDesignedWebsiteProps {
   isBuilderPreview?: boolean;
   onDeleteSection?: (sectionId: string) => void;
   onEditSection?: (sectionId: string) => void;
+  onDragStart?: (sectionId: string) => void;
+  onDragOver?: (e: React.DragEvent, sectionId: string) => void;
+  onDragEnd?: () => void;
 }
 
-export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = false, onDeleteSection, onEditSection }: FigmaDesignedWebsiteProps) {
+export default function FigmaDesignedWebsite({ 
+  clientId, 
+  isBuilderPreview = false, 
+  onDeleteSection, 
+  onEditSection,
+  onDragStart,
+  onDragOver,
+  onDragEnd
+}: FigmaDesignedWebsiteProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -280,6 +294,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('header') : undefined}
         onSettings={onEditSection ? () => onEditSection('header') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <header className="bg-white shadow-sm" data-testid="header">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -322,6 +339,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('hero') : undefined}
         onSettings={onEditSection ? () => onEditSection('hero') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <section 
           id="home" 
@@ -385,6 +405,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('staff') : undefined}
         onSettings={onEditSection ? () => onEditSection('staff') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <section id="staff" className="py-20 bg-gray-50" data-testid="staff-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -464,6 +487,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('pricing') : undefined}
         onSettings={onEditSection ? () => onEditSection('pricing') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <section id="pricing" className="py-20 bg-white" data-testid="pricing-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -558,6 +584,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('testimonials') : undefined}
         onSettings={onEditSection ? () => onEditSection('testimonials') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <section 
           className="py-20 relative"
@@ -661,6 +690,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('contact') : undefined}
         onSettings={onEditSection ? () => onEditSection('contact') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <section id="contact" className="py-20 bg-white" data-testid="contact-section">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -709,6 +741,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('newsletter') : undefined}
         onSettings={onEditSection ? () => onEditSection('newsletter') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <section className="py-20 bg-gray-50" data-testid="newsletter-section">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -772,6 +807,9 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('footer') : undefined}
         onSettings={onEditSection ? () => onEditSection('footer') : undefined}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
         <footer className="bg-purple-900 text-white py-16" data-testid="footer">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -9,6 +9,9 @@ interface EditableSectionProps {
   isEditable?: boolean;
   onDelete?: () => void;
   onSettings?: () => void;
+  onDragStart?: (sectionId: string) => void;
+  onDragOver?: (e: React.DragEvent, sectionId: string) => void;
+  onDragEnd?: () => void;
   className?: string;
 }
 
@@ -19,6 +22,9 @@ export default function EditableSection({
   isEditable = false,
   onDelete,
   onSettings,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
   className
 }: EditableSectionProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -33,6 +39,10 @@ export default function EditableSection({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       data-section-id={sectionId}
+      draggable={isEditable}
+      onDragStart={() => onDragStart?.(sectionId)}
+      onDragOver={(e) => onDragOver?.(e, sectionId)}
+      onDragEnd={onDragEnd}
     >
       {/* Hover Overlay */}
       {isHovered && (

@@ -37,6 +37,7 @@ export default function ElementorStyleBuilder() {
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editText, setEditText] = useState('');
   const [sections, setSections] = useState<any[]>([]);
+  const [draggedSection, setDraggedSection] = useState<string | null>(null);
   
   // Get clientId from URL
   useEffect(() => {
@@ -143,6 +144,41 @@ export default function ElementorStyleBuilder() {
         sections: JSON.stringify(updatedSections)
       });
     }
+  };
+
+  // Drag and drop handlers for section reordering
+  const handleDragStart = (sectionId: string) => {
+    setDraggedSection(sectionId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetSectionId: string) => {
+    e.preventDefault();
+    
+    if (!draggedSection || draggedSection === targetSectionId) return;
+    
+    // Find indices
+    const draggedIndex = sections.findIndex(s => s.id === draggedSection);
+    const targetIndex = sections.findIndex(s => s.id === targetSectionId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    
+    // Reorder sections
+    const newSections = [...sections];
+    const [removed] = newSections.splice(draggedIndex, 1);
+    newSections.splice(targetIndex, 0, removed);
+    
+    setSections(newSections);
+  };
+
+  const handleDragEnd = () => {
+    if (draggedSection && websiteData) {
+      // Save the new order
+      saveWebsiteMutation.mutate({
+        ...websiteData,
+        sections: JSON.stringify(sections)
+      });
+    }
+    setDraggedSection(null);
   };
 
   if (!clientId) {
@@ -349,6 +385,9 @@ export default function ElementorStyleBuilder() {
                         description: `Editing ${sectionId} section`
                       });
                     }}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
                   />
                   
                   {/* Editing overlay hints */}
