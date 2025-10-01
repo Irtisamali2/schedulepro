@@ -23,6 +23,7 @@ import EditableSection from '@/components/EditableSection';
 import EditableText from '@/components/EditableText';
 import { useEditableWebsite } from '@/contexts/EditableWebsiteContext';
 import { apiRequest } from '@/lib/queryClient';
+import LeadForm from '@/components/LeadForm';
 
 // Import Figma assets
 import heroImage from '@assets/Image (3)_1757807495639.png';
@@ -388,9 +389,18 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         <section id="staff" className="py-20 bg-gray-50" data-testid="staff-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4" data-testid="staff-title">
-                Meet With Our Professional Staff
-              </h2>
+              <EditableText
+                element="h2"
+                className="text-4xl font-bold text-gray-900 mb-4"
+                data-testid="staff-title"
+                sectionId="staff"
+                elementId="staff-title"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'staff', field: 'title', value: newText });
+                }}
+              >
+                {websiteSections.find(s => s.type === 'staff')?.title || 'Meet With Our Professional Staff'}
+              </EditableText>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {displayStaff.map((member, index) => (
@@ -640,6 +650,54 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
                 )}
               </div>
             )}
+          </div>
+        </section>
+      </EditableSection>
+
+      {/* Lead Contact Section */}
+      <EditableSection
+        sectionId="contact"
+        sectionName="Lead Contact"
+        isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('contact') : undefined}
+        onSettings={onEditSection ? () => onEditSection('contact') : undefined}
+      >
+        <section id="contact" className="py-20 bg-white" data-testid="contact-section">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <EditableText
+                element="h2"
+                className="text-4xl font-bold text-gray-900 mb-4"
+                data-testid="contact-title"
+                sectionId="contact"
+                elementId="contact-title"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'contact', field: 'title', value: newText });
+                }}
+              >
+                {websiteSections.find(s => s.type === 'contact')?.title || 'Get Your Free Quote'}
+              </EditableText>
+              <EditableText
+                element="p"
+                className="text-gray-600 text-lg"
+                data-testid="contact-description"
+                sectionId="contact"
+                elementId="contact-description"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'contact', field: 'description', value: newText });
+                }}
+              >
+                {websiteSections.find(s => s.type === 'contact')?.description || 'Fill out the form below and we\'ll get back to you within 24 hours.'}
+              </EditableText>
+            </div>
+            <LeadForm 
+              clientId={clientId}
+              title=""
+              description=""
+              buttonText="Submit Request"
+              buttonColor={primaryColor}
+              className="bg-gray-50 rounded-lg p-8"
+            />
           </div>
         </section>
       </EditableSection>

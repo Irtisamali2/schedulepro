@@ -317,7 +317,7 @@ export default function ElementorStyleBuilder() {
                     data-testid="add-contact-section"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Contact Section
+                    Lead Contact Section
                   </Button>
                 </div>
               </div>
