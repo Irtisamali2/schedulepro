@@ -51,6 +51,15 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Website Builder Security Enhancement (October 1, 2025)
+- **CRITICAL FIX**: Added authentication protection to website management API endpoints
+- All `/api/client/:clientId/website` endpoints now require `requirePermission` middleware
+- Business owners automatically granted full access via wildcard permissions `['*']`
+- Team members must have specific `website.view` and `website.edit` permissions
+- Prevents unauthorized access to other clients' websites
+- Each client's website is isolated and protected from cross-client access
+- **Deployment-Ready**: Security fix applied and tested, safe for Coolify production
+
 ### Elementor-Style WYSIWYG Website Builder - Complete Inline Editing (October 1, 2025)
 - **Primary Route**: `/website-builder?clientId={id}` uses ElementorStyleBuilder with full inline editing from header to footer
 - **Components Created**:

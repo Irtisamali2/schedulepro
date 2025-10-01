@@ -2653,7 +2653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client Website Management
-  app.get("/api/client/:clientId/website", async (req, res) => {
+  app.get("/api/client/:clientId/website", requirePermission('website.view'), async (req, res) => {
     try {
       const { clientId } = req.params;
       const website = await storage.getClientWebsite(clientId);
@@ -2663,7 +2663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/client/:clientId/website", async (req, res) => {
+  app.post("/api/client/:clientId/website", requirePermission('website.edit'), async (req, res) => {
     try {
       const { clientId } = req.params;
       console.log('POST website request body:', req.body);
@@ -2676,7 +2676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/client/:clientId/website", async (req, res) => {
+  app.put("/api/client/:clientId/website", requirePermission('website.edit'), async (req, res) => {
     try {
       const { clientId } = req.params;
       const updates = req.body;
