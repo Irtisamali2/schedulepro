@@ -51,6 +51,18 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Website Builder Synchronization Fix (October 1, 2025)
+- **CRITICAL BUG FIX**: Fixed complete disconnect between Website Builder and Client Website
+- **Root Cause**: `FigmaDesignedWebsite.tsx` was rendering a hardcoded template instead of dynamically rendering sections from builder database
+- **Impact**: All builder edits (sections, colors, text, images) were being saved but not appearing on the actual public client website
+- **Fix Applied**: Complete rewrite of `FigmaDesignedWebsite.tsx` to:
+  - Fetch and parse sections array from `/api/public/client/${clientId}/website`
+  - Dynamically render each section based on its type (hero, about, staff, pricing, testimonials, newsletter, booking, footer, etc.)
+  - Apply all builder settings: colors, gradients, backgrounds, padding, alignment, custom data
+  - Support 15+ section types with extensible switch-based renderer
+- **Verification**: End-to-end test confirmed 100% synchronization between builder and public website
+- **Result**: Website Builder now provides true WYSIWYG experience - all edits immediately appear on public site after save
+
 ### Domain Configuration Database Fix (October 1, 2025)
 - **CRITICAL PRODUCTION FIX**: Fixed domain configuration not persisting/displaying in Coolify production
 - **Root Cause**: `getDomainConfigurations()` method in DBStorage was a stub returning empty array instead of querying database
