@@ -36,7 +36,6 @@ export default function ElementorStyleBuilder() {
   const [editingElement, setEditingElement] = useState<any>(null);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editText, setEditText] = useState('');
-  const [sections, setSections] = useState<any[]>([]);
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
   
   // Get clientId from URL
@@ -61,24 +60,21 @@ export default function ElementorStyleBuilder() {
     enabled: !!clientId
   });
 
-  // Fetch website data
+  // Fetch website data - Use public endpoint for consistency with FigmaDesignedWebsite
   const { data: websiteData, isLoading } = useQuery<any>({
-    queryKey: [`/api/client/${clientId}/website`],
+    queryKey: [`/api/public/client/${clientId}/website`],
     enabled: !!clientId
   });
 
-  // Initialize sections from websiteData
-  useEffect(() => {
-    if (websiteData?.sections) {
-      try {
-        const parsedSections = JSON.parse(websiteData.sections);
-        setSections(parsedSections);
-      } catch (e) {
-        console.error('Error parsing sections:', e);
-        setSections([]);
-      }
+  // Parse sections from websiteData (no local state needed)
+  const sections = websiteData?.sections ? (() => {
+    try {
+      return JSON.parse(websiteData.sections);
+    } catch (e) {
+      console.error('Error parsing sections:', e);
+      return [];
     }
-  }, [websiteData]);
+  })() : [];
 
   // Save website mutation
   const saveWebsiteMutation = useMutation({
@@ -87,7 +83,9 @@ export default function ElementorStyleBuilder() {
       return await apiRequest(`/api/client/${clientId}/website`, method, data);
     },
     onSuccess: () => {
+      // Invalidate both authenticated and public caches to ensure consistency
       queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/website`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/public/client/${clientId}/website`] });
       toast({
         title: "Saved!",
         description: "Your website has been updated successfully."
@@ -124,7 +122,6 @@ export default function ElementorStyleBuilder() {
     };
     
     const updatedSections = [...sections, newSection];
-    setSections(updatedSections);
     
     if (websiteData) {
       saveWebsiteMutation.mutate({
@@ -135,8 +132,7 @@ export default function ElementorStyleBuilder() {
   };
 
   const handleDeleteSection = (sectionId: string) => {
-    const updatedSections = sections.filter(s => s.id !== sectionId);
-    setSections(updatedSections);
+    const updatedSections = sections.filter((s: any) => s.id !== sectionId);
     
     if (websiteData) {
       saveWebsiteMutation.mutate({
@@ -157,17 +153,23 @@ export default function ElementorStyleBuilder() {
     if (!draggedSection || draggedSection === targetSectionId) return;
     
     // Find indices
-    const draggedIndex = sections.findIndex(s => s.id === draggedSection);
-    const targetIndex = sections.findIndex(s => s.id === targetSectionId);
+    const draggedIndex = sections.findIndex((s: any) => s.id === draggedSection);
+    const targetIndex = sections.findIndex((s: any) => s.id === targetSectionId);
     
     if (draggedIndex === -1 || targetIndex === -1) return;
     
-    // Reorder sections
+    // Reorder sections - update cache optimistically
     const newSections = [...sections];
     const [removed] = newSections.splice(draggedIndex, 1);
     newSections.splice(targetIndex, 0, removed);
     
-    setSections(newSections);
+    // Update query cache optimistically
+    if (websiteData) {
+      queryClient.setQueryData([`/api/public/client/${clientId}/website`], {
+        ...websiteData,
+        sections: JSON.stringify(newSections)
+      });
+    }
   };
 
   const handleDragEnd = () => {

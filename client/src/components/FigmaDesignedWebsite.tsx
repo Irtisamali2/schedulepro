@@ -169,8 +169,22 @@ export default function FigmaDesignedWebsite({
   // Update website content mutation
   const updateContentMutation = useMutation({
     mutationFn: async (updates: { sectionId: string; field: string; value: string }) => {
+      // Get fresh website data from query cache
+      const currentWebsiteData = queryClient.getQueryData<any>([`/api/public/client/${clientId}/website`]);
+      
+      // Parse current sections
+      let currentSections: any[] = [];
+      if (currentWebsiteData?.sections) {
+        try {
+          currentSections = JSON.parse(currentWebsiteData.sections);
+        } catch (e) {
+          console.error('Error parsing current sections:', e);
+          currentSections = [];
+        }
+      }
+      
       // Find the section to update
-      const updatedSections = [...websiteSections];
+      const updatedSections = [...currentSections];
       const sectionIndex = updatedSections.findIndex(s => s.id === updates.sectionId || s.type === updates.sectionId);
       
       if (sectionIndex >= 0) {
@@ -192,7 +206,7 @@ export default function FigmaDesignedWebsite({
         `/api/client/${clientId}/website`,
         'PUT',
         {
-          ...websiteData,
+          ...currentWebsiteData,
           sections: JSON.stringify(updatedSections)
         }
       );
