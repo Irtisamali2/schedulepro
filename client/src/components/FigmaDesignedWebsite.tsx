@@ -228,6 +228,8 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
   const heroTitle = websiteSections.find(s => s.type === 'hero')?.title || 'Transform Your Look with Professional Hair Care';
   const heroContent = websiteSections.find(s => s.type === 'hero')?.content || 'Experience luxury hair services that bring out your natural beauty';
   const heroImageUrl = websiteSections.find(s => s.type === 'hero')?.settings?.heroImage || websiteData?.heroImage || heroImage;
+  const pricingTitle = websiteSections.find(s => s.type === 'pricing')?.title || 'Summer Hair Hair Offers';
+  const pricingDescription = websiteSections.find(s => s.type === 'pricing')?.description || 'Choose the perfect service for your hair care needs';
   const primaryColor = websiteData?.primaryColor || '#a855f7'; // Default purple
   const secondaryColor = websiteData?.secondaryColor || '#ec4899'; // Default pink
 
@@ -446,7 +448,7 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
                   updateContentMutation.mutate({ sectionId: 'pricing', field: 'title', value: newText });
                 }}
               >
-                Summer Hair Hair Offers
+                {pricingTitle}
               </EditableText>
               <EditableText
                 element="p"
@@ -458,7 +460,7 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
                   updateContentMutation.mutate({ sectionId: 'pricing', field: 'description', value: newText });
                 }}
               >
-                Choose the perfect service for your hair care needs
+                {pricingDescription}
               </EditableText>
             </div>
             {allDisplayPricing.length > 0 ? (
