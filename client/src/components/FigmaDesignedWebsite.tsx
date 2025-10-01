@@ -20,7 +20,9 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EditableSection from '@/components/EditableSection';
+import EditableText from '@/components/EditableText';
 import { useEditableWebsite } from '@/contexts/EditableWebsiteContext';
+import { apiRequest } from '@/lib/queryClient';
 
 // Import Figma assets
 import heroImage from '@assets/Image (3)_1757807495639.png';
@@ -148,6 +150,49 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
     }
   });
 
+  // Update website content mutation
+  const updateContentMutation = useMutation({
+    mutationFn: async (updates: { sectionId: string; field: string; value: string }) => {
+      // Find the section to update
+      const updatedSections = [...websiteSections];
+      const sectionIndex = updatedSections.findIndex(s => s.id === updates.sectionId || s.type === updates.sectionId);
+      
+      if (sectionIndex >= 0) {
+        updatedSections[sectionIndex] = {
+          ...updatedSections[sectionIndex],
+          [updates.field]: updates.value
+        };
+      } else {
+        // Create new section if it doesn't exist
+        updatedSections.push({
+          id: updates.sectionId,
+          type: updates.sectionId,
+          [updates.field]: updates.value
+        });
+      }
+
+      // Update website data
+      const response = await apiRequest(
+        `/api/client/${clientId}/website`,
+        'PUT',
+        {
+          ...websiteData,
+          sections: JSON.stringify(updatedSections)
+        }
+      );
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/public/client/${clientId}/website`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/website`] });
+      toast({ title: "Saved!", description: "Content updated successfully." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save changes.", variant: "destructive" });
+    }
+  });
+
 
   // Fallback to imported assets only if no admin data is available
   const defaultStaffWithAssets = [
@@ -265,12 +310,30 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="text-white">
-              <h1 className="text-5xl lg:text-7xl font-bold mb-6" data-testid="hero-title">
+              <EditableText
+                element="h1"
+                className="text-5xl lg:text-7xl font-bold mb-6"
+                data-testid="hero-title"
+                sectionId="hero"
+                elementId="hero-title"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'hero', field: 'title', value: newText });
+                }}
+              >
                 {heroTitle}
-              </h1>
-              <p className="text-xl mb-8 opacity-90" data-testid="hero-description">
+              </EditableText>
+              <EditableText
+                element="p"
+                className="text-xl mb-8 opacity-90"
+                data-testid="hero-description"
+                sectionId="hero"
+                elementId="hero-description"
+                onUpdate={(newText) => {
+                  updateContentMutation.mutate({ sectionId: 'hero', field: 'content', value: newText });
+                }}
+              >
                 {heroContent}
-              </p>
+              </EditableText>
               <Link href={`/booking/${clientId}`}>
                 <Button 
                   className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold"
