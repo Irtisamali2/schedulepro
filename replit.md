@@ -51,6 +51,31 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Elementor-Style WYSIWYG Website Builder - In Progress (October 1, 2025)
+- **Created New Builder**: `/elementor-builder?clientId={id}` - True WYSIWYG builder that embeds actual client website
+- **Components Created**:
+  - `EditableWebsiteContext` - Shared editing state across components
+  - `EditableSection` - Wrapper component that adds hover controls (blue border, drag handle, settings, delete buttons)
+  - `ElementorStyleBuilder` - Main builder page with sidebar controls and embedded FigmaDesignedWebsite
+- **Current Functionality**: ✅ Works
+  - Website embedded in builder with visual editing overlays
+  - Hover over sections shows blue border and control buttons
+  - Sidebar controls for website title and theme colors (primary/secondary)
+  - Color changes update gradients immediately
+  - Preview button opens actual client website in new tab
+  - Save button persists changes with toast notification
+- **Partially Implemented**:
+  - Section add buttons in sidebar (structure exists but rendering not data-driven)
+  - Section delete buttons (handlers exist but not connected to actual rendering)
+- **Not Yet Implemented**:
+  - Inline text editing (double-click text elements to edit)
+  - Drag-and-drop section reordering
+  - Auto-save debouncing (currently saves on every keystroke)
+  - Dynamic section rendering (sections are hardcoded, not driven by data)
+  - Query key consistency between builder and preview
+- **Architecture Note**: Current FigmaDesignedWebsite renders static sections (hero, staff, pricing). To fully support dynamic section add/delete, need to refactor to render sections from data array.
+- **Test Status**: ✅ Basic functionality tested and working (hover effects, colors, preview, save)
+
 ### Website Builder Content Sync Verification (October 1, 2025)
 - **Comprehensive Testing**: Verified website builder save/preview functionality works correctly end-to-end
 - **Test Results**: ✅ Users can edit content in sidebar textarea, save changes, and see updates in preview immediately

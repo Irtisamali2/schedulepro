@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EditableSection from '@/components/EditableSection';
+import { useEditableWebsite } from '@/contexts/EditableWebsiteContext';
 
 // Import Figma assets
 import heroImage from '@assets/Image (3)_1757807495639.png';
@@ -42,6 +43,8 @@ interface Client {
 interface FigmaDesignedWebsiteProps {
   clientId: string;
   isBuilderPreview?: boolean;
+  onDeleteSection?: (sectionId: string) => void;
+  onEditSection?: (sectionId: string) => void;
 }
 
 interface WebsiteStaff {
@@ -83,13 +86,16 @@ interface WebsiteTestimonial {
 interface FigmaDesignedWebsiteProps {
   clientId: string;
   isBuilderPreview?: boolean;
+  onDeleteSection?: (sectionId: string) => void;
+  onEditSection?: (sectionId: string) => void;
 }
 
-export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = false }: FigmaDesignedWebsiteProps) {
+export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = false, onDeleteSection, onEditSection }: FigmaDesignedWebsiteProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [newsletterEmail, setNewsletterEmail] = useState('');
+  const { isEditable, setSelectedElement, setToolbarPosition } = useEditableWebsite();
 
   // Fetch client data
   const { data: client } = useQuery<Client>({
@@ -246,6 +252,8 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         sectionId="hero"
         sectionName="Hero Section"
         isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('hero') : undefined}
+        onSettings={onEditSection ? () => onEditSection('hero') : undefined}
       >
         <section 
           id="home" 
@@ -289,6 +297,8 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         sectionId="staff"
         sectionName="Staff Section"
         isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('staff') : undefined}
+        onSettings={onEditSection ? () => onEditSection('staff') : undefined}
       >
         <section id="staff" className="py-20 bg-gray-50" data-testid="staff-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -329,6 +339,8 @@ export default function FigmaDesignedWebsite({ clientId, isBuilderPreview = fals
         sectionId="pricing"
         sectionName="Pricing Section"
         isEditable={isBuilderPreview}
+        onDelete={onDeleteSection ? () => onDeleteSection('pricing') : undefined}
+        onSettings={onEditSection ? () => onEditSection('pricing') : undefined}
       >
         <section id="pricing" className="py-20 bg-white" data-testid="pricing-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

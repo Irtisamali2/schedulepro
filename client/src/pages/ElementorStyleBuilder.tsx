@@ -36,6 +36,7 @@ export default function ElementorStyleBuilder() {
   const [editingElement, setEditingElement] = useState<any>(null);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editText, setEditText] = useState('');
+  const [sections, setSections] = useState<any[]>([]);
   
   // Get clientId from URL
   useEffect(() => {
@@ -97,6 +98,38 @@ export default function ElementorStyleBuilder() {
       title: "Updated",
       description: "Text has been updated"
     });
+  };
+
+  const handleAddSection = (sectionType: string) => {
+    const newSection = {
+      id: `section_${Date.now()}`,
+      type: sectionType,
+      title: `New ${sectionType} Section`,
+      content: 'Edit this content...',
+      settings: {}
+    };
+    
+    const updatedSections = [...sections, newSection];
+    setSections(updatedSections);
+    
+    if (websiteData) {
+      saveWebsiteMutation.mutate({
+        ...websiteData,
+        sections: JSON.stringify(updatedSections)
+      });
+    }
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    const updatedSections = sections.filter(s => s.id !== sectionId);
+    setSections(updatedSections);
+    
+    if (websiteData) {
+      saveWebsiteMutation.mutate({
+        ...websiteData,
+        sections: JSON.stringify(updatedSections)
+      });
+    }
   };
 
   if (!clientId) {
@@ -240,6 +273,7 @@ export default function ElementorStyleBuilder() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
+                    onClick={() => handleAddSection('hero')}
                     data-testid="add-hero-section"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -248,6 +282,7 @@ export default function ElementorStyleBuilder() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
+                    onClick={() => handleAddSection('about')}
                     data-testid="add-about-section"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -256,6 +291,7 @@ export default function ElementorStyleBuilder() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
+                    onClick={() => handleAddSection('services')}
                     data-testid="add-services-section"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -264,6 +300,7 @@ export default function ElementorStyleBuilder() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
+                    onClick={() => handleAddSection('contact')}
                     data-testid="add-contact-section"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -289,7 +326,17 @@ export default function ElementorStyleBuilder() {
                   data-testid="editable-website-container"
                 >
                   {/* Render actual client website */}
-                  <FigmaDesignedWebsite clientId={clientId} isBuilderPreview={true} />
+                  <FigmaDesignedWebsite 
+                    clientId={clientId} 
+                    isBuilderPreview={true}
+                    onDeleteSection={handleDeleteSection}
+                    onEditSection={(sectionId) => {
+                      toast({
+                        title: "Edit Section",
+                        description: `Editing ${sectionId} section`
+                      });
+                    }}
+                  />
                   
                   {/* Editing overlay hints */}
                   <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm z-50">
