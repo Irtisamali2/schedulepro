@@ -9,6 +9,7 @@ import TeamLogin from "@/pages/TeamLogin";
 import TeamDashboard from "@/pages/TeamDashboard";
 import AdvancedWebsiteBuilder from "@/pages/AdvancedWebsiteBuilder";
 import WYSIWYGWebsiteBuilder from "@/pages/WYSIWYGWebsiteBuilder";
+import ElementorStyleBuilder from "@/pages/ElementorStyleBuilder";
 import CheckoutPage from "@/pages/CheckoutPage";
 import ClientWebsite from "@/pages/ClientWebsite";
 import ReviewPlatformConnections from "@/pages/ReviewPlatformConnections";
@@ -51,6 +52,7 @@ function App() {
           {/* Website Builder */}
           <Route path="/website-builder" component={AdvancedWebsiteBuilder} />
           <Route path="/wysiwyg-builder" component={WYSIWYGWebsiteBuilder} />
+          <Route path="/elementor-builder" component={ElementorStyleBuilder} />
           
           {/* Checkout */}
           <Route path="/checkout" component={CheckoutPage} />
