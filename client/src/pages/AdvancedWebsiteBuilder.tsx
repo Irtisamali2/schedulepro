@@ -1057,6 +1057,21 @@ export default function AdvancedWebsiteBuilder() {
   });
 
   const handleSave = () => {
+    if (import.meta.env.DEV) {
+      console.log('📝 AdvancedWebsiteBuilder: Saving website data');
+      console.log('📝 Total sections:', websiteData.sections.length);
+      websiteData.sections.forEach((section, idx) => {
+        console.log(`📝 Section ${idx}: ${section.type} - ${section.title || 'No title'}`);
+        if (section.columns) {
+          section.columns.forEach((col, colIdx) => {
+            console.log(`  📝 Column ${colIdx}: ${col.elements.length} elements`);
+            col.elements.forEach((el, elIdx) => {
+              console.log(`    📝 Element ${elIdx}: ${el.type} - Content: "${el.content?.substring(0, 50) || 'No content'}"`);
+            });
+          });
+        }
+      });
+    }
     saveWebsiteMutation.mutate(websiteData);
   };
 

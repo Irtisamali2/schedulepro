@@ -2680,7 +2680,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId } = req.params;
       const updates = req.body;
-      console.log('PUT website request body:', updates);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 PUT website request for client:', clientId);
+        console.log('🔄 Request body keys:', Object.keys(updates));
+        if (updates.sections) {
+          try {
+            const parsedSections = typeof updates.sections === 'string' ? JSON.parse(updates.sections) : updates.sections;
+            console.log('🔄 Parsed sections count:', parsedSections.length);
+            parsedSections.forEach((section: any, idx: number) => {
+              console.log(`🔄 Section ${idx}: ${section.type} - ${section.title || 'No title'}`);
+              if (section.columns) {
+                section.columns.forEach((col: any, colIdx: number) => {
+                  console.log(`  🔄 Column ${colIdx}: ${col.elements?.length || 0} elements`);
+                  col.elements?.forEach((el: any, elIdx: number) => {
+                    console.log(`    🔄 Element ${elIdx}: ${el.type} - Content: "${el.content?.substring(0, 50) || 'No content'}"`);
+                  });
+                });
+              }
+            });
+          } catch (parseError) {
+            console.error('🔄 Error parsing sections:', parseError);
+          }
+        }
+      }
+      
       const website = await storage.updateClientWebsite(clientId, updates);
       res.json(website);
     } catch (error) {

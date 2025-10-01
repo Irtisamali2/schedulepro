@@ -51,6 +51,15 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Website Builder Content Sync Verification (October 1, 2025)
+- **Comprehensive Testing**: Verified website builder save/preview functionality works correctly end-to-end
+- **Test Results**: ✅ Users can edit content in sidebar textarea, save changes, and see updates in preview immediately
+- **False Positive Resolution**: Original bug report was due to test methodology (page.evaluate() bypassing React state)
+- **Data Flow Confirmed**: Content textarea → updateElement() → websiteData state → handleSave() → API PUT → database → preview
+- **Development Logging**: Added gated debug logging (DEV only) to track section/element content during save operations
+- **Route Verification**: Website builder correctly served at `/website-builder?clientId={id}`
+- **Conclusion**: Website builder content synchronization is fully functional with no data loss or sync issues
+
 ### Domain Configuration Database Fix (October 1, 2025)
 - **CRITICAL PRODUCTION FIX**: Fixed domain configuration not persisting/displaying in Coolify production
 - **Root Cause**: `getDomainConfigurations()` method in DBStorage was a stub returning empty array instead of querying database
