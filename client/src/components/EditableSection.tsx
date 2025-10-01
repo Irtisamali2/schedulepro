@@ -1,6 +1,6 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Trash2, Settings } from 'lucide-react';
+import { GripVertical, Trash2, Settings, Palette } from 'lucide-react';
 
 interface EditableSectionProps {
   children: ReactNode;
@@ -9,6 +9,7 @@ interface EditableSectionProps {
   isEditable?: boolean;
   onDelete?: () => void;
   onSettings?: () => void;
+  onBackgroundColorChange?: (color: string) => void;
   onDragStart?: (sectionId: string) => void;
   onDragOver?: (e: React.DragEvent, sectionId: string) => void;
   onDragEnd?: () => void;
@@ -22,12 +23,14 @@ export default function EditableSection({
   isEditable = false,
   onDelete,
   onSettings,
+  onBackgroundColorChange,
   onDragStart,
   onDragOver,
   onDragEnd,
   className
 }: EditableSectionProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   if (!isEditable) {
     return <>{children}</>;
@@ -62,6 +65,25 @@ export default function EditableSection({
             >
               <GripVertical className="h-4 w-4" />
             </Button>
+            {onBackgroundColorChange && (
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => colorInputRef.current?.click()}
+                  data-testid={`color-${sectionId}`}
+                  title="Change background color"
+                >
+                  <Palette className="h-4 w-4" />
+                </Button>
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  className="hidden"
+                  onChange={(e) => onBackgroundColorChange(e.target.value)}
+                />
+              </>
+            )}
             {onSettings && (
               <Button
                 size="sm"

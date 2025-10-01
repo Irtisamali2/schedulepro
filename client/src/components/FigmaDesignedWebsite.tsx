@@ -21,6 +21,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EditableSection from '@/components/EditableSection';
 import EditableText from '@/components/EditableText';
+import EditableImage from '@/components/EditableImage';
 import { useEditableWebsite } from '@/contexts/EditableWebsiteContext';
 import { apiRequest } from '@/lib/queryClient';
 import LeadForm from '@/components/LeadForm';
@@ -339,6 +340,13 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('hero') : undefined}
         onSettings={onEditSection ? () => onEditSection('hero') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'hero', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
@@ -347,7 +355,7 @@ export default function FigmaDesignedWebsite({
           id="home" 
           className="relative min-h-screen flex items-center"
           style={{
-            background: `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
+            background: websiteSections.find(s => s.type === 'hero')?.backgroundColor || `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
           }}
           data-testid="hero-section"
         >
@@ -388,10 +396,20 @@ export default function FigmaDesignedWebsite({
               </Link>
             </div>
             <div className="relative" data-testid="hero-image">
-              <img 
+              <EditableImage
                 src={heroImageUrl} 
-                alt="Woman with beautiful hair" 
+                alt="Hero image" 
                 className="w-full h-auto rounded-lg shadow-2xl"
+                data-testid="hero-image-img"
+                sectionId="hero"
+                elementId="hero-image"
+                onUpdate={(newImageUrl) => {
+                  updateContentMutation.mutate({ 
+                    sectionId: 'hero', 
+                    field: 'settings', 
+                    value: JSON.stringify({ ...websiteSections.find(s => s.type === 'hero')?.settings, heroImage: newImageUrl })
+                  });
+                }}
               />
             </div>
           </div>
@@ -405,11 +423,22 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('staff') : undefined}
         onSettings={onEditSection ? () => onEditSection('staff') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'staff', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section id="staff" className="py-20 bg-gray-50" data-testid="staff-section">
+        <section 
+          id="staff" 
+          className="py-20" 
+          style={{ backgroundColor: websiteSections.find(s => s.type === 'staff')?.backgroundColor || '#F9FAFB' }}
+          data-testid="staff-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <EditableText
@@ -429,11 +458,17 @@ export default function FigmaDesignedWebsite({
               {displayStaff.map((member, index) => (
                 <div key={member.id} className="text-center" data-testid={`staff-member-${index}`}>
                   <div className="relative w-48 h-48 mx-auto mb-6">
-                    <img 
+                    <EditableImage
                       src={member.profileImage} 
                       alt={member.name}
                       className="w-full h-full rounded-full object-cover shadow-lg"
                       data-testid={`staff-image-${index}`}
+                      sectionId={`staff-${member.id}`}
+                      elementId={`staff-image-${index}`}
+                      isCircular={true}
+                      onUpdate={(newImageUrl) => {
+                        toast({ title: "Staff Image", description: "Staff image upload coming soon - will integrate with staff management", variant: "default" });
+                      }}
                     />
                   </div>
                   <EditableText
@@ -487,11 +522,22 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('pricing') : undefined}
         onSettings={onEditSection ? () => onEditSection('pricing') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'pricing', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section id="pricing" className="py-20 bg-white" data-testid="pricing-section">
+        <section 
+          id="pricing" 
+          className="py-20" 
+          style={{ backgroundColor: websiteSections.find(s => s.type === 'pricing')?.backgroundColor || '#FFFFFF' }}
+          data-testid="pricing-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <EditableText
@@ -584,6 +630,13 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('testimonials') : undefined}
         onSettings={onEditSection ? () => onEditSection('testimonials') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'testimonials', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
@@ -591,7 +644,7 @@ export default function FigmaDesignedWebsite({
         <section 
           className="py-20 relative"
           style={{
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #581c87 100%)'
+            background: websiteSections.find(s => s.type === 'testimonials')?.backgroundColor || 'linear-gradient(135deg, #1e1b4b 0%, #581c87 100%)'
           }}
           data-testid="testimonial-section"
         >
@@ -690,11 +743,22 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('contact') : undefined}
         onSettings={onEditSection ? () => onEditSection('contact') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'contact', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section id="contact" className="py-20 bg-white" data-testid="contact-section">
+        <section 
+          id="contact" 
+          className="py-20" 
+          style={{ backgroundColor: websiteSections.find(s => s.type === 'contact')?.backgroundColor || '#FFFFFF' }}
+          data-testid="contact-section">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <EditableText
@@ -741,11 +805,21 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('newsletter') : undefined}
         onSettings={onEditSection ? () => onEditSection('newsletter') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'newsletter', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section className="py-20 bg-gray-50" data-testid="newsletter-section">
+        <section 
+          className="py-20" 
+          style={{ backgroundColor: websiteSections.find(s => s.type === 'newsletter')?.backgroundColor || '#F9FAFB' }}
+          data-testid="newsletter-section">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
               <div className="w-20 h-20 bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-6" data-testid="newsletter-logo">
@@ -807,11 +881,21 @@ export default function FigmaDesignedWebsite({
         isEditable={isBuilderPreview}
         onDelete={onDeleteSection ? () => onDeleteSection('footer') : undefined}
         onSettings={onEditSection ? () => onEditSection('footer') : undefined}
+        onBackgroundColorChange={(color) => {
+          updateContentMutation.mutate({ 
+            sectionId: 'footer', 
+            field: 'backgroundColor', 
+            value: color
+          });
+        }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <footer className="bg-purple-900 text-white py-16" data-testid="footer">
+        <footer 
+          className="text-white py-16" 
+          style={{ backgroundColor: websiteSections.find(s => s.type === 'footer')?.backgroundColor || '#581C87' }}
+          data-testid="footer">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
