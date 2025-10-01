@@ -3373,9 +3373,32 @@ class PostgreSQLStorage implements IStorage {
   async createPlatformReview(review: InsertPlatformReview): Promise<PlatformReview> { throw new Error("Not implemented"); }
   async updatePlatformReview(id: string, updates: Partial<InsertPlatformReview>): Promise<PlatformReview> { throw new Error("Not implemented"); }
   async deletePlatformReview(id: string): Promise<void> { throw new Error("Not implemented"); }
-  async getDomainConfigurations(clientId: string): Promise<DomainConfiguration[]> { return []; }
-  async getDomainConfiguration(id: string): Promise<DomainConfiguration | undefined> { return undefined; }
-  async getDomainConfigurationByDomain(domain: string): Promise<DomainConfiguration | undefined> { return undefined; }
+  async getDomainConfigurations(clientId: string): Promise<DomainConfiguration[]> {
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(domainConfigurations)
+      .where(eq(domainConfigurations.clientId, clientId));
+    return result;
+  }
+  async getDomainConfiguration(id: string): Promise<DomainConfiguration | undefined> {
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(domainConfigurations)
+      .where(eq(domainConfigurations.id, id))
+      .limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  }
+  async getDomainConfigurationByDomain(domain: string): Promise<DomainConfiguration | undefined> {
+    const dbInstance = this.ensureDB();
+    const result = await dbInstance
+      .select()
+      .from(domainConfigurations)
+      .where(eq(domainConfigurations.domain, domain))
+      .limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  }
   async createDomainConfiguration(domain: InsertDomainConfiguration): Promise<DomainConfiguration> {
     const dbInstance = this.ensureDB();
     const id = `domain_${Date.now()}`;

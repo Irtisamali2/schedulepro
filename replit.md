@@ -51,6 +51,16 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Domain Configuration Database Fix (October 1, 2025)
+- **CRITICAL PRODUCTION FIX**: Fixed domain configuration not persisting/displaying in Coolify production
+- **Root Cause**: `getDomainConfigurations()` method in DBStorage was a stub returning empty array instead of querying database
+- **Fix Applied**: Implemented proper Drizzle ORM database queries for:
+  - `getDomainConfigurations(clientId)` - Retrieves all domains for a client
+  - `getDomainConfiguration(id)` - Retrieves single domain by ID
+  - `getDomainConfigurationByDomain(domain)` - Retrieves domain by domain name
+- **Verification**: End-to-end test confirmed domains now save to database and appear in UI with DNS instructions
+- **Impact**: Clients can now successfully add custom domains for admin panels and client websites on Coolify production
+
 ### Database Schema & Production Deployment Fixes (September 29, 2025)
 - **CRITICAL PRODUCTION FIX**: Resolved database schema mismatches preventing CRUD operations in Coolify deployment
 - Fixed missing columns in `client_services` table: `stripe_product_id`, `stripe_price_id`, `enable_online_payments`
