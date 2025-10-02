@@ -113,13 +113,13 @@ export default function FigmaDesignedWebsite({
   const apiBase = isSubdomainRoute ? `/api/public/${subdomain}` : `/api/public/client/${clientId}`;
 
   // Fetch client data
-  const { data: client } = useQuery<Client>({
+  const { data: client, isLoading: isClientLoading } = useQuery<Client>({
     queryKey: isSubdomainRoute ? [`/api/public/${subdomain}`] : [`/api/public/client/${clientId}`],
     enabled: !!identifier
   });
 
   // Fetch website data from the same source as the builder
-  const { data: websiteData } = useQuery<any>({
+  const { data: websiteData, isLoading: isWebsiteLoading } = useQuery<any>({
     queryKey: [`${apiBase}/website`],
     enabled: !!identifier
   });
@@ -314,6 +314,31 @@ export default function FigmaDesignedWebsite({
   const prevTestimonial = () => {
     setCurrentTestimonial((prev) => (prev - 1 + displayTestimonials.length) % displayTestimonials.length);
   };
+
+  // Show loading state while critical data is fetching - prevents flash of default content
+  if (isClientLoading || isWebsiteLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center" data-testid="website-loading">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading website...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if client data failed to load (404 or other error)
+  if (!client && !isClientLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center" data-testid="website-not-found">
+        <div className="text-center max-w-md px-4">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Website Not Found</h1>
+          <p className="text-gray-600 mb-8">The website you're looking for doesn't exist or has been moved.</p>
+          <a href="/" className="text-purple-600 hover:text-purple-700 underline">Go to Home</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white" data-testid="figma-designed-website">
