@@ -30,11 +30,14 @@ export default function EditableSection({
   className
 }: EditableSectionProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   if (!isEditable) {
     return <>{children}</>;
   }
+
+  const showControls = isHovered || isColorPickerOpen;
 
   return (
     <div
@@ -48,7 +51,7 @@ export default function EditableSection({
       onDragEnd={onDragEnd}
     >
       {/* Hover Overlay */}
-      {isHovered && (
+      {showControls && (
         <>
           <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none z-10" />
           
@@ -70,7 +73,10 @@ export default function EditableSection({
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => colorInputRef.current?.click()}
+                  onClick={() => {
+                    setIsColorPickerOpen(true);
+                    colorInputRef.current?.click();
+                  }}
                   data-testid={`color-${sectionId}`}
                   title="Change background color"
                 >
@@ -80,7 +86,11 @@ export default function EditableSection({
                   ref={colorInputRef}
                   type="color"
                   className="hidden"
-                  onChange={(e) => onBackgroundColorChange(e.target.value)}
+                  onChange={(e) => {
+                    onBackgroundColorChange(e.target.value);
+                  }}
+                  onBlur={() => setIsColorPickerOpen(false)}
+                  onClick={() => setIsColorPickerOpen(true)}
                 />
               </>
             )}
