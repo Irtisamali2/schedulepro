@@ -51,18 +51,21 @@ Scheduled is a comprehensive business management platform designed for service-b
 ## Recent Changes
 
 ### Website Builder Auto-Initialization with Race Condition Fix (October 2, 2025)
-- **CRITICAL PRODUCTION FIX**: Website builder no longer fails with 404 or duplicate key errors on Coolify
+- **CRITICAL PRODUCTION FIX**: Website builder no longer fails with 404, duplicate key, or timestamp errors on Coolify
 - **Root Cause 1**: New clients on Coolify don't have website records in PostgreSQL, causing "Loading website..." to hang
 - **Root Cause 2**: `getClientWebsite()` and `getPublicWebsite()` methods in PostgreSQLStorage were not implemented (returned undefined)
+- **Root Cause 3**: PUT endpoint passed timestamp fields as strings, causing "value.toISOString is not a function" error
 - **Race Condition**: Multiple concurrent requests tried to create the same website, causing duplicate key errors
 - **Solution**: 
   - Modified `/api/public/client/:clientId/website` to auto-initialize with race condition handling
   - Implemented `getClientWebsite()` to properly query database by clientId
   - Implemented `getPublicWebsite()` to properly query database by subdomain
+  - Fixed PUT endpoint to exclude `id`, `createdAt`, `updatedAt` fields from updates (prevents timestamp conversion errors)
 - **Implementation**: 
   - Auto-creates default website using client's business info when missing
   - Try-catch wraps creation: if duplicate key error (PostgreSQL code 23505), fetches existing website instead
   - Guarantees unique subdomains with clientId suffix appended to business name
   - Proper database queries now retrieve existing websites correctly
-- **Result**: Website builder works instantly for all clients on both Replit and Coolify
+  - Timestamps managed by storage layer, not client requests
+- **Result**: Website builder works instantly for all clients on both Replit and Coolify, updates save successfully
 - **Deployment-Ready**: Production fix ready for Coolify deployment

@@ -2679,7 +2679,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/client/:clientId/website", requirePermission('website.edit'), async (req, res) => {
     try {
       const { clientId } = req.params;
-      const updates = req.body;
+      // Exclude auto-generated fields that shouldn't be updated by clients
+      const { id, createdAt, updatedAt, ...updates } = req.body;
       
       if (process.env.NODE_ENV === 'development') {
         console.log('🔄 PUT website request for client:', clientId);
