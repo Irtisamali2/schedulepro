@@ -50,6 +50,27 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Subdomain-Based Public URLs for Security (October 2, 2025)
+- **SECURITY IMPROVEMENT**: Client IDs are no longer exposed in public URLs
+- **Change**: Public website URLs now use subdomain instead of clientId
+- **Routes Updated**:
+  - **New Route**: `/site/:subdomain` (e.g., `/site/johns-salon-759942`)
+  - **Legacy Route**: `/client-website/:clientId` (kept for backward compatibility)
+- **API Endpoints**:
+  - New: `/api/public/:subdomain` and `/api/public/:subdomain/*`
+  - Legacy: `/api/public/client/:clientId/*` (backward compatible)
+- **Implementation**:
+  - Added `getClientBySubdomain()` storage method (joins through website table)
+  - Frontend intelligently uses subdomain when available, falls back to clientId
+  - All public-facing components updated to support both identifiers
+  - Subdomains are unique, URL-friendly identifiers derived from business name
+- **Benefits**:
+  - Enhanced security by not exposing internal database IDs
+  - More professional and user-friendly URLs
+  - SEO-friendly website addresses
+  - Maintains full backward compatibility
+- **Result**: Public URLs now use business-friendly subdomains while admin routes remain unchanged
+
 ### Website Builder Auto-Initialization with Race Condition Fix (October 2, 2025)
 - **CRITICAL PRODUCTION FIX**: Website builder no longer fails with 404, duplicate key, timestamp, or image upload errors on Coolify
 - **Root Cause 1**: New clients on Coolify don't have website records in PostgreSQL, causing "Loading website..." to hang
