@@ -2713,16 +2713,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public website data endpoint
+  // Public website data endpoint (auto-initializes if doesn't exist)
   app.get("/api/public/client/:clientId/website", async (req, res) => {
     try {
       const { clientId } = req.params;
-      const website = await storage.getClientWebsite(clientId);
+      let website = await storage.getClientWebsite(clientId);
+      
+      // Auto-initialize website if it doesn't exist (Coolify production fix)
       if (!website) {
-        return res.status(404).json({ error: "Website not found" });
+        console.log(`[Website Builder] Auto-initializing website for client ${clientId}`);
+        
+        // Get client info to populate defaults
+        const client = await storage.getClient(clientId);
+        if (!client) {
+          return res.status(404).json({ error: "Client not found" });
+        }
+        
+        // Generate subdomain from business name (guaranteed unique with clientId suffix)
+        const baseSubdomain = client.businessName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || 'business';
+        
+        // Append clientId suffix to ensure subdomain uniqueness
+        const clientSuffix = clientId.split('_')[1] || clientId.substring(clientId.length - 8);
+        const subdomain = `${baseSubdomain}-${clientSuffix}`;
+        
+        // Create default website with client info
+        const defaultWebsite = {
+          clientId,
+          subdomain,
+          title: `${client.businessName} - Professional Services`,
+          description: client.businessDescription || `${client.businessName} - Quality service you can trust`,
+          heroImage: null,
+          primaryColor: "#3B82F6",
+          secondaryColor: "#F3F4F6",
+          contactInfo: JSON.stringify({
+            phone: client.phone || "",
+            email: client.email || "",
+            address: client.businessAddress || ""
+          }),
+          socialLinks: JSON.stringify({}),
+          sections: JSON.stringify([
+            {
+              id: "hero",
+              type: "hero",
+              title: `Welcome to ${client.businessName}`,
+              content: client.businessDescription || "Professional services for all your needs.",
+              settings: {
+                backgroundColor: "#3B82F6",
+                textColor: "#FFFFFF",
+                alignment: "center",
+                padding: "large"
+              }
+            },
+            {
+              id: "about",
+              type: "about",
+              title: `About ${client.businessName}`,
+              content: client.businessAddress || "We are dedicated to providing exceptional service.",
+              settings: {
+                backgroundColor: "#FFFFFF",
+                textColor: "#1F2937",
+                alignment: "left",
+                padding: "medium"
+              }
+            }
+          ]),
+          showPrices: true,
+          allowOnlineBooking: true,
+          isPublished: false
+        };
+        
+        website = await storage.createClientWebsite(defaultWebsite);
+        console.log(`[Website Builder] Successfully initialized website ${website.id} for client ${clientId}`);
       }
+      
       res.json(website);
     } catch (error) {
+      console.error("[Website Builder] Error fetching/initializing website:", error);
       res.status(500).json({ error: "Failed to fetch website" });
     }
   });
