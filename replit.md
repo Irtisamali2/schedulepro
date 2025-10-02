@@ -50,6 +50,21 @@ Scheduled is a comprehensive business management platform designed for service-b
 
 ## Recent Changes
 
+### Image Upload Double-Stringify Bug Fix (October 2, 2025)
+- **CRITICAL BUG FIX**: Images now save and persist correctly in website builder
+- **Root Cause**: Double JSON stringification corrupted image data structure
+  - onUpdate passed: `JSON.stringify({ heroImage: base64 })` → string
+  - Mutation assigned string directly to settings field
+  - Database save did `JSON.stringify(sections)` again → double-stringify
+  - Reading back: `settings?.heroImage` failed (settings was string, not object)
+- **Solution**: Added JSON parsing in mutation before assignment
+  - Detects JSON strings and parses them to objects
+  - Prevents double-stringification while preserving raw values
+  - Works for all nested object fields (settings, metadata, etc.)
+- **Test Coverage**: E2E test confirms upload → save → refresh → persistence
+- **Production Ready**: Works in both Replit and Coolify (no env-specific code)
+- **Result**: All image uploads now save correctly to database and persist across sessions
+
 ### Subdomain-Based Public URLs for Security (October 2, 2025)
 - **SECURITY IMPROVEMENT**: Client IDs are no longer exposed in public URLs
 - **Change**: Public website URLs now use subdomain instead of clientId
