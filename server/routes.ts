@@ -2714,7 +2714,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public website data endpoint (auto-initializes if doesn't exist)
+  // Public website data endpoint by subdomain (new secure route with auto-initialization)
+  app.get("/api/public/:subdomain/website", async (req, res) => {
+    try {
+      const { subdomain } = req.params;
+      const client = await storage.getClientBySubdomain(subdomain);
+      
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      let website = await storage.getClientWebsite(client.id);
+      
+      // Auto-initialize website if it doesn't exist (Coolify production fix)
+      if (!website) {
+        console.log(`[Website Builder] Auto-initializing website for subdomain ${subdomain}`);
+        
+        // Create default website with client info
+        const defaultWebsite = {
+          clientId: client.id,
+          subdomain,
+          title: `${client.businessName} - Professional Services`,
+          description: client.businessDescription || `${client.businessName} - Quality service you can trust`,
+          heroImage: null,
+          primaryColor: "#3B82F6",
+          secondaryColor: "#F3F4F6",
+          contactInfo: JSON.stringify({
+            phone: client.phone || "",
+            email: client.email || "",
+            address: client.businessAddress || ""
+          }),
+          socialLinks: JSON.stringify({}),
+          sections: JSON.stringify([
+            {
+              id: "hero",
+              type: "hero",
+              title: `Welcome to ${client.businessName}`,
+              content: client.businessDescription || "Professional services for all your needs.",
+              settings: {
+                backgroundColor: "#3B82F6",
+                textColor: "#FFFFFF",
+                alignment: "center",
+                padding: "large"
+              }
+            },
+            {
+              id: "about",
+              type: "about",
+              title: `About ${client.businessName}`,
+              content: client.businessAddress || "We are dedicated to providing exceptional service.",
+              settings: {
+                backgroundColor: "#FFFFFF",
+                textColor: "#1F2937",
+                alignment: "left",
+                padding: "medium"
+              }
+            }
+          ])
+        };
+
+        try {
+          website = await storage.createClientWebsite(defaultWebsite);
+          console.log(`[Website Builder] Successfully initialized website ${website.id} for subdomain ${subdomain}`);
+        } catch (createError: any) {
+          // Handle race condition - if another request created it, fetch it
+          if (createError.code === '23505') { // PostgreSQL unique constraint violation
+            console.log(`[Website Builder] Race condition detected, fetching existing website for subdomain ${subdomain}`);
+            website = await storage.getClientWebsite(client.id);
+          } else {
+            throw createError;
+          }
+        }
+      }
+
+      res.json(website);
+    } catch (error) {
+      console.error("Error fetching public website:", error);
+      res.status(500).json({ error: "Failed to fetch website" });
+    }
+  });
+
+  // Legacy route (kept for backward compatibility)
   app.get("/api/public/client/:clientId/website", async (req, res) => {
     try {
       const { clientId } = req.params;
@@ -3122,7 +3202,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUBLIC CLIENT WEBSITE ROUTES
   // =============================================================================
 
-  // Get public client info
+  // Get public client info by subdomain (new secure route)
+  app.get("/api/public/:subdomain", async (req, res) => {
+    try {
+      const { subdomain } = req.params;
+      const client = await storage.getClientBySubdomain(subdomain);
+      
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      res.json(client);
+    } catch (error) {
+      console.error("Error fetching public client:", error);
+      res.status(500).json({ error: "Failed to fetch client" });
+    }
+  });
+
+  // Legacy route (kept for backward compatibility)
   app.get("/api/public/client/:clientId", async (req, res) => {
     try {
       const { clientId } = req.params;
@@ -3139,7 +3236,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get public client services
+  // Get public client services by subdomain (new secure route)
+  app.get("/api/public/:subdomain/services", async (req, res) => {
+    try {
+      const { subdomain } = req.params;
+      const client = await storage.getClientBySubdomain(subdomain);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      const services = await storage.getClientServices(client.id);
+      
+      // Only return active services for public view
+      const activeServices = services.filter(s => s.isActive);
+      res.json(activeServices);
+    } catch (error) {
+      console.error("Error fetching public services:", error);
+      res.status(500).json({ error: "Failed to fetch services" });
+    }
+  });
+
+  // Legacy route
   app.get("/api/public/client/:clientId/services", async (req, res) => {
     try {
       const { clientId } = req.params;
