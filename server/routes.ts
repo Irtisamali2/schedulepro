@@ -2785,8 +2785,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isPublished: false
         };
         
-        website = await storage.createClientWebsite(defaultWebsite);
-        console.log(`[Website Builder] Successfully initialized website ${website.id} for client ${clientId}`);
+        try {
+          website = await storage.createClientWebsite(defaultWebsite);
+          console.log(`[Website Builder] Successfully initialized website ${website.id} for client ${clientId}`);
+        } catch (createError: any) {
+          // Handle race condition: website was created by another request
+          if (createError?.code === '23505') {
+            console.log(`[Website Builder] Website already exists (race condition), fetching existing record`);
+            website = await storage.getClientWebsite(clientId);
+            if (!website) {
+              throw new Error("Website exists but cannot be retrieved");
+            }
+          } else {
+            throw createError;
+          }
+        }
       }
       
       res.json(website);

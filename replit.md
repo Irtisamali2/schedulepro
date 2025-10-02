@@ -47,3 +47,17 @@ Scheduled is a comprehensive business management platform designed for service-b
 - **Resend API:** For reliable email delivery.
 - **Google Business Profile API (implied):** For Google Business setup assistant.
 - **Third-party scheduling platforms:** (e.g., Vagaro, Booksy, GlossGenius, Square Appointments, Fresha, MindBody, Acuity Scheduling, Schedulicity, Jobber, ServiceTitan, Housecall Pro, FieldEdge, Gingr, Pet Sitter Plus, PawLoyalty, Kennel Connection, HoneyBook, Pixieset, Studio Ninja, Calendly, Setmore, SimplyBook.me, Appointy) for data import functionality.
+
+## Recent Changes
+
+### Website Builder Auto-Initialization with Race Condition Fix (October 2, 2025)
+- **CRITICAL PRODUCTION FIX**: Website builder no longer fails with 404 or duplicate key errors on Coolify
+- **Root Cause**: New clients on Coolify don't have website records in PostgreSQL, causing "Loading website..." to hang
+- **Race Condition**: Multiple concurrent requests tried to create the same website, causing duplicate key errors
+- **Solution**: Modified `/api/public/client/:clientId/website` to auto-initialize with race condition handling
+- **Implementation**: 
+  - Auto-creates default website using client's business info when missing
+  - Try-catch wraps creation: if duplicate key error (PostgreSQL code 23505), fetches existing website instead
+  - Guarantees unique subdomains with clientId suffix appended to business name
+- **Result**: Website builder works instantly for all clients, handles concurrent requests gracefully
+- **Deployment-Ready**: Production fix ready for Coolify deployment
