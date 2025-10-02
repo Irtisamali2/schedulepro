@@ -136,8 +136,8 @@ const requirePermission = (requiredPermission: string) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Enable JSON parsing
-  app.use(express.json());
+  // Enable JSON parsing with increased limit for image uploads
+  app.use(express.json({ limit: '50mb' }));
 
   // CORS headers for all routes
   app.use((req, res, next) => {

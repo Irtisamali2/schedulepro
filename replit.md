@@ -51,21 +51,24 @@ Scheduled is a comprehensive business management platform designed for service-b
 ## Recent Changes
 
 ### Website Builder Auto-Initialization with Race Condition Fix (October 2, 2025)
-- **CRITICAL PRODUCTION FIX**: Website builder no longer fails with 404, duplicate key, or timestamp errors on Coolify
+- **CRITICAL PRODUCTION FIX**: Website builder no longer fails with 404, duplicate key, timestamp, or image upload errors on Coolify
 - **Root Cause 1**: New clients on Coolify don't have website records in PostgreSQL, causing "Loading website..." to hang
 - **Root Cause 2**: `getClientWebsite()` and `getPublicWebsite()` methods in PostgreSQLStorage were not implemented (returned undefined)
 - **Root Cause 3**: PUT endpoint passed timestamp fields as strings, causing "value.toISOString is not a function" error
+- **Root Cause 4**: Express body size limit (100kb default) caused "PayloadTooLargeError" when uploading images as base64
 - **Race Condition**: Multiple concurrent requests tried to create the same website, causing duplicate key errors
 - **Solution**: 
   - Modified `/api/public/client/:clientId/website` to auto-initialize with race condition handling
   - Implemented `getClientWebsite()` to properly query database by clientId
   - Implemented `getPublicWebsite()` to properly query database by subdomain
   - Fixed PUT endpoint to exclude `id`, `createdAt`, `updatedAt` fields from updates (prevents timestamp conversion errors)
+  - Increased Express body size limit to 50mb in both `server/index.ts` and `server/routes.ts` for image uploads
 - **Implementation**: 
   - Auto-creates default website using client's business info when missing
   - Try-catch wraps creation: if duplicate key error (PostgreSQL code 23505), fetches existing website instead
   - Guarantees unique subdomains with clientId suffix appended to business name
   - Proper database queries now retrieve existing websites correctly
   - Timestamps managed by storage layer, not client requests
-- **Result**: Website builder works instantly for all clients on both Replit and Coolify, updates save successfully
+  - Base64-encoded images can now be uploaded without size limit errors
+- **Result**: Website builder works instantly for all clients on both Replit and Coolify, updates and image uploads save successfully
 - **Deployment-Ready**: Production fix ready for Coolify deployment
