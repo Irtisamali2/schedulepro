@@ -1,0 +1,67 @@
+  - Coolify: Yes
+  - Production: Yes
+  - DATABASE_URL present: Yes
+✅ Initializing Coolify PostgreSQL connection
+🔧 Database Environment Detection:
+  - Replit: No
+  - Coolify: Yes
+  - Production: Yes
+  - DATABASE_URL present: Yes
+🔧 Environment: Coolify
+💾 Storage: PostgreSQL
+🗄️  Database URL present: Yes
+🚀 Production mode: Yes
+📊 Demo data: Disabled (Production)
+✅ Using PostgreSQL database for production data
+🔄 Initializing PostgreSQL database tables...
+🔧 Creating database tables if they don't exist...
+2025-10-02T16:32:40.718Z serving on port 5000
+✅ Database tables created successfully
+🔧 Running database migrations for missing columns...
+✅ Database migrations completed successfully
+👤 Super admin user already exists, skipping creation
+📊 Demo data already exists, skipping seed
+✅ PostgreSQL database initialized successfully
+2025-10-02T16:32:44.634Z GET /api/health 200 in 8ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-10-02T16:33:14.701Z GET /api/health 200 in 1ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-10-02T16:33:43.866Z GET /api/client/client_1759419024505 304 in 24ms
+2025-10-02T16:33:43.889Z GET /api/public/clients/client_1759419024505/pricing-tiers 304 in 3ms :: []
+2025-10-02T16:33:43.892Z GET /api/public/clients/client_1759419024505/website-staff 304 in 1ms :: []
+2025-10-02T16:33:43.938Z GET /api/public/client/client_1759419024505/website 304 in 59ms :: {"id":"websi…
+2025-10-02T16:33:43.946Z GET /api/public/client/client_1759419024505/services 304 in 50ms :: []
+2025-10-02T16:33:43.948Z GET /api/public/client/client_1759419024505 304 in 56ms :: {"id":"client_175941…
+2025-10-02T16:33:44.111Z GET /api/public/clients/client_1759419024505/website-testimonials 304 in 1ms ::…
+2025-10-02T16:33:44.774Z GET /api/health 200 in 2ms :: {"status":"healthy","service":"SaaS Platform API"}
+Business owner access granted for website.edit
+2025-10-02T16:33:50.917Z PUT /api/client/client_1759419024505/website 200 in 12ms :: {"id":"website_1759…
+2025-10-02T16:33:51.415Z GET /api/public/client/client_1759419024505/website 200 in 4ms :: {"id":"websit…
+2025-10-02T16:33:58.714Z GET /api/public/client/client_1759419024505/services 304 in 3ms :: []
+2025-10-02T16:33:58.737Z GET /api/public/client/client_1759419024505 304 in 25ms :: {"id":"client_175941…
+2025-10-02T16:33:58.919Z GET /api/public/client/client_1759419024505/website 304 in 4ms :: {"id":"websit…
+2025-10-02T16:33:58.930Z GET /api/public/clients/client_1759419024505/website-staff 304 in 1ms :: []
+2025-10-02T16:33:58.932Z GET /api/public/clients/client_1759419024505/website-testimonials 304 in 1ms ::…
+2025-10-02T16:33:58.935Z GET /api/public/clients/client_1759419024505/pricing-tiers 304 in 1ms :: []
+2025-10-02T16:34:03.584Z GET /api/client/client_1759419024505 304 in 1ms
+2025-10-02T16:34:05.905Z GET /api/client/client_1759419024505 304 in 1ms
+2025-10-02T16:34:05.911Z GET /api/public/client/client_1759419024505/website 304 in 4ms :: {"id":"websit…
+2025-10-02T16:34:06.332Z GET /api/public/client/client_1759419024505/services 304 in 9ms :: []
+2025-10-02T16:34:06.335Z GET /api/public/clients/client_1759419024505/website-staff 304 in 2ms :: []
+2025-10-02T16:34:06.336Z GET /api/public/client/client_1759419024505 304 in 12ms :: {"id":"client_175941…
+2025-10-02T16:34:06.379Z GET /api/public/clients/client_1759419024505/pricing-tiers 304 in 2ms :: []
+2025-10-02T16:34:06.382Z GET /api/public/clients/client_1759419024505/website-testimonials 304 in 3ms ::…
+Business owner access granted for website.edit
+2025-10-02T16:34:13.210Z PUT /api/client/client_1759419024505/website 200 in 810ms :: {"id":"website_175…
+2025-10-02T16:34:14.095Z GET /api/public/client/client_1759419024505/website 200 in 20ms :: {"id":"websi…
+2025-10-02T16:34:14.842Z GET /api/health 200 in 0ms :: {"status":"healthy","service":"SaaS Platform API"}
+2025-10-02T16:34:27.564Z GET /api/public/client/client_1759419024505/services 304 in 19ms :: []
+2025-10-02T16:34:27.569Z GET /api/public/client/client_1759419024505 304 in 22ms :: {"id":"client_175941…
+2025-10-02T16:34:27.574Z GET /api/public/clients/client_1759419024505/website-staff 304 in 1ms :: []
+2025-10-02T16:34:27.593Z GET /api/public/client/client_1759419024505/website 304 in 14ms :: {"id":"websi…
+2025-10-02T16:34:27.594Z GET /api/public/clients/client_1759419024505/pricing-tiers 304 in 0ms :: []
+2025-10-02T16:34:27.595Z GET /api/public/clients/client_1759419024505/website-testimonials 304 in 0ms ::…
+2025-10-02T16:34:31.153Z GET /api/public/client/client_1759419024505/services 304 in 3ms :: []
+2025-10-02T16:34:31.155Z GET /api/public/clients/client_1759419024505/pricing-tiers 304 in 1ms :: []
+2025-10-02T16:34:31.156Z GET /api/public/clients/client_1759419024505/website-staff 304 in 1ms :: []
+2025-10-02T16:34:31.157Z GET /api/public/client/client_1759419024505 304 in 6ms :: {"id":"client_1759419…
+2025-10-02T16:34:31.158Z GET /api/public/clients/client_1759419024505/website-testimonials 304 in 1ms ::…
+2025-10-02T16:34:31.172Z GET /api/public/client/client_1759419024505/website 304 in 14ms :: {"id":"websi…

@@ -189,17 +189,30 @@ export default function FigmaDesignedWebsite({
       const updatedSections = [...currentSections];
       const sectionIndex = updatedSections.findIndex(s => s.id === updates.sectionId || s.type === updates.sectionId);
       
+      // Parse value if it's a JSON string (for nested objects like settings)
+      let parsedValue = updates.value;
+      try {
+        // Try to parse as JSON - if it works, use the parsed object
+        const parsed = JSON.parse(updates.value);
+        if (typeof parsed === 'object' && parsed !== null) {
+          parsedValue = parsed;
+        }
+      } catch (e) {
+        // Not JSON, use the raw value
+        parsedValue = updates.value;
+      }
+      
       if (sectionIndex >= 0) {
         updatedSections[sectionIndex] = {
           ...updatedSections[sectionIndex],
-          [updates.field]: updates.value
+          [updates.field]: parsedValue
         };
       } else {
         // Create new section if it doesn't exist
         updatedSections.push({
           id: updates.sectionId,
           type: updates.sectionId,
-          [updates.field]: updates.value
+          [updates.field]: parsedValue
         });
       }
 
