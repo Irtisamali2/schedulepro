@@ -44,16 +44,6 @@ interface Client {
   industry: string;
 }
 
-interface FigmaDesignedWebsiteProps {
-  clientId: string;
-  isBuilderPreview?: boolean;
-  onDeleteSection?: (sectionId: string) => void;
-  onEditSection?: (sectionId: string) => void;
-  onDragStart?: (sectionId: string) => void;
-  onDragOver?: (e: React.DragEvent, sectionId: string) => void;
-  onDragEnd?: () => void;
-}
-
 interface WebsiteStaff {
   id: string;
   name: string;
@@ -91,7 +81,8 @@ interface WebsiteTestimonial {
 }
 
 interface FigmaDesignedWebsiteProps {
-  clientId: string;
+  clientId?: string;
+  subdomain?: string;
   isBuilderPreview?: boolean;
   onDeleteSection?: (sectionId: string) => void;
   onEditSection?: (sectionId: string) => void;
@@ -102,6 +93,7 @@ interface FigmaDesignedWebsiteProps {
 
 export default function FigmaDesignedWebsite({ 
   clientId, 
+  subdomain,
   isBuilderPreview = false, 
   onDeleteSection, 
   onEditSection,
@@ -115,35 +107,45 @@ export default function FigmaDesignedWebsite({
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const { isEditable, setSelectedElement, setToolbarPosition } = useEditableWebsite();
 
+  // Determine which identifier to use (prefer subdomain for security)
+  const identifier = subdomain || clientId;
+  const isSubdomainRoute = !!subdomain;
+  const apiBase = isSubdomainRoute ? `/api/public/${subdomain}` : `/api/public/client/${clientId}`;
+
   // Fetch client data
   const { data: client } = useQuery<Client>({
-    queryKey: [`/api/public/client/${clientId}`]
+    queryKey: isSubdomainRoute ? [`/api/public/${subdomain}`] : [`/api/public/client/${clientId}`],
+    enabled: !!identifier
   });
 
   // Fetch website data from the same source as the builder
   const { data: websiteData } = useQuery<any>({
-    queryKey: [`/api/public/client/${clientId}/website`],
-    enabled: !!clientId
+    queryKey: [`${apiBase}/website`],
+    enabled: !!identifier
   });
 
   // Fetch staff data
   const { data: staff = [] } = useQuery<WebsiteStaff[]>({
-    queryKey: [`/api/public/clients/${clientId}/website-staff`]
+    queryKey: [`/api/public/clients/${identifier}/website-staff`],
+    enabled: !!identifier
   });
 
   // Fetch pricing tiers
   const { data: pricingTiers = [] } = useQuery<ServicePricingTier[]>({
-    queryKey: [`/api/public/clients/${clientId}/pricing-tiers`]
+    queryKey: [`/api/public/clients/${identifier}/pricing-tiers`],
+    enabled: !!identifier
   });
 
   // Fetch client services to display alongside pricing tiers
   const { data: clientServices = [] } = useQuery<ClientService[]>({
-    queryKey: [`/api/public/client/${clientId}/services`]
+    queryKey: [`${apiBase}/services`],
+    enabled: !!identifier
   });
 
   // Fetch testimonials
   const { data: testimonials = [] } = useQuery<WebsiteTestimonial[]>({
-    queryKey: [`/api/public/clients/${clientId}/website-testimonials`]
+    queryKey: [`/api/public/clients/${identifier}/website-testimonials`],
+    enabled: !!identifier
   });
 
   // Newsletter subscription mutation

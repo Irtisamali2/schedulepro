@@ -71,7 +71,9 @@ function App() {
           <Route path="/terms-and-conditions" component={TermsAndConditions} />
           <Route path="/privacy-policy" component={PrivacyPolicy} />
           
-          {/* Public Client Websites */}
+          {/* Public Client Websites - using subdomain for security */}
+          <Route path="/site/:subdomain" component={ClientWebsite} />
+          {/* Legacy route for backward compatibility */}
           <Route path="/client-website/:clientId" component={ClientWebsite} />
           
           {/* Fallback */}
