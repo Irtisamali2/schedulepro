@@ -3162,7 +3162,15 @@ class PostgreSQLStorage implements IStorage {
     const dbInstance = this.ensureDB();
     await dbInstance.delete(leads).where(eq(leads.id, id));
   }
-  async getClientWebsite(clientId: string): Promise<ClientWebsite | undefined> { return undefined; }
+  async getClientWebsite(clientId: string): Promise<ClientWebsite | undefined> {
+    const dbInstance = this.ensureDB();
+    const [website] = await dbInstance
+      .select()
+      .from(clientWebsites)
+      .where(eq(clientWebsites.clientId, clientId))
+      .limit(1);
+    return website;
+  }
   async createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite> {
     const dbInstance = this.ensureDB();
     const id = `website_${Date.now()}`;
@@ -3209,7 +3217,15 @@ class PostgreSQLStorage implements IStorage {
     
     return updatedWebsite;
   }
-  async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> { return undefined; }
+  async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> {
+    const dbInstance = this.ensureDB();
+    const [website] = await dbInstance
+      .select()
+      .from(clientWebsites)
+      .where(eq(clientWebsites.subdomain, subdomain))
+      .limit(1);
+    return website;
+  }
   async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> { 
     const dbInstance = this.ensureDB();
     const slots = await dbInstance
