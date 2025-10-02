@@ -61,6 +61,7 @@ export interface IStorage {
   getClients(): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
   getClientByEmail(email: string): Promise<Client | undefined>;
+  getClientBySubdomain(subdomain: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, updates: Partial<InsertClient>): Promise<Client>;
   deleteClient(id: string): Promise<void>;
@@ -808,6 +809,14 @@ class MemStorage implements IStorage {
 
   async getClientByEmail(email: string): Promise<Client | undefined> {
     return this.clients.find(c => c.email === email);
+  }
+
+  async getClientBySubdomain(subdomain: string): Promise<Client | undefined> {
+    // Find the website with this subdomain
+    const website = this.clientWebsites.find(w => w.subdomain === subdomain);
+    if (!website) return undefined;
+    // Return the client associated with this website
+    return this.clients.find(c => c.id === website.clientId);
   }
 
   async createClient(client: InsertClient): Promise<Client> {
@@ -2938,6 +2947,50 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(clients)
       .where(eq(clients.email, email))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+  async getClientBySubdomain(subdomain: string): Promise<Client | undefined> {
+    const dbInstance = this.ensureDB();
+    // Join through website to find the client
+    const result = await dbInstance
+      .select({
+        id: clients.id,
+        businessName: clients.businessName,
+        contactPerson: clients.contactPerson,
+        email: clients.email,
+        phone: clients.phone,
+        businessAddress: clients.businessAddress,
+        industry: clients.industry,
+        businessDescription: clients.businessDescription,
+        logoUrl: clients.logoUrl,
+        operatingHours: clients.operatingHours,
+        timeZone: clients.timeZone,
+        planId: clients.planId,
+        status: clients.status,
+        userId: clients.userId,
+        onboardingSessionId: clients.onboardingSessionId,
+        stripeCustomerId: clients.stripeCustomerId,
+        stripeSubscriptionId: clients.stripeSubscriptionId,
+        stripePublicKey: clients.stripePublicKey,
+        stripeSecretKey: clients.stripeSecretKey,
+        stripeAccountId: clients.stripeAccountId,
+        smtpHost: clients.smtpHost,
+        smtpPort: clients.smtpPort,
+        smtpUsername: clients.smtpUsername,
+        smtpPassword: clients.smtpPassword,
+        smtpFromEmail: clients.smtpFromEmail,
+        smtpFromName: clients.smtpFromName,
+        smtpSecure: clients.smtpSecure,
+        smtpEnabled: clients.smtpEnabled,
+        createdAt: clients.createdAt,
+        updatedAt: clients.updatedAt,
+        lastLogin: clients.lastLogin
+      })
+      .from(clientWebsites)
+      .innerJoin(clients, eq(clientWebsites.clientId, clients.id))
+      .where(eq(clientWebsites.subdomain, subdomain))
       .limit(1);
     
     return result.length > 0 ? result[0] : undefined;
