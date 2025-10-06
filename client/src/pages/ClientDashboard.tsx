@@ -833,14 +833,26 @@ export default function ClientDashboard() {
         <header className="bg-white shadow-sm border-b">
           <div className="px-6 py-4">
             <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{clientData.businessName}</h1>
-                <p className="text-sm text-gray-600">
-                  {isTeamMember() ? 'Team Member Dashboard' : 'Business Dashboard'}
-                  {teamContext && (
-                    <span className="ml-2 text-blue-600">• Limited Access</span>
-                  )}
-                </p>
+              <div className="flex items-center gap-3">
+                {/* Mobile Menu Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="lg:hidden"
+                  data-testid="button-mobile-menu"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">{clientData.businessName}</h1>
+                  <p className="text-sm text-gray-600">
+                    {isTeamMember() ? 'Team Member Dashboard' : 'Business Dashboard'}
+                    {teamContext && (
+                      <span className="ml-2 text-blue-600">• Limited Access</span>
+                    )}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <Badge variant="outline" className="capitalize">
