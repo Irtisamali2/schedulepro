@@ -27,7 +27,7 @@ import profile4 from "@assets/Ellipse 57_1757064789131.png";
 import playButton from "@assets/Group 215_1757064789132.png";
 // New Figma design assets
 import decorativeWave from "@assets/Vector 32_1758896044047.png";
-import figmaHeroImage from "@assets/image_1758896213219.png";
+import figmaHeroImage from "@assets/OBJECTS_1761163271187.png";
 
 interface Plan {
   id: string;
