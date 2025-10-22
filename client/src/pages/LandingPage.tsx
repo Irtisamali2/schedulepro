@@ -26,7 +26,7 @@ import profile3 from "@assets/Ellipse 56_1757064789130.png";
 import profile4 from "@assets/Ellipse 57_1757064789131.png";
 import playButton from "@assets/Group 215_1757064789132.png";
 // New Figma design assets
-import decorativeWave from "@assets/Vector 32_1758896044047.png";
+import decorativeWave from "@assets/Vector 32 (1)_1761163404884.png";
 import figmaHeroImage from "@assets/OBJECTS_1761163271187.png";
 
 interface Plan {
@@ -256,30 +256,32 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-8 sm:py-12 lg:py-24">
+      <section className="py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left Column - Text */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-2">
-                Grow Your Business Visibility 
+            <div className="text-left">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-bold text-black mb-0" style={{ lineHeight: '1.15' }}>
+                Grow Your
+                <span className="block">Business Visibility</span>
                 <span className="block">with Scheduled Pro</span>
               </h1>
               
               {/* Decorative Wave Line */}
-              <div className="flex justify-center lg:justify-start mb-4 md:mb-6">
+              <div className="flex justify-start mt-2 mb-6">
                 <img 
                   src={decorativeWave} 
                   alt="Decorative wave line" 
-                  className="h-3 w-auto"
+                  className="w-[320px] h-auto"
+                  style={{ maxWidth: '100%' }}
                 />
               </div>
               
-              <p className="text-base sm:text-lg text-gray-600 mb-6 md:mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0">
+              <p className="text-base sm:text-lg text-black mb-8 max-w-md" style={{ lineHeight: '1.5' }}>
                 Register your business today and get your own dedicated landing page in minutes.
               </p>
               <Button 
-                className="text-white px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg w-full sm:w-auto" 
+                className="text-white px-8 py-3 text-base font-normal rounded-md" 
                 style={{backgroundColor: '#7CB8EA'}} 
                 onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6BA6E0'} 
                 onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#7CB8EA'}
@@ -295,7 +297,7 @@ export default function LandingPage() {
                 <img 
                   src={figmaHeroImage} 
                   alt="Professional with business dashboard and analytics" 
-                  className="w-full h-auto max-w-md mx-auto lg:max-w-full"
+                  className="w-full h-auto max-w-lg mx-auto lg:max-w-full"
                 />
               </div>
             </div>
