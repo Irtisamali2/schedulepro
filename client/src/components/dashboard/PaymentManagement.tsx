@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   CreditCard, 
   Smartphone, 
@@ -17,7 +18,9 @@ import {
   AlertCircle,
   Plus,
   Users,
-  Receipt
+  Receipt,
+  Info,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SimplePaymentRequest from './SimplePaymentRequest';
@@ -114,6 +117,136 @@ export default function PaymentManagement() {
     <div className="space-y-6">
       {/* Simple Payment Request Form */}
       <SimplePaymentRequest />
+
+      {/* Payment Configuration Help */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5 text-blue-600" />
+            How to Configure Payment Methods
+          </CardTitle>
+          <CardDescription>
+            Set up Stripe, PayPal, Zelle, and Venmo to accept payments from your clients
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm">What Payment Management Does:</h4>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Multi-Payment Support:</strong> Accept payments via Stripe (cards), PayPal, Zelle, and Venmo</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Payment Requests:</strong> Send professional payment links to clients via email or SMS</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Automatic Invoicing:</strong> Generate and send invoices with payment options automatically</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Payment Tracking:</strong> Monitor all transactions, pending payments, and payment history</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm">Step-by-Step Payment Setup:</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm pl-2">
+              <li className="pl-2">
+                <strong>Configure Stripe (Credit Cards)</strong>
+                <ul className="ml-6 mt-1 space-y-1 text-gray-600">
+                  <li>• Navigate to the "Payments" or "Stripe Configuration" section in Settings</li>
+                  <li>• Click "Configure Payments" and enter your Stripe API keys</li>
+                  <li>• Get API keys from <a href="https://dashboard.stripe.com/apikeys" target="_blank" className="text-blue-600 underline">Stripe Dashboard</a></li>
+                  <li>• Fee: 2.9% + $0.30 per transaction</li>
+                </ul>
+              </li>
+              <li className="pl-2">
+                <strong>Set Up PayPal</strong>
+                <ul className="ml-6 mt-1 space-y-1 text-gray-600">
+                  <li>• Configure PayPal Business account credentials in payment settings</li>
+                  <li>• Enable PayPal as a payment option for clients</li>
+                  <li>• Fee: 2.9% + $0.30 per transaction</li>
+                </ul>
+              </li>
+              <li className="pl-2">
+                <strong>Add Zelle & Venmo (Free Options)</strong>
+                <ul className="ml-6 mt-1 space-y-1 text-gray-600">
+                  <li>• Add your Zelle email/phone number in payment settings</li>
+                  <li>• Add your Venmo username in payment settings</li>
+                  <li>• No processing fees - clients send money directly to you</li>
+                </ul>
+              </li>
+              <li className="pl-2">
+                <strong>Send Payment Requests</strong>
+                <ul className="ml-6 mt-1 space-y-1 text-gray-600">
+                  <li>• Use the "Create Payment Request" form above to generate payment links</li>
+                  <li>• Clients receive a link showing all available payment methods</li>
+                  <li>• Track payment status in the Payment History section below</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm">Payment Method Comparison:</h4>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="text-sm p-3 bg-white rounded border border-blue-200">
+                <div className="font-medium flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-blue-600" />
+                  Stripe (Credit/Debit Cards)
+                </div>
+                <div className="text-gray-600 mt-1">
+                  <div>Fee: 2.9% + $0.30</div>
+                  <div className="text-xs mt-1">✓ Professional • ✓ Instant verification • ✓ Best for high volume</div>
+                </div>
+              </div>
+              <div className="text-sm p-3 bg-white rounded border border-blue-200">
+                <div className="font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-blue-600" />
+                  PayPal
+                </div>
+                <div className="text-gray-600 mt-1">
+                  <div>Fee: 2.9% + $0.30</div>
+                  <div className="text-xs mt-1">✓ Widely trusted • ✓ Buyer protection • ✓ International payments</div>
+                </div>
+              </div>
+              <div className="text-sm p-3 bg-white rounded border border-green-200">
+                <div className="font-medium flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-green-600" />
+                  Zelle
+                </div>
+                <div className="text-gray-600 mt-1">
+                  <div className="text-green-600 font-medium">Free (No fees)</div>
+                  <div className="text-xs mt-1">✓ Bank-to-bank • ✓ Instant • ✓ No signup needed</div>
+                </div>
+              </div>
+              <div className="text-sm p-3 bg-white rounded border border-green-200">
+                <div className="font-medium flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-green-600" />
+                  Venmo
+                </div>
+                <div className="text-gray-600 mt-1">
+                  <div className="text-green-600 font-medium">Free (No fees)</div>
+                  <div className="text-xs mt-1">✓ Social payments • ✓ Popular with millennials • ✓ Easy to use</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Alert className="bg-white border-blue-200">
+            <AlertTriangle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-xs">
+              <strong>Pro Tip:</strong> Offer multiple payment methods to increase your collection rate. Clients who 
+              prefer free options (Zelle/Venmo) are more likely to pay immediately, while Stripe/PayPal provide 
+              professional payment processing with buyer protection.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
       
       {/* Divider */}
       <div className="border-t pt-6">
