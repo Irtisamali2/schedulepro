@@ -628,32 +628,111 @@ export default function SMTPConfiguration({ clientId, hasPermission }: SMTPConfi
               </Button>
             )}
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Common Providers Help */}
+      {/* SMTP Configuration Instructions */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-blue-600" />
+            How to Configure SMTP Email
+          </CardTitle>
+          <CardDescription>
+            SMTP (Simple Mail Transfer Protocol) enables your application to send automated emails
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-700">Popular SMTP Providers</h4>
-            <div className="grid gap-2 md:grid-cols-2">
-              {getCommonProviders().map((provider) => (
-                <div key={provider.name} className="text-sm p-2 bg-gray-50 rounded border">
-                  <div className="font-medium">{provider.name}</div>
+            <h4 className="font-semibold text-sm">What SMTP Does:</h4>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Appointment Confirmations:</strong> Automatically send booking confirmations to customers</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Reminders:</strong> Send appointment reminders before scheduled services</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Status Updates:</strong> Notify customers when appointment status changes</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <span><strong>Notifications:</strong> Send alerts for new leads, payments, and important events</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-semibold text-sm">Step-by-Step Setup Guide:</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm pl-2">
+              <li className="pl-2">
+                <strong>Choose an Email Provider</strong>
+                <p className="text-gray-600 ml-6 mt-1">Select from Gmail, Outlook, or a dedicated service like SendGrid (recommended for business use)</p>
+              </li>
+              <li className="pl-2">
+                <strong>Get SMTP Credentials</strong>
+                <ul className="ml-6 mt-1 space-y-1 text-gray-600">
+                  <li>• <strong>Gmail:</strong> Enable 2-factor auth, then create an App Password in your Google Account settings</li>
+                  <li>• <strong>Outlook:</strong> Use your regular email and password</li>
+                  <li>• <strong>SendGrid/Others:</strong> Find SMTP settings in your account dashboard</li>
+                </ul>
+              </li>
+              <li className="pl-2">
+                <strong>Enter Configuration</strong>
+                <p className="text-gray-600 ml-6 mt-1">Click "Configure SMTP" above and fill in the host, port, username, and password from your provider</p>
+              </li>
+              <li className="pl-2">
+                <strong>Test Connection</strong>
+                <p className="text-gray-600 ml-6 mt-1">Send a test email to verify everything works correctly</p>
+              </li>
+              <li className="pl-2">
+                <strong>Enable SMTP</strong>
+                <p className="text-gray-600 ml-6 mt-1">Toggle "Enable SMTP Email" to start sending automated emails</p>
+              </li>
+            </ol>
+          </div>
+
+          <Alert className="bg-white border-blue-200">
+            <AlertTriangle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-xs">
+              <strong>Important:</strong> Gmail limits SMTP to 500 emails/day. For higher volume, consider using SendGrid, 
+              Mailgun, or AWS SES which offer generous free tiers and better deliverability for business emails.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
+      {/* Popular Providers Reference Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Popular SMTP Providers</CardTitle>
+          <CardDescription>Quick reference for common email service settings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 md:grid-cols-2">
+            {getCommonProviders().map((provider) => (
+              <div key={provider.name} className="text-sm p-2 bg-gray-50 rounded border">
+                <div className="font-medium">{provider.name}</div>
                   <div className="text-gray-600">
                     {provider.host}:{provider.port} • {provider.note}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Email Notifications Info */}
-          <Alert>
-            <Mail className="h-4 w-4" />
-            <AlertDescription>
-              Once configured, this SMTP server will be used for all email notifications including:
-              appointment confirmations, status changes, reminders, and other business communications.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
+
+      {/* Email Notifications Info */}
+      <Alert>
+        <Mail className="h-4 w-4" />
+        <AlertDescription>
+          Once configured, this SMTP server will be used for all email notifications including:
+          appointment confirmations, status changes, reminders, and other business communications.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

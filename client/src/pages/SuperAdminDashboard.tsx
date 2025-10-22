@@ -644,7 +644,7 @@ export default function SuperAdminDashboard() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsSidebarOpen(true)}
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                   className="lg:hidden"
                   data-testid="button-mobile-menu"
                 >

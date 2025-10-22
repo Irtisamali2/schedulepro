@@ -300,6 +300,61 @@ export default function StripeConfiguration({ clientId, hasPermission }: StripeC
           </CardContent>
         </Card>
 
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-blue-600" />
+              What is Stripe For?
+            </CardTitle>
+            <CardDescription>
+              Stripe handles online payments, invoicing, and financial transactions for your business
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm">Key Features:</h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Accept Payments:</strong> Process credit cards, debit cards, and digital wallets securely</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Automated Invoicing:</strong> Send professional invoices and track payment status</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Recurring Billing:</strong> Set up subscriptions and automatic payment collection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Payment Links:</strong> Share payment links with customers via email or text</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Financial Reporting:</strong> Track revenue, payouts, and transaction history</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Fraud Protection:</strong> Advanced security features to prevent fraudulent transactions</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Global Support:</strong> Accept payments in 135+ currencies from customers worldwide</span>
+                </li>
+              </ul>
+            </div>
+            
+            <Alert className="bg-white border-blue-200">
+              <AlertTriangle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-xs">
+                <strong>Note:</strong> Once configured, Stripe will handle all payment processing for appointments, 
+                services, and invoices. Standard Stripe fees apply (typically 2.9% + $0.30 per transaction).
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+
         {!stripeConfig?.stripePublicKey && (
           <Card>
             <CardHeader>
