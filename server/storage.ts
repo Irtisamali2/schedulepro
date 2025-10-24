@@ -351,8 +351,7 @@ class MemStorage implements IStorage {
       sortOrder: 3
     });
 
-    // Create sample plans
-    // Create Free Demo plan first
+    // Create sample plans (Free Demo, Basic, Team)
     await this.createPlan({
       name: "Free Demo",
       monthlyPrice: 0,
@@ -378,24 +377,12 @@ class MemStorage implements IStorage {
     });
 
     await this.createPlan({
-      name: "Pro",
+      name: "Team",
       monthlyPrice: 99.99,
       monthlyEnabled: true, 
       features: ["5 Users", "100GB Storage", "Priority Support", "Advanced Analytics"],
       maxUsers: 5,
       storageGB: 100,
-      isActive: true,
-      isFreeTrial: false,
-      trialDays: 0
-    });
-
-    await this.createPlan({
-      name: "Enterprise",
-      monthlyPrice: 299.99,
-      monthlyEnabled: true,
-      features: ["Unlimited Users", "1TB Storage", "24/7 Support", "Custom Integrations"],
-      maxUsers: 999,
-      storageGB: 1000,
       isActive: true,
       isFreeTrial: false,
       trialDays: 0
@@ -2686,43 +2673,36 @@ class PostgreSQLStorage implements IStorage {
 
       console.log("🌱 Seeding demo data for production...");
       
-      // Insert demo plans
+      // Insert demo plans (Free Demo, Basic, Team)
       await dbInstance.insert(plans).values([
         {
           id: "plan_1",
           name: "Free Demo",
           monthlyPrice: 0,
           yearlyPrice: 0,
-          features: ["1 User", "Basic Support", "Demo Features"],
+          features: ["7-day trial", "1 User", "2GB Storage", "Basic Features"],
           maxUsers: 1,
-          storageGB: 1
+          storageGB: 2,
+          isFreeTrial: true,
+          trialDays: 7
         },
         {
           id: "plan_2", 
           name: "Basic",
-          monthlyPrice: 29,
-          yearlyPrice: 290,
-          features: ["Up to 5 Users", "Email Support", "Client Management"],
-          maxUsers: 5,
+          monthlyPrice: 15,
+          yearlyPrice: 150,
+          features: ["1 User", "10GB Storage", "Basic Support", "Online Booking", "Client Management"],
+          maxUsers: 1,
           storageGB: 10
         },
         {
           id: "plan_3",
-          name: "Pro", 
-          monthlyPrice: 79,
-          yearlyPrice: 790,
-          features: ["Unlimited Users", "Priority Support", "Analytics", "API Access"],
-          maxUsers: -1,
+          name: "Team", 
+          monthlyPrice: 99.99,
+          yearlyPrice: 999.99,
+          features: ["5 Users", "100GB Storage", "Priority Support", "Advanced Analytics"],
+          maxUsers: 5,
           storageGB: 100
-        },
-        {
-          id: "plan_4",
-          name: "Enterprise",
-          monthlyPrice: 199,
-          yearlyPrice: 1990,
-          features: ["Everything in Pro", "Custom Integrations", "Dedicated Support", "White Label"],
-          maxUsers: -1,
-          storageGB: -1
         }
       ]);
 

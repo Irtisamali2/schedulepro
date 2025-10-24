@@ -596,9 +596,9 @@ export default function LandingPage() {
                       {plan.name}
                     </h3>
                     <p className={`text-xs sm:text-sm mb-6 sm:mb-8 ${isMiddlePlan ? 'text-white/90' : 'text-gray-600'}`}>
-                      {plan.name === 'Basic' && 'Have a go and test your superpowers'}
-                      {plan.name === 'Pro' && 'Experiment the power of infinite possibilities'}
-                      {plan.name === 'Business' && 'Unveil new superpowers and join the Design League'}
+                      {plan.name === 'Free Demo' && 'Try all features with our 7-day free trial'}
+                      {plan.name === 'Basic' && 'Perfect for solo professionals and small businesses'}
+                      {plan.name === 'Team' && 'Scale your business with team collaboration'}
                     </p>
                     
                     <div className={`mb-${isMiddlePlan ? '3 sm:mb-4' : '6 sm:mb-8'}`}>
@@ -654,7 +654,7 @@ export default function LandingPage() {
                       variant={isMiddlePlan ? "default" : "outline"}
                       onClick={() => handleGetStarted(plan.id)}
                     >
-                      {index === 0 ? 'Signup for free' : index === 1 ? 'Go to pro' : 'Goto Business'}
+                      {plan.name === 'Free Demo' ? 'Start Free Trial' : plan.name === 'Basic' ? 'Get Started' : 'Upgrade to Team'}
                     </Button>
                   </div>
                 </Card>
