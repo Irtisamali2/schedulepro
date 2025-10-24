@@ -19,10 +19,12 @@ import {
   AlertCircle,
   MessageSquare,
   Filter,
-  MoreHorizontal
+  MoreHorizontal,
+  ArrowRightLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import AppointmentTransferDialog from './AppointmentTransferDialog';
 
 interface Appointment {
   id: number;
@@ -47,8 +49,25 @@ export default function AppointmentApproval() {
   const [operatorNotes, setOperatorNotes] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkAction, setBulkAction] = useState<'approve' | 'decline' | null>(null);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [selectedTransferAppointment, setSelectedTransferAppointment] = useState<Appointment | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Get clientId from session storage or use default
+  // In production, this should come from authenticated user context
+  const clientId = (() => {
+    try {
+      const sessionData = localStorage.getItem("teamMemberSession");
+      if (sessionData) {
+        const parsed = JSON.parse(sessionData);
+        return parsed.clientId || "client_1";
+      }
+    } catch (e) {
+      console.error("Failed to parse session data:", e);
+    }
+    return "client_1"; // Fallback for development
+  })();
 
   // Fetch appointments by status
   const { data: appointments = [], isLoading } = useQuery({
@@ -534,6 +553,24 @@ export default function AppointmentApproval() {
                         </div>
                       )}
                       
+                      {appointment.status === 'approved' && (
+                        <div className="space-y-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              setSelectedTransferAppointment(appointment);
+                              setTransferDialogOpen(true);
+                            }}
+                            data-testid="button-transfer-appointment"
+                          >
+                            <ArrowRightLeft className="h-3 w-3 mr-1" />
+                            Transfer Appointment
+                          </Button>
+                        </div>
+                      )}
+                      
                       {appointment.status === 'declined' && appointment.declineReason && (
                         <div className="mt-3">
                           <div className="text-xs text-gray-500 mb-1">Decline Reason</div>
@@ -558,6 +595,28 @@ export default function AppointmentApproval() {
             </Card>
           ))}
         </div>
+      )}
+      
+      {/* Appointment Transfer Dialog */}
+      {selectedTransferAppointment && (
+        <AppointmentTransferDialog
+          isOpen={transferDialogOpen}
+          onClose={() => {
+            setTransferDialogOpen(false);
+            setSelectedTransferAppointment(null);
+          }}
+          appointment={{
+            id: String(selectedTransferAppointment.id),
+            customerName: selectedTransferAppointment.clientName,
+            appointmentDate: selectedTransferAppointment.date,
+            startTime: new Date(selectedTransferAppointment.date).toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            assignedTo: String(selectedTransferAppointment.stylistId),
+          }}
+          clientId={clientId}
+        />
       )}
     </div>
   );

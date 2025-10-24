@@ -554,7 +554,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-6 lg:gap-8 max-w-6xl mx-auto">
             {/* Dynamic Plans */}
             {plans.map((plan, index) => {
               const displayPrice = getDisplayPrice(plan);
@@ -576,7 +576,7 @@ export default function LandingPage() {
               return (
                 <Card 
                   key={plan.id} 
-                  className={`p-0 border-none relative text-center ${
+                  className={`p-0 border-none relative text-center w-full md:w-80 lg:w-96 ${
                     isMiddlePlan ? 'md:transform md:scale-105 overflow-hidden rounded-xl' : 'p-4 sm:p-6 lg:p-8 border border-gray-200'
                   }`}
                 >

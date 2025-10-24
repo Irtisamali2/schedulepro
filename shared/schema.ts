@@ -270,6 +270,7 @@ export const appointments = pgTable("appointments", {
   customerEmail: text("customer_email").notNull(),
   customerPhone: text("customer_phone"),
   serviceId: text("service_id").notNull(),
+  assignedTo: text("assigned_to"), // Team member ID assigned to this appointment
   appointmentDate: timestamp("appointment_date").notNull(),
   startTime: text("start_time").notNull(), // HH:MM format
   endTime: text("end_time").notNull(),
@@ -291,6 +292,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
   customerEmail: true,
   customerPhone: true,
   serviceId: true,
+  assignedTo: true,
   appointmentDate: true,
   startTime: true,
   endTime: true,
@@ -306,6 +308,30 @@ export const insertAppointmentSchema = createInsertSchema(appointments).pick({
 
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type Appointment = typeof appointments.$inferSelect;
+
+// Appointment Transfers
+export const appointmentTransfers = pgTable("appointment_transfers", {
+  id: text("id").primaryKey(),
+  appointmentId: text("appointment_id").notNull(),
+  clientId: text("client_id").notNull(),
+  fromStaffId: text("from_staff_id"), // Null if not previously assigned
+  toStaffId: text("to_staff_id").notNull(),
+  transferredBy: text("transferred_by").notNull(), // Admin/Manager who performed the transfer
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAppointmentTransferSchema = createInsertSchema(appointmentTransfers).pick({
+  appointmentId: true,
+  clientId: true,
+  fromStaffId: true,
+  toStaffId: true,
+  transferredBy: true,
+  reason: true,
+});
+
+export type InsertAppointmentTransfer = z.infer<typeof insertAppointmentTransferSchema>;
+export type AppointmentTransfer = typeof appointmentTransfers.$inferSelect;
 
 // Client operating hours
 export const operatingHours = pgTable("operating_hours", {

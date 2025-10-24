@@ -12,6 +12,7 @@ import {
   clientWebsites, type ClientWebsite, type InsertClientWebsite,
   appointmentSlots, type AppointmentSlot, type InsertAppointmentSlot,
   teamMembers, type TeamMember, type InsertTeamMember,
+  appointmentTransfers, type AppointmentTransfer, type InsertAppointmentTransfer,
   reviewPlatforms, type ReviewPlatform, type InsertReviewPlatform,
   domainConfigurations, type DomainConfiguration, type InsertDomainConfiguration,
   domainVerificationLogs, type DomainVerificationLog, type InsertDomainVerificationLog,
@@ -87,6 +88,11 @@ export interface IStorage {
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment>;
   deleteAppointment(id: string): Promise<void>;
+  
+  // Appointment Transfers
+  transferAppointment(appointmentId: string, toStaffId: string, transferredBy: string, reason?: string): Promise<Appointment>;
+  getAppointmentTransfers(appointmentId: string): Promise<AppointmentTransfer[]>;
+  getStaffTransfers(staffId: string): Promise<AppointmentTransfer[]>;
   
   // Operating Hours
   getOperatingHours(clientId: string): Promise<OperatingHours[]>;
@@ -250,6 +256,7 @@ class MemStorage implements IStorage {
   private reviews: Review[] = [];
   private clientServices: ClientService[] = [];
   private appointments: Appointment[] = [];
+  private appointmentTransfers: AppointmentTransfer[] = [];
   private operatingHours: OperatingHours[] = [];
   private leads: Lead[] = [];
   private payments: Payment[] = [];
@@ -1012,6 +1019,39 @@ class MemStorage implements IStorage {
     const index = this.appointments.findIndex(a => a.id === id);
     if (index === -1) throw new Error("Appointment not found");
     this.appointments.splice(index, 1);
+  }
+
+  // Appointment transfer methods
+  async transferAppointment(appointmentId: string, toStaffId: string, transferredBy: string, reason?: string): Promise<Appointment> {
+    const appointment = await this.getAppointment(appointmentId);
+    if (!appointment) throw new Error("Appointment not found");
+    
+    // Create transfer record
+    const transfer: AppointmentTransfer = {
+      id: `transfer_${this.appointmentTransfers.length + 1}`,
+      appointmentId,
+      clientId: appointment.clientId,
+      fromStaffId: appointment.assignedTo || null,
+      toStaffId,
+      transferredBy,
+      reason: reason || null,
+      createdAt: new Date(),
+    };
+    
+    this.appointmentTransfers.push(transfer);
+    
+    // Update appointment with new assigned staff
+    return await this.updateAppointment(appointmentId, { assignedTo: toStaffId });
+  }
+
+  async getAppointmentTransfers(appointmentId: string): Promise<AppointmentTransfer[]> {
+    return this.appointmentTransfers.filter(t => t.appointmentId === appointmentId);
+  }
+
+  async getStaffTransfers(staffId: string): Promise<AppointmentTransfer[]> {
+    return this.appointmentTransfers.filter(
+      t => t.fromStaffId === staffId || t.toStaffId === staffId
+    );
   }
 
   // Operating hours methods
@@ -3165,6 +3205,53 @@ class PostgreSQLStorage implements IStorage {
     const dbInstance = this.ensureDB();
     await dbInstance.delete(appointments).where(eq(appointments.id, id));
   }
+
+  // Appointment transfer methods
+  async transferAppointment(appointmentId: string, toStaffId: string, transferredBy: string, reason?: string): Promise<Appointment> {
+    const dbInstance = this.ensureDB();
+    
+    const appointment = await this.getAppointment(appointmentId);
+    if (!appointment) throw new Error("Appointment not found");
+    
+    // Create transfer record
+    const transferId = `transfer_${Date.now()}`;
+    await dbInstance.insert(appointmentTransfers).values({
+      id: transferId,
+      appointmentId,
+      clientId: appointment.clientId,
+      fromStaffId: appointment.assignedTo || null,
+      toStaffId,
+      transferredBy,
+      reason: reason || null,
+      createdAt: new Date(),
+    });
+    
+    // Update appointment with new assigned staff
+    return await this.updateAppointment(appointmentId, { assignedTo: toStaffId });
+  }
+
+  async getAppointmentTransfers(appointmentId: string): Promise<AppointmentTransfer[]> {
+    const dbInstance = this.ensureDB();
+    const transfers = await dbInstance
+      .select()
+      .from(appointmentTransfers)
+      .where(eq(appointmentTransfers.appointmentId, appointmentId));
+    
+    return transfers;
+  }
+
+  async getStaffTransfers(staffId: string): Promise<AppointmentTransfer[]> {
+    const dbInstance = this.ensureDB();
+    const transfers = await dbInstance
+      .select()
+      .from(appointmentTransfers)
+      .where(
+        sql`${appointmentTransfers.fromStaffId} = ${staffId} OR ${appointmentTransfers.toStaffId} = ${staffId}`
+      );
+    
+    return transfers;
+  }
+
   async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
   async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> { return []; }
   async getLeads(clientId: string): Promise<Lead[]> { 

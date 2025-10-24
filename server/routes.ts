@@ -2584,6 +2584,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Appointment Transfer (Team plan feature)
+  app.post("/api/client/:clientId/appointments/:appointmentId/transfer", requirePermission('appointments.edit'), async (req, res) => {
+    try {
+      const { clientId, appointmentId } = req.params;
+      const { toStaffId, reason } = req.body;
+      
+      // Verify appointment belongs to this client (prevent cross-tenant access)
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ error: "Appointment not found" });
+      }
+      
+      if (appointment.clientId !== clientId) {
+        return res.status(403).json({ error: "Unauthorized access to appointment" });
+      }
+      
+      // Check if client is on Team plan or higher
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      const plan = await storage.getPlan(client.planId);
+      if (!plan || !plan.features.includes("Appointment Transfer")) {
+        return res.status(403).json({ 
+          error: "Appointment transfer is only available on Team plan or higher",
+          upgrade: true 
+        });
+      }
+      
+      if (!toStaffId) {
+        return res.status(400).json({ error: "toStaffId is required" });
+      }
+      
+      // Verify target staff member belongs to this client
+      const targetStaff = await storage.getTeamMember(toStaffId);
+      if (!targetStaff || targetStaff.clientId !== clientId) {
+        return res.status(400).json({ error: "Invalid staff member for this client" });
+      }
+      
+      // Get the current user from session for audit trail
+      const transferredBy = req.user?.id || clientId;
+      
+      const updatedAppointment = await storage.transferAppointment(
+        appointmentId,
+        toStaffId,
+        transferredBy,
+        reason
+      );
+      
+      res.json({ 
+        message: "Appointment transferred successfully",
+        appointment: updatedAppointment 
+      });
+    } catch (error) {
+      console.error("Failed to transfer appointment:", error);
+      res.status(500).json({ error: "Failed to transfer appointment" });
+    }
+  });
+
+  // Get transfer history for an appointment
+  app.get("/api/client/:clientId/appointments/:appointmentId/transfers", requirePermission('appointments.view'), async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const transfers = await storage.getAppointmentTransfers(appointmentId);
+      res.json(transfers);
+    } catch (error) {
+      console.error("Failed to fetch transfer history:", error);
+      res.status(500).json({ error: "Failed to fetch transfer history" });
+    }
+  });
+
+  // Get transfers for a specific staff member
+  app.get("/api/client/:clientId/staff/:staffId/transfers", requirePermission('appointments.view'), async (req, res) => {
+    try {
+      const { staffId } = req.params;
+      const transfers = await storage.getStaffTransfers(staffId);
+      res.json(transfers);
+    } catch (error) {
+      console.error("Failed to fetch staff transfers:", error);
+      res.status(500).json({ error: "Failed to fetch staff transfers" });
+    }
+  });
+
   // Operating Hours Management
   app.get("/api/client/:clientId/operating-hours", async (req, res) => {
     try {
