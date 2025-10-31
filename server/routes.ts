@@ -2668,6 +2668,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send Calendar Invite for Appointment
+  app.post("/api/appointments/:appointmentId/send-calendar-invite", async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const { recipientEmail } = req.body;
+      
+      if (!recipientEmail || !recipientEmail.includes('@')) {
+        return res.status(400).json({ error: "Valid recipient email is required" });
+      }
+      
+      // Get appointment details
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ error: "Appointment not found" });
+      }
+      
+      // Get client details
+      const client = await storage.getClient(appointment.clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      // Get service details
+      const services = await storage.getClientServices(appointment.clientId);
+      const service = services.find(s => s.id === appointment.serviceId);
+      
+      if (!service) {
+        return res.status(404).json({ error: "Service not found" });
+      }
+      
+      // Send calendar invite
+      const { EmailService } = await import('./emailService');
+      const emailService = new EmailService(storage);
+      
+      const result = await emailService.sendCalendarInvite(
+        appointment.clientId,
+        recipientEmail,
+        {
+          id: appointment.id,
+          customerName: appointment.customerName,
+          serviceName: service.name,
+          appointmentDate: new Date(appointment.appointmentDate),
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+          durationMinutes: service.durationMinutes,
+          notes: appointment.notes || undefined,
+          businessName: client.businessName,
+          businessPhone: client.phone || undefined,
+          businessEmail: client.email,
+          businessAddress: client.businessAddress || undefined,
+        }
+      );
+      
+      if (result.success) {
+        res.json({ message: result.message, success: true });
+      } else {
+        res.status(500).json({ error: result.message, success: false });
+      }
+    } catch (error) {
+      console.error("Failed to send calendar invite:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      res.status(500).json({ error: `Failed to send calendar invite: ${errorMessage}` });
+    }
+  });
+
   // Operating Hours Management
   app.get("/api/client/:clientId/operating-hours", async (req, res) => {
     try {

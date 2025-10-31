@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { IStorage } from './storage';
+import { generateICS, createDateTimeFromStrings, addMinutes } from './calendar-utils';
 
 export interface EmailConfig {
   smtpHost: string;
@@ -381,5 +382,166 @@ Email: ${appointmentDetails.businessEmail}
     `;
 
     return await this.sendEmail(clientId, customerEmail, subject, htmlContent, textContent);
+  }
+
+  async sendCalendarInvite(
+    clientId: string,
+    recipientEmail: string,
+    appointmentDetails: {
+      id: string;
+      customerName: string;
+      serviceName: string;
+      appointmentDate: Date;
+      startTime: string;
+      endTime?: string;
+      durationMinutes?: number;
+      notes?: string;
+      businessName: string;
+      businessPhone?: string;
+      businessEmail: string;
+      businessAddress?: string;
+    }
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const config = await this.getEmailConfig(clientId);
+      
+      if (!config) {
+        throw new Error('SMTP configuration is not properly configured or not enabled');
+      }
+
+      // Create start and end times for the calendar event
+      const startDateTime = createDateTimeFromStrings(appointmentDetails.appointmentDate, appointmentDetails.startTime);
+      
+      // Calculate end time
+      let endDateTime: Date;
+      if (appointmentDetails.endTime) {
+        endDateTime = createDateTimeFromStrings(appointmentDetails.appointmentDate, appointmentDetails.endTime);
+      } else if (appointmentDetails.durationMinutes) {
+        endDateTime = addMinutes(startDateTime, appointmentDetails.durationMinutes);
+      } else {
+        // Default to 1 hour if no end time or duration provided
+        endDateTime = addMinutes(startDateTime, 60);
+      }
+
+      // Generate .ics file content
+      const icsContent = generateICS({
+        title: `${appointmentDetails.serviceName} - ${appointmentDetails.businessName}`,
+        description: `Appointment for ${appointmentDetails.serviceName}\n\nCustomer: ${appointmentDetails.customerName}\n${appointmentDetails.notes ? `Notes: ${appointmentDetails.notes}\n` : ''}\nConfirmation: #${appointmentDetails.id}`,
+        location: appointmentDetails.businessAddress || appointmentDetails.businessName,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        organizerName: appointmentDetails.businessName,
+        organizerEmail: appointmentDetails.businessEmail,
+        attendeeEmail: recipientEmail,
+        attendeeName: appointmentDetails.customerName,
+      });
+
+      const transporter = nodemailer.createTransport({
+        host: config.smtpHost,
+        port: config.smtpPort,
+        secure: config.smtpSecure,
+        auth: {
+          user: config.smtpUsername,
+          pass: config.smtpPassword,
+        },
+      });
+
+      const subject = `Calendar Invite: ${appointmentDetails.serviceName} - ${appointmentDetails.businessName}`;
+      
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">📅 Appointment Calendar Invite</h2>
+          
+          <p style="color: #666; font-size: 16px; line-height: 1.5;">
+            Hello,
+          </p>
+          
+          <p style="color: #666; font-size: 16px; line-height: 1.5;">
+            You've been sent a calendar invite for an appointment with <strong>${appointmentDetails.businessName}</strong>.
+          </p>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #7CB8EA;">
+            <h3 style="color: #333; margin-top: 0;">📅 Appointment Details</h3>
+            <p style="margin: 8px 0;"><strong>Service:</strong> ${appointmentDetails.serviceName}</p>
+            <p style="margin: 8px 0;"><strong>Customer:</strong> ${appointmentDetails.customerName}</p>
+            <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date(appointmentDetails.appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p style="margin: 8px 0;"><strong>Time:</strong> ${appointmentDetails.startTime}</p>
+            ${appointmentDetails.businessAddress ? `<p style="margin: 8px 0;"><strong>Location:</strong> ${appointmentDetails.businessAddress}</p>` : ''}
+            ${appointmentDetails.notes ? `<p style="margin: 8px 0;"><strong>Notes:</strong> ${appointmentDetails.notes}</p>` : ''}
+          </div>
+          
+          <div style="background: #e0f2ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #7CB8EA;">
+            <p style="color: #0369a1; margin: 0; font-weight: 500;">
+              📎 <strong>Add to Calendar:</strong> Click the attached .ics file to add this appointment to your Google Calendar, Outlook, Apple Calendar, or any calendar app.
+            </p>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <div style="text-align: center;">
+            <p style="color: #999; font-size: 14px; margin: 5px 0;">
+              <strong>${appointmentDetails.businessName}</strong>
+            </p>
+            ${appointmentDetails.businessPhone ? `<p style="color: #999; font-size: 14px; margin: 5px 0;">📞 ${appointmentDetails.businessPhone}</p>` : ''}
+            <p style="color: #999; font-size: 14px; margin: 5px 0;">📧 ${appointmentDetails.businessEmail}</p>
+          </div>
+        </div>
+      `;
+
+      const textContent = `
+Appointment Calendar Invite
+
+You've been sent a calendar invite for an appointment with ${appointmentDetails.businessName}.
+
+Appointment Details:
+- Service: ${appointmentDetails.serviceName}
+- Customer: ${appointmentDetails.customerName}
+- Date: ${new Date(appointmentDetails.appointmentDate).toLocaleDateString()}
+- Time: ${appointmentDetails.startTime}
+${appointmentDetails.businessAddress ? `- Location: ${appointmentDetails.businessAddress}` : ''}
+${appointmentDetails.notes ? `- Notes: ${appointmentDetails.notes}` : ''}
+
+Add to Calendar: Open the attached .ics file to add this appointment to your calendar.
+
+${appointmentDetails.businessName}
+${appointmentDetails.businessPhone ? `Phone: ${appointmentDetails.businessPhone}` : ''}
+Email: ${appointmentDetails.businessEmail}
+      `;
+
+      // Send email with .ics attachment
+      const info = await transporter.sendMail({
+        from: `"${config.smtpFromName}" <${config.smtpFromEmail}>`,
+        to: recipientEmail,
+        subject,
+        html: htmlContent,
+        text: textContent,
+        attachments: [
+          {
+            filename: 'appointment.ics',
+            content: icsContent,
+            contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+          },
+        ],
+        // Also set calendar content in the main body for better email client support
+        icalEvent: {
+          filename: 'appointment.ics',
+          method: 'REQUEST',
+          content: icsContent,
+        },
+      });
+
+      return {
+        success: true,
+        message: `Calendar invite sent successfully to ${recipientEmail}. Message ID: ${info.messageId}`
+      };
+
+    } catch (error) {
+      console.error('Calendar invite sending error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      return {
+        success: false,
+        message: `Failed to send calendar invite: ${errorMessage}`
+      };
+    }
   }
 }
