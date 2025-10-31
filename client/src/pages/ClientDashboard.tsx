@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { 
   Calendar,
+  CalendarPlus,
   Users,
   DollarSign,
   TrendingUp,
@@ -46,6 +47,7 @@ import DomainConfig from '../components/dashboard/DomainConfig';
 import StripeConfiguration from '../components/dashboard/StripeConfiguration';
 import SubscriptionManagement from '../components/dashboard/SubscriptionManagement';
 import SMTPConfiguration from '../components/dashboard/SMTPConfiguration';
+import SendCalendarInviteDialog from '../components/dashboard/SendCalendarInviteDialog';
 
 interface Client {
   id: string;
@@ -142,6 +144,8 @@ export default function ClientDashboard() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [selectedCalendarAppointment, setSelectedCalendarAppointment] = useState<Appointment | null>(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
   
   // Edit states
@@ -1249,6 +1253,17 @@ export default function ClientDashboard() {
                             <Button variant="outline" size="sm" onClick={() => openAppointmentModal(appointment)}>
                               <Edit className="h-4 w-4" />
                             </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCalendarAppointment(appointment);
+                                setIsCalendarDialogOpen(true);
+                              }}
+                              data-testid="button-send-calendar"
+                            >
+                              <CalendarPlus className="h-4 w-4" />
+                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="outline" size="sm">
@@ -1919,6 +1934,25 @@ export default function ClientDashboard() {
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
       />
+
+      {/* Send Calendar Invite Dialog */}
+      {selectedCalendarAppointment && (
+        <SendCalendarInviteDialog
+          isOpen={isCalendarDialogOpen}
+          onClose={() => {
+            setIsCalendarDialogOpen(false);
+            setSelectedCalendarAppointment(null);
+          }}
+          appointment={{
+            id: String(selectedCalendarAppointment.id),
+            customerName: selectedCalendarAppointment.customerName,
+            customerEmail: selectedCalendarAppointment.customerEmail,
+            appointmentDate: selectedCalendarAppointment.appointmentDate,
+            startTime: selectedCalendarAppointment.startTime,
+            serviceName: getServiceName(selectedCalendarAppointment.serviceId),
+          }}
+        />
+      )}
     </div>
   );
 }
