@@ -29,20 +29,11 @@ export default function SendCalendarInviteDialog({ isOpen, onClose, appointment 
 
   const sendCalendarInviteMutation = useMutation({
     mutationFn: async (email: string) => {
-      const response = await apiRequest(`/api/appointments/${appointment.id}/send-calendar-invite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ recipientEmail: email }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send calendar invite');
-      }
-      
-      return await response.json();
+      return await apiRequest(
+        `/api/appointments/${appointment.id}/send-calendar-invite`,
+        'POST',
+        { recipientEmail: email }
+      );
     },
     onSuccess: () => {
       toast({

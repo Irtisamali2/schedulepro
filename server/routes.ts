@@ -2624,8 +2624,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid staff member for this client" });
       }
       
-      // Get the current user from session for audit trail
-      const transferredBy = req.user?.id || clientId;
+      // Use clientId for audit trail
+      const transferredBy = clientId;
       
       const updatedAppointment = await storage.transferAppointment(
         appointmentId,

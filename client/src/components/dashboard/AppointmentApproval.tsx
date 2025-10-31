@@ -20,11 +20,13 @@ import {
   MessageSquare,
   Filter,
   MoreHorizontal,
-  ArrowRightLeft
+  ArrowRightLeft,
+  CalendarPlus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import AppointmentTransferDialog from './AppointmentTransferDialog';
+import SendCalendarInviteDialog from './SendCalendarInviteDialog';
 
 interface Appointment {
   id: number;
@@ -51,6 +53,8 @@ export default function AppointmentApproval() {
   const [bulkAction, setBulkAction] = useState<'approve' | 'decline' | null>(null);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedTransferAppointment, setSelectedTransferAppointment] = useState<Appointment | null>(null);
+  const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
+  const [selectedCalendarAppointment, setSelectedCalendarAppointment] = useState<Appointment | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -571,6 +575,23 @@ export default function AppointmentApproval() {
                         </div>
                       )}
                       
+                      {/* Send to Calendar Button - Available for all appointments */}
+                      <div className="mt-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="w-full"
+                          onClick={() => {
+                            setSelectedCalendarAppointment(appointment);
+                            setCalendarDialogOpen(true);
+                          }}
+                          data-testid="button-send-calendar"
+                        >
+                          <CalendarPlus className="h-3 w-3 mr-1" />
+                          Send to Calendar
+                        </Button>
+                      </div>
+                      
                       {appointment.status === 'declined' && appointment.declineReason && (
                         <div className="mt-3">
                           <div className="text-xs text-gray-500 mb-1">Decline Reason</div>
@@ -616,6 +637,29 @@ export default function AppointmentApproval() {
             assignedTo: String(selectedTransferAppointment.stylistId),
           }}
           clientId={clientId}
+        />
+      )}
+      
+      {/* Send Calendar Invite Dialog */}
+      {selectedCalendarAppointment && (
+        <SendCalendarInviteDialog
+          isOpen={calendarDialogOpen}
+          onClose={() => {
+            setCalendarDialogOpen(false);
+            setSelectedCalendarAppointment(null);
+          }}
+          appointment={{
+            id: String(selectedCalendarAppointment.id),
+            customerName: selectedCalendarAppointment.clientName,
+            customerEmail: selectedCalendarAppointment.clientEmail,
+            appointmentDate: selectedCalendarAppointment.date,
+            startTime: new Date(selectedCalendarAppointment.date).toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            serviceName: getServiceName(selectedCalendarAppointment.serviceId),
+            notes: selectedCalendarAppointment.notes,
+          }}
         />
       )}
     </div>
