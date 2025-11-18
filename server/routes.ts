@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import express from "express";
 import { storage } from "./storage";
+import { GlossGeniusIntegration } from "./glossgenius-integration";
 import { 
   insertUserSchema,
   insertPlanSchema,
@@ -2752,6 +2753,350 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(hours);
     } catch (error) {
       res.status(500).json({ error: "Failed to update operating hours" });
+    }
+  });
+
+  // Export Appointments to GlossGenius
+  app.post("/api/client/:clientId/export/glossgenius", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { appointmentIds, apiKey, businessId } = req.body;
+
+      // Validate input
+      if (!apiKey || !businessId) {
+        return res.status(400).json({
+          error: "GlossGenius API Key and Business ID are required"
+        });
+      }
+
+      if (!appointmentIds || !Array.isArray(appointmentIds) || appointmentIds.length === 0) {
+        return res.status(400).json({
+          error: "At least one appointment must be selected"
+        });
+      }
+
+      // Initialize GlossGenius integration
+      const glossGenius = new GlossGeniusIntegration({
+        apiKey,
+        businessId,
+        baseUrl: 'https://api.glossgenius.com' // GlossGenius API base URL
+      });
+
+      // Fetch selected appointments
+      const appointments = [];
+      for (const appointmentId of appointmentIds) {
+        const appointment = await storage.getAppointment(appointmentId);
+        if (appointment && appointment.clientId === clientId) {
+          // Get additional details
+          const client = await storage.getClient(appointment.clientId);
+          const services = await storage.getClientServices(appointment.clientId);
+          const service = services.find(s => s.id === appointment.serviceId);
+
+          if (client && service) {
+            appointments.push({
+              id: appointment.id,
+              clientName: client.name,
+              clientEmail: client.email,
+              clientPhone: client.phone || '',
+              serviceName: service.name,
+              date: appointment.date,
+              time: appointment.time,
+              duration: appointment.duration || 60,
+              price: service.price,
+              status: appointment.status,
+              notes: appointment.notes || '',
+              staffId: appointment.teamMemberId || ''
+            });
+          }
+        }
+      }
+
+      if (appointments.length === 0) {
+        return res.status(404).json({
+          error: "No valid appointments found to export"
+        });
+      }
+
+      // Export to GlossGenius
+      const result = await glossGenius.exportAppointments(appointments);
+
+      res.json({
+        success: result.success,
+        failed: result.failed,
+        total: appointments.length,
+        errors: result.errors
+      });
+
+    } catch (error: any) {
+      console.error("GlossGenius export error:", error);
+      res.status(500).json({
+        error: error.message || "Failed to export appointments to GlossGenius"
+      });
+    }
+  });
+
+  // Export All Appointments to GlossGenius
+  app.post("/api/client/:clientId/export/glossgenius/all", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { apiKey, businessId, dateFrom, dateTo } = req.body;
+
+      // Validate input
+      if (!apiKey || !businessId) {
+        return res.status(400).json({
+          error: "GlossGenius API Key and Business ID are required"
+        });
+      }
+
+      // Initialize GlossGenius integration
+      const glossGenius = new GlossGeniusIntegration({
+        apiKey,
+        businessId,
+        baseUrl: 'https://api.glossgenius.com'
+      });
+
+      // Fetch all appointments (with optional date filter)
+      const allAppointments = await storage.getClientAppointments(clientId);
+
+      let filteredAppointments = allAppointments;
+      if (dateFrom || dateTo) {
+        filteredAppointments = allAppointments.filter((apt: any) => {
+          const aptDate = new Date(apt.date);
+          if (dateFrom && aptDate < new Date(dateFrom)) return false;
+          if (dateTo && aptDate > new Date(dateTo)) return false;
+          return true;
+        });
+      }
+
+      // Prepare appointments for export
+      const appointments = [];
+      for (const appointment of filteredAppointments) {
+        const client = await storage.getClient(appointment.clientId);
+        const services = await storage.getClientServices(appointment.clientId);
+        const service = services.find((s: any) => s.id === appointment.serviceId);
+
+        if (client && service) {
+          appointments.push({
+            id: appointment.id,
+            clientName: client.name,
+            clientEmail: client.email,
+            clientPhone: client.phone || '',
+            serviceName: service.name,
+            date: appointment.date,
+            time: appointment.time,
+            duration: appointment.duration || 60,
+            price: service.price,
+            status: appointment.status,
+            notes: appointment.notes || '',
+            staffId: appointment.teamMemberId || ''
+          });
+        }
+      }
+
+      if (appointments.length === 0) {
+        return res.status(404).json({
+          error: "No appointments found to export"
+        });
+      }
+
+      // Export to GlossGenius
+      const result = await glossGenius.exportAppointments(appointments);
+
+      res.json({
+        success: result.success,
+        failed: result.failed,
+        total: appointments.length,
+        errors: result.errors
+      });
+
+    } catch (error: any) {
+      console.error("GlossGenius export error:", error);
+      res.status(500).json({
+        error: error.message || "Failed to export appointments to GlossGenius"
+      });
+    }
+  });
+
+  // CSV Export for GlossGenius - Selected Appointments
+  app.get("/api/client/:clientId/export/glossgenius/csv", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const appointmentIds = req.query.appointmentIds as string;
+
+      if (!appointmentIds) {
+        return res.status(400).json({
+          error: "At least one appointment must be selected"
+        });
+      }
+
+      const ids = appointmentIds.split(',');
+      const appointments = [];
+
+      // Fetch selected appointments with details
+      for (const appointmentId of ids) {
+        const appointment = await storage.getAppointment(appointmentId);
+        if (appointment && appointment.clientId === clientId) {
+          const services = await storage.getClientServices(appointment.clientId);
+          const service = services.find((s: any) => s.id === appointment.serviceId);
+
+          if (service) {
+            // Use appointment's customerName (for public bookings) or client data (for internal bookings)
+            const fullName = appointment.customerName || '';
+            const nameParts = fullName.split(' ');
+
+            appointments.push({
+              clientFirstName: nameParts[0] || '',
+              clientLastName: nameParts.slice(1).join(' ') || '',
+              clientEmail: appointment.customerEmail || '',
+              clientPhone: appointment.customerPhone || '',
+              serviceName: service.name || '',
+              servicePrice: service.price || 0,
+              serviceDuration: service.durationMinutes || 60,
+              appointmentDate: appointment.appointmentDate || appointment.date || '',
+              appointmentTime: appointment.startTime || appointment.time || '',
+              appointmentStatus: appointment.status || 'PENDING',
+              notes: appointment.notes || ''
+            });
+          }
+        }
+      }
+
+      // Generate CSV
+      const headers = [
+        'Client First Name',
+        'Client Last Name',
+        'Client Email',
+        'Client Phone',
+        'Service Name',
+        'Service Price',
+        'Service Duration (minutes)',
+        'Appointment Date',
+        'Appointment Time',
+        'Status',
+        'Notes'
+      ];
+
+      const csvRows = [
+        headers.join(','),
+        ...appointments.map(apt => [
+          `"${apt.clientFirstName}"`,
+          `"${apt.clientLastName}"`,
+          `"${apt.clientEmail}"`,
+          `"${apt.clientPhone}"`,
+          `"${apt.serviceName}"`,
+          apt.servicePrice,
+          apt.serviceDuration,
+          apt.appointmentDate,
+          apt.appointmentTime,
+          apt.appointmentStatus,
+          `"${apt.notes.replace(/"/g, '""')}"`
+        ].join(','))
+      ];
+
+      const csv = csvRows.join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=glossgenius_appointments_${new Date().toISOString().split('T')[0]}.csv`);
+      res.send(csv);
+
+    } catch (error: any) {
+      console.error("CSV export error:", error);
+      res.status(500).json({
+        error: error.message || "Failed to export appointments as CSV"
+      });
+    }
+  });
+
+  // CSV Export for GlossGenius - All Appointments
+  app.get("/api/client/:clientId/export/glossgenius/csv/all", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { dateFrom, dateTo } = req.query;
+
+      const allAppointments = await storage.getClientAppointments(clientId);
+
+      // Filter by date if provided
+      let filteredAppointments = allAppointments;
+      if (dateFrom || dateTo) {
+        filteredAppointments = allAppointments.filter((apt: any) => {
+          const aptDate = new Date(apt.appointmentDate || apt.date);
+          if (dateFrom && aptDate < new Date(dateFrom as string)) return false;
+          if (dateTo && aptDate > new Date(dateTo as string)) return false;
+          return true;
+        });
+      }
+
+      const appointments = [];
+
+      // Prepare appointments for export
+      for (const appointment of filteredAppointments) {
+        const services = await storage.getClientServices(appointment.clientId);
+        const service = services.find((s: any) => s.id === appointment.serviceId);
+
+        if (service) {
+          // Use appointment's customerName (for public bookings) or client data (for internal bookings)
+          const fullName = appointment.customerName || '';
+          const nameParts = fullName.split(' ');
+
+          appointments.push({
+            clientFirstName: nameParts[0] || '',
+            clientLastName: nameParts.slice(1).join(' ') || '',
+            clientEmail: appointment.customerEmail || '',
+            clientPhone: appointment.customerPhone || '',
+            serviceName: service.name || '',
+            servicePrice: service.price || 0,
+            serviceDuration: service.durationMinutes || 60,
+            appointmentDate: appointment.appointmentDate || appointment.date || '',
+            appointmentTime: appointment.startTime || appointment.time || '',
+            appointmentStatus: appointment.status || 'PENDING',
+            notes: appointment.notes || ''
+          });
+        }
+      }
+
+      // Generate CSV
+      const headers = [
+        'Client First Name',
+        'Client Last Name',
+        'Client Email',
+        'Client Phone',
+        'Service Name',
+        'Service Price',
+        'Service Duration (minutes)',
+        'Appointment Date',
+        'Appointment Time',
+        'Status',
+        'Notes'
+      ];
+
+      const csvRows = [
+        headers.join(','),
+        ...appointments.map(apt => [
+          `"${apt.clientFirstName}"`,
+          `"${apt.clientLastName}"`,
+          `"${apt.clientEmail}"`,
+          `"${apt.clientPhone}"`,
+          `"${apt.serviceName}"`,
+          apt.servicePrice,
+          apt.serviceDuration,
+          apt.appointmentDate,
+          apt.appointmentTime,
+          apt.appointmentStatus,
+          `"${apt.notes.replace(/"/g, '""')}"`
+        ].join(','))
+      ];
+
+      const csv = csvRows.join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=glossgenius_appointments_${new Date().toISOString().split('T')[0]}.csv`);
+      res.send(csv);
+
+    } catch (error: any) {
+      console.error("CSV export error:", error);
+      res.status(500).json({
+        error: error.message || "Failed to export appointments as CSV"
+      });
     }
   });
 

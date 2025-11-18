@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduled - Universal App Icon</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 90vw;
+            margin-bottom: 20px;
+        }
+        
+        .icon {
+            width: min(80vw, 400px);
+            height: min(80vw, 400px);
+            margin: 20px auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        
+        .features {
+            text-align: left;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .features h3 {
+            color: #4f46e5;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .feature-item {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .feature-item h4 {
+            color: #4f46e5;
+            margin: 0 0 8px 0;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .feature-item p {
+            margin: 0;
+            font-size: 0.8em;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        .cta {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .cta h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .cta p {
+            margin: 0;
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scheduled</h1>
+        <p class="subtitle">Universal App Icon for All Industries</p>
+        
+        <div class="icon">
+            <svg width="100%" height="100%" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="mainGradient" cx="0.3" cy="0.3" r="1.4">
+                  <stop offset="0%" stop-color="#4f46e5" />
+                  <stop offset="35%" stop-color="#7c3aed" />
+                  <stop offset="70%" stop-color="#ec4899" />
+                  <stop offset="100%" stop-color="#f59e0b" />
+                </radialGradient>
+                
+                <linearGradient id="calendarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.98" />
+                  <stop offset="100%" stop-color="#f8fafc" stop-opacity="0.95" />
+                </linearGradient>
+                
+                <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#06b6d4" />
+                  <stop offset="100%" stop-color="#3b82f6" />
+                </linearGradient>
+                
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                
+                <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="rgba(0,0,0,0.15)"/>
+                </filter>
+                
+                <radialGradient id="highlightOverlay" cx="0.2" cy="0.2" r="1.3">
+                  <stop stop-color="white" stop-opacity="0.4" />
+                  <stop offset="0.6" stop-color="white" stop-opacity="0.1" />
+                  <stop offset="1" stop-color="white" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+              
+              <circle cx="512" cy="512" r="500" fill="url(#mainGradient)" />
+              <circle cx="512" cy="512" r="485" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="6" />
+              <rect x="280" y="320" width="464" height="384" rx="40" fill="url(#calendarGradient)" filter="url(#softShadow)" />
+              <rect x="280" y="320" width="464" height="96" rx="40" fill="url(#accentGradient)" />
+              <rect x="280" y="392" width="464" height="24" fill="url(#accentGradient)" />
+              
+              <rect x="320" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              <rect x="376" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              <rect x="432" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              <rect x="488" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              <rect x="544" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              <rect x="600" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              <rect x="656" y="352" width="32" height="40" rx="8" fill="rgba(255,255,255,0.95)" />
+              
+              <line x1="280" y1="480" x2="744" y2="480" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              <line x1="280" y1="560" x2="744" y2="560" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              <line x1="280" y1="640" x2="744" y2="640" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              <line x1="380" y1="440" x2="380" y2="704" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              <line x1="480" y1="440" x2="480" y2="704" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              <line x1="580" y1="440" x2="580" y2="704" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              <line x1="680" y1="440" x2="680" y2="704" stroke="rgba(148,163,184,0.3)" stroke-width="2" />
+              
+              <circle cx="430" cy="520" r="24" fill="url(#accentGradient)" filter="url(#glow)" />
+              <circle cx="430" cy="520" r="16" fill="rgba(255,255,255,0.9)" />
+              <circle cx="430" cy="520" r="8" fill="url(#accentGradient)" />
+              
+              <circle cx="530" cy="520" r="20" fill="#10b981" />
+              <path d="M522 520 L528 526 L538 514" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              
+              <circle cx="630" cy="600" r="20" fill="#f59e0b" />
+              <circle cx="630" cy="600" r="12" fill="white" />
+              <circle cx="630" cy="600" r="6" fill="#f59e0b" />
+              
+              <circle cx="330" cy="600" r="18" fill="#8b5cf6" />
+              <rect x="324" y="594" width="12" height="12" rx="2" fill="white" />
+              
+              <g transform="translate(200,200)">
+                <circle r="32" fill="url(#accentGradient)" fill-opacity="0.8" filter="url(#glow)" />
+                <circle r="20" fill="white" fill-opacity="0.9" />
+                <path d="M-8,-8 L8,8 M-8,8 L8,-8" stroke="url(#accentGradient)" stroke-width="3" stroke-linecap="round" />
+              </g>
+              
+              <g transform="translate(824,200)">
+                <circle r="28" fill="#10b981" fill-opacity="0.8" filter="url(#glow)" />
+                <circle r="18" fill="white" fill-opacity="0.9" />
+                <circle r="8" fill="#10b981" />
+              </g>
+              
+              <g transform="translate(200,824)">
+                <circle r="28" fill="#f59e0b" fill-opacity="0.8" filter="url(#glow)" />
+                <path d="M-12,0 L-4,-8 L4,0 L-4,8 Z" fill="white" />
+              </g>
+              
+              <g transform="translate(824,824)">
+                <circle r="32" fill="#ec4899" fill-opacity="0.8" filter="url(#glow)" />
+                <circle r="20" fill="white" fill-opacity="0.9" />
+                <path d="M-10,-6 L-6,-10 L6,-10 L10,-6 L10,6 L6,10 L-6,10 L-10,6 Z" fill="#ec4899" />
+              </g>
+              
+              <circle cx="512" cy="372" r="28" fill="white" fill-opacity="0.95" filter="url(#softShadow)" />
+              <path d="M504,364 Q508,360 514,360 Q520,360 524,364 Q528,368 528,372 Q528,376 524,380 Q520,384 514,384 Q508,384 504,380 Q500,376 500,372 Q500,368 504,364 Z" fill="none" stroke="url(#accentGradient)" stroke-width="3" />
+              <path d="M508,368 Q510,366 514,366 Q518,366 520,368 Q520,370 518,372 Q516,374 514,374 Q512,374 510,372 Q508,370 508,368 Z M508,376 Q510,374 514,374 Q518,374 520,376 Q520,378 518,380 Q516,382 514,382 Q512,382 510,380 Q508,378 508,376 Z" fill="url(#accentGradient)" />
+              
+              <circle cx="512" cy="512" r="500" fill="url(#highlightOverlay)" />
+              <circle cx="512" cy="512" r="496" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8" />
+            </svg>
+        </div>
+        
+        <div class="features">
+            <h3>Perfect for All Industries</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h4>Beauty & Wellness</h4>
+                    <p>Vibrant colors appeal to beauty professionals while maintaining sophistication</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Home Services</h4>
+                    <p>Professional calendar interface shows business capability and reliability</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Creative Services</h4>
+                    <p>Modern gradient design attracts creative professionals and agencies</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Universal Appeal</h4>
+                    <p>Balanced design works across all service industries without being too specific</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta">
+            <h3>Ready for Apple App Store</h3>
+            <p>1024x1024 resolution icon designed to attract users and stand out in the App Store. The sophisticated gradient background with clean calendar interface makes people want to click and explore your scheduling platform.</p>
+        </div>
+    </div>
+</body>
+</html>

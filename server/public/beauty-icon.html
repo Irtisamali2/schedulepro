@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beauty App Icon</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 90vw;
+        }
+        
+        .icon {
+            width: min(80vw, 400px);
+            height: min(80vw, 400px);
+            margin: 20px auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .features {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+        
+        .features h3 {
+            color: #c44569;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            padding: 5px 0;
+            font-size: 0.85em;
+        }
+        
+        .features li:before {
+            content: "✨ ";
+            color: #ff6b9d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Beauty App Icon</h1>
+        <p class="subtitle">Pretty • Professional • Playful</p>
+        
+        <div class="icon">
+            <svg width="100%" height="100%" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="mainGradient" cx="0.3" cy="0.3" r="1.2">
+                  <stop offset="0%" stop-color="#ff6b9d" />
+                  <stop offset="40%" stop-color="#c44569" />
+                  <stop offset="100%" stop-color="#8e44ad" />
+                </radialGradient>
+                
+                <linearGradient id="sparkleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+                  <stop offset="50%" stop-color="#ffd700" stop-opacity="0.8" />
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9" />
+                </linearGradient>
+                
+                <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+                  <stop offset="100%" stop-color="#f8f9fa" stop-opacity="0.9" />
+                </linearGradient>
+                
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                
+                <radialGradient id="paint0_radial" cx="0.2" cy="0.2" r="1.2" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="white" stop-opacity="0.3" />
+                  <stop offset="0.7" stop-color="white" stop-opacity="0.1" />
+                  <stop offset="1" stop-color="white" stop-opacity="0" />
+                </radialGradient>
+              </defs>
+              
+              <circle cx="512" cy="512" r="500" fill="url(#mainGradient)" />
+              <circle cx="512" cy="512" r="480" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8" />
+              <rect x="312" y="340" width="400" height="340" rx="32" fill="url(#centerGradient)" filter="url(#glow)" />
+              <rect x="312" y="340" width="400" height="80" rx="32" fill="url(#mainGradient)" />
+              <rect x="312" y="396" width="400" height="24" fill="url(#mainGradient)" />
+              
+              <rect x="340" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="380" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="420" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="460" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="500" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="540" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="580" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="620" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="660" y="364" width="24" height="32" rx="6" fill="rgba(255,255,255,0.9)" />
+              
+              <line x1="312" y1="460" x2="712" y2="460" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="312" y1="520" x2="712" y2="520" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="312" y1="580" x2="712" y2="580" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="380" y1="420" x2="380" y2="680" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="450" y1="420" x2="450" y2="680" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="520" y1="420" x2="520" y2="680" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="590" y1="420" x2="590" y2="680" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              <line x1="660" y1="420" x2="660" y2="680" stroke="rgba(0,0,0,0.1)" stroke-width="2" />
+              
+              <!-- Beauty Icons -->
+              <circle cx="415" cy="490" r="16" fill="#ff6b9d" />
+              <rect x="411" y="478" width="8" height="24" rx="4" fill="#ff6b9d" />
+              <circle cx="415" cy="475" r="3" fill="#ffffff" />
+              
+              <circle cx="485" cy="490" r="16" fill="#8e44ad" />
+              <rect x="481" y="482" width="8" height="16" rx="2" fill="#ffffff" />
+              <rect x="479" y="498" width="12" height="4" rx="2" fill="#ffffff" />
+              
+              <circle cx="555" cy="550" r="16" fill="#c44569" />
+              <rect x="551" y="542" width="8" height="16" rx="4" fill="#ffffff" />
+              <circle cx="555" cy="542" r="2" fill="#ff6b9d" />
+              
+              <circle cx="625" cy="550" r="16" fill="#ff6b9d" />
+              <circle cx="625" cy="550" r="10" fill="#ffffff" />
+              <rect x="623" y="560" width="4" height="8" fill="#8e44ad" />
+              
+              <circle cx="415" cy="610" r="16" fill="#8e44ad" />
+              <path d="M408 606 L422 614 M408 614 L422 606" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+              <circle cx="410" cy="606" r="2" fill="#ffffff" />
+              <circle cx="420" cy="614" r="2" fill="#ffffff" />
+              
+              <!-- Sparkles -->
+              <g transform="translate(280,280)">
+                <path d="M0,-12 L3,-3 L12,0 L3,3 L0,12 L-3,3 L-12,0 L-3,-3 Z" fill="url(#sparkleGradient)" filter="url(#glow)" />
+              </g>
+              <g transform="translate(720,300)">
+                <path d="M0,-8 L2,-2 L8,0 L2,2 L0,8 L-2,2 L-8,0 L-2,-2 Z" fill="url(#sparkleGradient)" filter="url(#glow)" />
+              </g>
+              <g transform="translate(300,720)">
+                <path d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z" fill="url(#sparkleGradient)" />
+              </g>
+              <g transform="translate(740,700)">
+                <path d="M0,-8 L2,-2 L8,0 L2,2 L0,8 L-2,2 L-8,0 L-2,-2 Z" fill="url(#sparkleGradient)" filter="url(#glow)" />
+              </g>
+              <g transform="translate(200,500)">
+                <path d="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z" fill="rgba(255,255,255,0.8)" />
+              </g>
+              <g transform="translate(800,420)">
+                <path d="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z" fill="rgba(255,255,255,0.8)" />
+              </g>
+              <g transform="translate(240,650)">
+                <path d="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z" fill="rgba(255,255,255,0.8)" />
+              </g>
+              
+              <circle cx="485" cy="550" r="20" fill="#27ae60" />
+              <path d="M476 550 L482 556 L494 544" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="512" cy="512" r="500" fill="url(#paint0_radial)" fill-opacity="0.15" />
+            </svg>
+        </div>
+        
+        <div class="features">
+            <h3>What Makes This Perfect</h3>
+            <ul>
+                <li>Pink-to-purple gradient background</li>
+                <li>Sparkles for beauty magic</li>
+                <li>Nail polish, lipstick, brush icons</li>
+                <li>Professional calendar layout</li>
+                <li>Perfect for beauty professionals</li>
+                <li>App Store ready</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

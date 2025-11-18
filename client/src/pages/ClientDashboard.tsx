@@ -48,6 +48,7 @@ import StripeConfiguration from '../components/dashboard/StripeConfiguration';
 import SubscriptionManagement from '../components/dashboard/SubscriptionManagement';
 import SMTPConfiguration from '../components/dashboard/SMTPConfiguration';
 import SendCalendarInviteDialog from '../components/dashboard/SendCalendarInviteDialog';
+import GlossGeniusExport from '../components/dashboard/GlossGeniusExport';
 
 interface Client {
   id: string;
@@ -1089,7 +1090,9 @@ export default function ClientDashboard() {
             {/* Appointment Booking Section */}
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Booked Appointments</h2>
-              <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
+              <div className="flex gap-2">
+                <GlossGeniusExport clientId={clientData?.id || "1"} />
+                <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
                   <DialogTrigger asChild>
                     <Button onClick={() => openAppointmentModal()}>
                       <Plus className="h-4 w-4 mr-2" />
@@ -1198,8 +1201,9 @@ export default function ClientDashboard() {
                   </div>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>All Appointments</CardTitle>

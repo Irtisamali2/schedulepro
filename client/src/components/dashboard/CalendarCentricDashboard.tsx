@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Calendar, Clock, Plus, Users, DollarSign, TrendingUp, Maximize2, Minimize2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { type Service, type Stylist, type Appointment } from "@shared/schema";
+import GlossGeniusExport from "./GlossGeniusExport";
 
 export default function CalendarCentricDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -480,10 +481,11 @@ Appointment Details:
                   {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
                 </CardDescription>
               </div>
-              
+
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
+                <GlossGeniusExport clientId="1" />
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={viewMode === "week" ? goToPreviousWeek : viewMode === "day" ? goToPreviousDay : goToPreviousMonth}
                 >
@@ -492,8 +494,8 @@ Appointment Details:
                 <Button variant="outline" size="sm" onClick={goToToday}>
                   Today
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={viewMode === "week" ? goToNextWeek : viewMode === "day" ? goToNextDay : goToNextMonth}
                 >

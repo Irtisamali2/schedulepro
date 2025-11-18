@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 
@@ -99,14 +100,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+
+  // Windows-compatible server configuration
+  const isWindows = process.platform === 'win32';
+  const serverOptions: any = isWindows
+    ? { port }  // Windows doesn't support reusePort
+    : { port, host: "0.0.0.0", reusePort: true };
+
+  server.listen(serverOptions, () => {
+    log(`serving on port ${port}`);
+  });
 })();
