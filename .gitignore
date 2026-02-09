@@ -1,10 +1,58 @@
-# environment
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
 .env
+.env.*
+!.env.example
 .local/
 
-# AI / temp
+# AI / IDE / temp
 .claude/
 attached_assets/
-
-# VS Code / temp files
 nul
+.replit
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Archives (should not be in repo)
+*.tar.gz
+*.zip
+*.tgz
+
+# iOS (handled by ios/.gitignore for native project files)
+# But ignore generated/copied web assets and build artifacts
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/Pods/
+ios/App/build/
+ios/App/output/
+ios/DerivedData/
+ios/capacitor-cordova-ios-plugins/
+ios/xcuserdata/
+
+# Lock file (optional - uncomment if you don't want it tracked)
+# package-lock.json
+
+# Vercel
+.vercel/
+
+# Vite
+vite.config.ts.timestamp-*

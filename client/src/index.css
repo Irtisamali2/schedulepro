@@ -230,6 +230,14 @@ body {
 
   body {
     overscroll-behavior-y: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in input/textarea */
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -292,4 +300,60 @@ body {
 
 .time-slot.selected {
   @apply bg-primary text-primary-foreground border-primary;
+}
+
+/* Capacitor / iOS native app styles */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* iOS rubber-band scrolling fix */
+html {
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  overflow: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent iOS callout on long press */
+a, button, img {
+  -webkit-touch-callout: none;
+}
+
+/* Smooth scrolling for iOS momentum */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Fix iOS input zoom */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Active states for touch feedback */
+button:active,
+a:active,
+[role="button"]:active {
+  opacity: 0.7;
+  transition: opacity 0.1s;
 }
