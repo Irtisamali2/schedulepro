@@ -29,8 +29,11 @@ export function initCapacitor(): void {
 
   const originalFetch = window.fetch;
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    let rewritten = false;
+
     if (typeof input === 'string' && input.startsWith('/api/')) {
       input = `${API_BASE_URL}${input}`;
+      rewritten = true;
     } else if (input instanceof Request) {
       // Request.url is always absolute (e.g. capacitor://localhost/api/...)
       // so we need to extract the pathname and check that
@@ -38,11 +41,19 @@ export function initCapacitor(): void {
         const url = new URL(input.url);
         if (url.pathname.startsWith('/api/')) {
           input = new Request(`${API_BASE_URL}${url.pathname}${url.search}`, input);
+          rewritten = true;
         }
       } catch {
         // If URL parsing fails, fall through to original fetch
       }
     }
+
+    // For rewritten API calls, remove credentials: "include" since auth is
+    // localStorage-based and wildcard CORS (*) rejects credentialed requests.
+    if (rewritten && init?.credentials === 'include') {
+      init = { ...init, credentials: 'omit' };
+    }
+
     return originalFetch.call(window, input, init);
   };
 }

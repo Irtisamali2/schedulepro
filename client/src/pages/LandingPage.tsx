@@ -186,7 +186,12 @@ export default function LandingPage() {
             </nav>
             
             <div className="flex items-center space-x-2 md:space-x-4">
-              <Button 
+              <Link href="/client-login">
+                <Button variant="ghost" className="hidden md:inline-flex text-gray-600 hover:text-gray-900 text-sm md:text-base">
+                  Log In
+                </Button>
+              </Link>
+              <Button
                 className="text-white px-4 md:px-6 py-2 text-sm md:text-base transition-all duration-200"
                 style={{
                   background: 'linear-gradient(135deg, #EEAF7C, #E0647D)',
@@ -201,9 +206,11 @@ export default function LandingPage() {
                   e.currentTarget.style.transform = 'translateY(0px)';
                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(238, 175, 124, 0.2)';
                 }}
-                onClick={() => handleGetStarted('plan_1')}
+                onClick={() => {
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
-                Get Started
+                Sign Up
               </Button>
               
               {/* Mobile menu button */}
@@ -242,13 +249,26 @@ export default function LandingPage() {
                 >
                   About
                 </a>
-                <a 
-                  href="#contact" 
+                <a
+                  href="#contact"
                   className="text-gray-600 hover:text-gray-900 transition-colors px-2 py-1"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Contact
                 </a>
+                <div className="border-t border-gray-200 pt-4 flex flex-col space-y-3">
+                  <Link href="/client-login" onClick={() => setMobileMenuOpen(false)}>
+                    <span className="text-gray-600 hover:text-gray-900 transition-colors px-2 py-1 block">Log In</span>
+                  </Link>
+                  <a
+                    href="#pricing"
+                    className="block text-center text-white px-4 py-2 rounded-md mx-2"
+                    style={{ background: 'linear-gradient(135deg, #EEAF7C, #E0647D)' }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </a>
+                </div>
               </nav>
             </div>
           )}
