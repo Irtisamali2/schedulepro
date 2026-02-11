@@ -16,7 +16,6 @@ build/
 
 # AI / IDE / temp
 .claude/
-attached_assets/
 nul
 .replit
 
