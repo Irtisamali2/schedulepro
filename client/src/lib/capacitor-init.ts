@@ -31,8 +31,17 @@ export function initCapacitor(): void {
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     if (typeof input === 'string' && input.startsWith('/api/')) {
       input = `${API_BASE_URL}${input}`;
-    } else if (input instanceof Request && input.url.startsWith('/api/')) {
-      input = new Request(`${API_BASE_URL}${input.url}`, input);
+    } else if (input instanceof Request) {
+      // Request.url is always absolute (e.g. capacitor://localhost/api/...)
+      // so we need to extract the pathname and check that
+      try {
+        const url = new URL(input.url);
+        if (url.pathname.startsWith('/api/')) {
+          input = new Request(`${API_BASE_URL}${url.pathname}${url.search}`, input);
+        }
+      } catch {
+        // If URL parsing fails, fall through to original fetch
+      }
     }
     return originalFetch.call(window, input, init);
   };

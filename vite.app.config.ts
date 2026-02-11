@@ -38,5 +38,6 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.VITE_CAPACITOR': JSON.stringify('true'),
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://scheduledpros.com'),
   },
 });
