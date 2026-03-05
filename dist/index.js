@@ -1129,6 +1129,8 @@ var clientWebsites = pgTable("client_websites", {
   // JSON string
   sections: text("sections"),
   // JSON string for website sections
+  templateId: text("template_id").default("default"),
+  // Template layout identifier
   showPrices: boolean("show_prices").default(true),
   allowOnlineBooking: boolean("allow_online_booking").default(true),
   isPublished: boolean("is_published").default(false),
@@ -1147,6 +1149,7 @@ var insertClientWebsiteSchema = createInsertSchema(clientWebsites).pick({
   contactInfo: true,
   socialLinks: true,
   sections: true,
+  templateId: true,
   showPrices: true,
   allowOnlineBooking: true,
   isPublished: true
@@ -1710,14 +1713,44 @@ var requiresDatabase = (isCoolify || isProduction) && !isReplit;
 if (hasDatabaseUrl) {
   if (isCoolify) {
     console.log(`\u2705 Initializing Coolify PostgreSQL connection`);
-    pool = new PgPool({ connectionString: process.env.DATABASE_URL });
+    pool = new PgPool({
+      connectionString: process.env.DATABASE_URL,
+      max: 20,
+      // Maximum number of clients in the pool
+      idleTimeoutMillis: 3e4,
+      // Close idle clients after 30 seconds
+      connectionTimeoutMillis: 1e4
+      // Return an error after 10 seconds if connection could not be established
+    });
+    pool.on("error", (err) => {
+      console.error("Unexpected error on idle PostgreSQL client", err);
+    });
     db = drizzlePg(pool, { schema: schema_exports });
   } else {
     console.log(`\u2705 Initializing Neon PostgreSQL connection`);
     neonConfig.webSocketConstructor = ws;
-    pool = new NeonPool({ connectionString: process.env.DATABASE_URL });
+    neonConfig.fetchConnectionCache = true;
+    pool = new NeonPool({
+      connectionString: process.env.DATABASE_URL,
+      max: 20,
+      // Maximum number of connections
+      idleTimeoutMillis: 3e4,
+      connectionTimeoutMillis: 1e4
+    });
+    pool.on("error", (err) => {
+      console.error("Unexpected error on idle Neon client", err);
+    });
     db = drizzleNeon(pool, { schema: schema_exports });
   }
+  (async () => {
+    try {
+      const client = await pool.connect();
+      console.log("\u2705 Database connection test successful");
+      client.release();
+    } catch (err) {
+      console.error("\u274C Database connection test failed:", err);
+    }
+  })();
 } else if (requiresDatabase) {
   console.error(`\u274C DATABASE_URL is required for production deployment`);
   throw new Error(
@@ -1726,6 +1759,27 @@ if (hasDatabaseUrl) {
 } else {
   console.log(`\u2139\uFE0F  DATABASE_URL not found - this is expected for development with MemStorage`);
 }
+process.on("SIGINT", async () => {
+  console.log("\u{1F6D1} Received SIGINT, closing database connections...");
+  if (pool) {
+    await pool.end();
+  }
+  process.exit(0);
+});
+process.on("SIGTERM", async () => {
+  console.log("\u{1F6D1} Received SIGTERM, closing database connections...");
+  if (pool) {
+    await pool.end();
+  }
+  process.exit(0);
+});
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("\u26A0\uFE0F  Unhandled Promise Rejection:", reason);
+  console.error("Promise:", promise);
+});
+process.on("uncaughtException", (error) => {
+  console.error("\u26A0\uFE0F  Uncaught Exception:", error);
+});
 
 // server/storage.ts
 import { eq, and, sql } from "drizzle-orm";
@@ -1830,6 +1884,8 @@ var MemStorage = class {
       name: "Free Demo",
       monthlyPrice: 0,
       monthlyEnabled: true,
+      yearlyPrice: 0,
+      yearlyEnabled: true,
       features: ["7-day trial", "1 User", "2GB Storage", "Basic Features"],
       maxUsers: 1,
       storageGB: 2,
@@ -1841,6 +1897,10 @@ var MemStorage = class {
       name: "Basic",
       monthlyPrice: 15,
       monthlyEnabled: true,
+      yearlyPrice: 180,
+      yearlyDiscount: 20,
+      // 20% off = $144/yr
+      yearlyEnabled: true,
       features: ["1 User", "10GB Storage", "Basic Support", "Online Booking", "Client Management"],
       maxUsers: 1,
       storageGB: 10,
@@ -1852,6 +1912,10 @@ var MemStorage = class {
       name: "Team",
       monthlyPrice: 99.99,
       monthlyEnabled: true,
+      yearlyPrice: 1199.88,
+      yearlyDiscount: 20,
+      // 20% off = ~$960/yr
+      yearlyEnabled: true,
       features: ["5 Users", "100GB Storage", "Priority Support", "Advanced Analytics"],
       maxUsers: 5,
       storageGB: 100,
@@ -6458,6 +6522,19 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch client analytics" });
     }
   });
+  app2.get("/api/check-email", async (req, res) => {
+    try {
+      const { email } = req.query;
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      const existingClient = await storage.getClientByEmail(email);
+      return res.json({ exists: !!existingClient });
+    } catch (error) {
+      console.error("Error checking email:", error);
+      return res.status(500).json({ error: "Failed to check email" });
+    }
+  });
   app2.get("/api/onboarding/sessions", async (req, res) => {
     try {
       const sessions = await storage.getOnboardingSessions();
@@ -7385,6 +7462,157 @@ async function registerRoutes(app2) {
       console.error("GlossGenius export error:", error);
       res.status(500).json({
         error: error.message || "Failed to export appointments to GlossGenius"
+      });
+    }
+  });
+  app2.get("/api/client/:clientId/export/glossgenius/csv", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const appointmentIds = req.query.appointmentIds;
+      if (!appointmentIds) {
+        return res.status(400).json({
+          error: "At least one appointment must be selected"
+        });
+      }
+      const ids = appointmentIds.split(",");
+      const appointments2 = [];
+      for (const appointmentId of ids) {
+        const appointment = await storage.getAppointment(appointmentId);
+        if (appointment && appointment.clientId === clientId) {
+          const services2 = await storage.getClientServices(appointment.clientId);
+          const service = services2.find((s) => s.id === appointment.serviceId);
+          if (service) {
+            const fullName = appointment.customerName || "";
+            const nameParts = fullName.split(" ");
+            appointments2.push({
+              clientFirstName: nameParts[0] || "",
+              clientLastName: nameParts.slice(1).join(" ") || "",
+              clientEmail: appointment.customerEmail || "",
+              clientPhone: appointment.customerPhone || "",
+              serviceName: service.name || "",
+              servicePrice: service.price || 0,
+              serviceDuration: service.durationMinutes || 60,
+              appointmentDate: appointment.appointmentDate || appointment.date || "",
+              appointmentTime: appointment.startTime || appointment.time || "",
+              appointmentStatus: appointment.status || "PENDING",
+              notes: appointment.notes || ""
+            });
+          }
+        }
+      }
+      const headers = [
+        "Client First Name",
+        "Client Last Name",
+        "Client Email",
+        "Client Phone",
+        "Service Name",
+        "Service Price",
+        "Service Duration (minutes)",
+        "Appointment Date",
+        "Appointment Time",
+        "Status",
+        "Notes"
+      ];
+      const csvRows = [
+        headers.join(","),
+        ...appointments2.map((apt) => [
+          `"${apt.clientFirstName}"`,
+          `"${apt.clientLastName}"`,
+          `"${apt.clientEmail}"`,
+          `"${apt.clientPhone}"`,
+          `"${apt.serviceName}"`,
+          apt.servicePrice,
+          apt.serviceDuration,
+          apt.appointmentDate,
+          apt.appointmentTime,
+          apt.appointmentStatus,
+          `"${apt.notes.replace(/"/g, '""')}"`
+        ].join(","))
+      ];
+      const csv = csvRows.join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename=glossgenius_appointments_${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.csv`);
+      res.send(csv);
+    } catch (error) {
+      console.error("CSV export error:", error);
+      res.status(500).json({
+        error: error.message || "Failed to export appointments as CSV"
+      });
+    }
+  });
+  app2.get("/api/client/:clientId/export/glossgenius/csv/all", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { dateFrom, dateTo } = req.query;
+      const allAppointments = await storage.getClientAppointments(clientId);
+      let filteredAppointments = allAppointments;
+      if (dateFrom || dateTo) {
+        filteredAppointments = allAppointments.filter((apt) => {
+          const aptDate = new Date(apt.appointmentDate || apt.date);
+          if (dateFrom && aptDate < new Date(dateFrom)) return false;
+          if (dateTo && aptDate > new Date(dateTo)) return false;
+          return true;
+        });
+      }
+      const appointments2 = [];
+      for (const appointment of filteredAppointments) {
+        const services2 = await storage.getClientServices(appointment.clientId);
+        const service = services2.find((s) => s.id === appointment.serviceId);
+        if (service) {
+          const fullName = appointment.customerName || "";
+          const nameParts = fullName.split(" ");
+          appointments2.push({
+            clientFirstName: nameParts[0] || "",
+            clientLastName: nameParts.slice(1).join(" ") || "",
+            clientEmail: appointment.customerEmail || "",
+            clientPhone: appointment.customerPhone || "",
+            serviceName: service.name || "",
+            servicePrice: service.price || 0,
+            serviceDuration: service.durationMinutes || 60,
+            appointmentDate: appointment.appointmentDate || appointment.date || "",
+            appointmentTime: appointment.startTime || appointment.time || "",
+            appointmentStatus: appointment.status || "PENDING",
+            notes: appointment.notes || ""
+          });
+        }
+      }
+      const headers = [
+        "Client First Name",
+        "Client Last Name",
+        "Client Email",
+        "Client Phone",
+        "Service Name",
+        "Service Price",
+        "Service Duration (minutes)",
+        "Appointment Date",
+        "Appointment Time",
+        "Status",
+        "Notes"
+      ];
+      const csvRows = [
+        headers.join(","),
+        ...appointments2.map((apt) => [
+          `"${apt.clientFirstName}"`,
+          `"${apt.clientLastName}"`,
+          `"${apt.clientEmail}"`,
+          `"${apt.clientPhone}"`,
+          `"${apt.serviceName}"`,
+          apt.servicePrice,
+          apt.serviceDuration,
+          apt.appointmentDate,
+          apt.appointmentTime,
+          apt.appointmentStatus,
+          `"${apt.notes.replace(/"/g, '""')}"`
+        ].join(","))
+      ];
+      const csv = csvRows.join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename=glossgenius_appointments_${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.csv`);
+      res.send(csv);
+    } catch (error) {
+      console.error("CSV export error:", error);
+      res.status(500).json({
+        error: error.message || "Failed to export appointments as CSV"
       });
     }
   });
@@ -9123,7 +9351,7 @@ app.use((req, res, next) => {
       res.sendFile(path2.join(publicPath, "index.html"));
     });
   }
-  const port = 5e3;
+  const port = parseInt(process.env.PORT || "5000", 10);
   const isWindows = process.platform === "win32";
   const serverOptions = isWindows ? { port } : { port, host: "0.0.0.0", reusePort: true };
   server.listen(serverOptions, () => {

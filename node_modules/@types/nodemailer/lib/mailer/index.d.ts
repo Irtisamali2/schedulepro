@@ -97,7 +97,7 @@ declare namespace Mail {
 
     interface Options {
         /** The e-mail address of the sender. All e-mail addresses can be plain 'sender@server.com' or formatted 'Sender Name <sender@server.com>' */
-        from?: string | Address | undefined;
+        from?: string | Address | Array<string | Address> | undefined;
         /** An e-mail address that will appear on the Sender: field */
         sender?: string | Address | undefined;
         /** Comma separated list or an array of recipients e-mail addresses that will appear on the To: field */
@@ -194,7 +194,9 @@ declare class Mail<T = any, DefaultTransportOptions = TransportOptions> extends 
         mailOptions: Mail.Options & Partial<DefaultTransportOptions>,
         callback: (err: Error | null, info: T) => void,
     ): void;
+    sendMail(mailOptions: Mail.Options, callback: (err: Error | null, info: T) => void): void;
     sendMail(mailOptions: Mail.Options & Partial<DefaultTransportOptions>): Promise<T>;
+    sendMail(mailOptions: Mail.Options): Promise<T>;
 
     getVersionString(): string;
 

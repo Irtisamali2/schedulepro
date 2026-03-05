@@ -24,13 +24,11 @@ export type CompositeAuthSecurityRequirements<
   T extends string,
   D extends CompositeAuthProviderConfig<T>
 > = Array<
-  Partial<
-    {
-      [P in T]: D[P] extends undefined | AuthenticatorInterface<infer X>
-        ? X
-        : never;
-    }
-  >
+  Partial<{
+    [P in T]: D[P] extends undefined | AuthenticatorInterface<infer X>
+      ? X
+      : never;
+  }>
 >;
 
 /**

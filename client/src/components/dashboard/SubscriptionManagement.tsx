@@ -13,14 +13,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { 
-  CreditCard, 
-  Calendar, 
-  DollarSign, 
-  TrendingUp, 
-  Download, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  CreditCard,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  Download,
+  AlertTriangle,
+  CheckCircle,
   X,
   Loader2,
   Shield,
@@ -149,16 +149,16 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
       queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/subscription`] });
       setIsChangingPlan(false);
       setSelectedPlan(null);
-      toast({ 
-        title: 'Plan Updated Successfully', 
-        description: 'Your subscription plan has been updated.' 
+      toast({
+        title: 'Plan Updated Successfully',
+        description: 'Your subscription plan has been updated.'
       });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Plan Update Failed', 
+      toast({
+        title: 'Plan Update Failed',
         description: error.message || 'Failed to update subscription plan.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   });
@@ -172,16 +172,16 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/subscription`] });
       setShowCancelDialog(false);
-      toast({ 
-        title: 'Subscription Cancelled', 
-        description: 'Your subscription will be cancelled at the end of the current billing period.' 
+      toast({
+        title: 'Subscription Cancelled',
+        description: 'Your subscription will be cancelled at the end of the current billing period.'
       });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Cancellation Failed', 
+      toast({
+        title: 'Cancellation Failed',
         description: error.message || 'Failed to cancel subscription.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   });
@@ -195,17 +195,17 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/payment-methods`] });
       setProcessingPaymentMethodId(null);
-      toast({ 
-        title: 'Default Payment Method Updated', 
-        description: 'Your default payment method has been updated successfully.' 
+      toast({
+        title: 'Default Payment Method Updated',
+        description: 'Your default payment method has been updated successfully.'
       });
     },
     onError: (error: any) => {
       setProcessingPaymentMethodId(null);
-      toast({ 
-        title: 'Update Failed', 
+      toast({
+        title: 'Update Failed',
         description: error.message || 'Failed to update default payment method.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   });
@@ -219,17 +219,17 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/client/${clientId}/payment-methods`] });
       setProcessingPaymentMethodId(null);
-      toast({ 
-        title: 'Payment Method Removed', 
-        description: 'Your payment method has been removed successfully.' 
+      toast({
+        title: 'Payment Method Removed',
+        description: 'Your payment method has been removed successfully.'
       });
     },
     onError: (error: any) => {
       setProcessingPaymentMethodId(null);
-      toast({ 
-        title: 'Removal Failed', 
+      toast({
+        title: 'Removal Failed',
         description: error.message || 'Failed to remove payment method.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   });
@@ -418,24 +418,24 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-3">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setActiveTab('plans')}
                       data-testid="button-change-plan"
                     >
                       <TrendingUp className="w-4 h-4 mr-2" />
                       Change Plan
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setActiveTab('payment')}
                       data-testid="button-update-payment"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
                       Update Payment Method
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setActiveTab('history')}
                       data-testid="button-view-history"
                     >
@@ -459,7 +459,7 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogAction
                               onClick={() => cancelSubscriptionMutation.mutate()}
                               disabled={cancelSubscriptionMutation.isPending}
                               className="bg-red-600 hover:bg-red-700"
@@ -493,8 +493,8 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {availablePlans.map((plan) => (
-                  <Card 
-                    key={plan.id} 
+                  <Card
+                    key={plan.id}
                     className={`relative ${plan.isPopular ? 'border-blue-500 shadow-lg' : ''} ${subscription?.planId === plan.id ? 'bg-green-50 border-green-500' : ''}`}
                   >
                     {plan.isPopular && (
@@ -507,7 +507,7 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                         <Badge className="bg-green-600 text-white">Current Plan</Badge>
                       </div>
                     )}
-                    
+
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         {plan.name}
@@ -519,7 +519,7 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                       </div>
                       <CardDescription>{plan.description}</CardDescription>
                     </CardHeader>
-                    
+
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         {plan.features.slice(0, 6).map((feature, index) => (
@@ -532,21 +532,21 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                           <p className="text-xs text-gray-600">+ {plan.features.length - 6} more features</p>
                         )}
                       </div>
-                      
+
                       <Separator />
-                      
+
                       <div className="flex justify-between text-xs text-gray-600">
                         <span>Users: {plan.maxUsers === 999 ? 'Unlimited' : plan.maxUsers}</span>
                         <span>Storage: {plan.storageGB}GB</span>
                       </div>
-                      
+
                       {subscription?.planId === plan.id ? (
                         <Button disabled className="w-full" data-testid={`button-current-plan-${plan.id}`}>
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Current Plan
                         </Button>
                       ) : (
-                        <Button 
+                        <Button
                           onClick={() => handlePlanChange(plan.id)}
                           disabled={changePlanMutation.isPending}
                           className="w-full"
@@ -605,8 +605,8 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                             )}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   size="sm"
                                   disabled={processingPaymentMethodId === method.id}
                                   data-testid={`button-payment-actions-${method.id}`}
@@ -650,10 +650,10 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                       </CardContent>
                     </Card>
                   ))}
-                  
-                  <Button 
+
+                  <Button
                     onClick={() => setShowUpdatePaymentDialog(true)}
-                    variant="outline" 
+                    variant="outline"
                     className="w-full"
                     data-testid="button-add-payment-method"
                   >
@@ -693,60 +693,62 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
                 </div>
               ) : (
                 <Card>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {billingHistory.length === 0 ? (
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-[600px]">
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                            No billing history found
-                          </TableCell>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        billingHistory.map((bill) => (
-                          <TableRow key={bill.id}>
-                            <TableCell>
-                              {format(new Date(bill.date), 'MMM dd, yyyy')}
-                            </TableCell>
-                            <TableCell>{bill.description}</TableCell>
-                            <TableCell>{formatPrice(bill.amount)}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant={
-                                  bill.status === 'PAID' ? 'default' : 
-                                  bill.status === 'PENDING' ? 'secondary' : 
-                                  'destructive'
-                                }
-                              >
-                                {bill.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {bill.invoiceUrl && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => window.open(bill.invoiceUrl, '_blank')}
-                                  data-testid={`button-download-invoice-${bill.id}`}
-                                >
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Download
-                                </Button>
-                              )}
+                      </TableHeader>
+                      <TableBody>
+                        {billingHistory.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                              No billing history found
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        ) : (
+                          billingHistory.map((bill) => (
+                            <TableRow key={bill.id}>
+                              <TableCell>
+                                {format(new Date(bill.date), 'MMM dd, yyyy')}
+                              </TableCell>
+                              <TableCell>{bill.description}</TableCell>
+                              <TableCell>{formatPrice(bill.amount)}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    bill.status === 'PAID' ? 'default' :
+                                      bill.status === 'PENDING' ? 'secondary' :
+                                        'destructive'
+                                  }
+                                >
+                                  {bill.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {bill.invoiceUrl && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(bill.invoiceUrl, '_blank')}
+                                    data-testid={`button-download-invoice-${bill.id}`}
+                                  >
+                                    <Download className="w-3 h-3 mr-1" />
+                                    Download
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </Card>
               )}
             </TabsContent>
@@ -781,7 +783,7 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel 
+              <AlertDialogCancel
                 onClick={() => {
                   setShowPlanUpgradeConfirm(false);
                   setPendingPlanChange(null);
@@ -789,7 +791,7 @@ export default function SubscriptionManagement({ clientId, isOpen, onClose }: Su
               >
                 Cancel
               </AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={confirmPlanChange}
                 disabled={changePlanMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700"

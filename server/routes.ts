@@ -1743,6 +1743,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ONBOARDING ROUTES
   // =============================================================================
 
+  // Check if email already exists
+  app.get("/api/check-email", async (req, res) => {
+    try {
+      const { email } = req.query;
+
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      // Check if email exists in clients table
+      const existingClient = await storage.getClientByEmail(email);
+
+      return res.json({ exists: !!existingClient });
+    } catch (error) {
+      console.error('Error checking email:', error);
+      return res.status(500).json({ error: 'Failed to check email' });
+    }
+  });
+
   // Get all onboarding sessions (Super Admin)
   app.get("/api/onboarding/sessions", async (req, res) => {
     try {

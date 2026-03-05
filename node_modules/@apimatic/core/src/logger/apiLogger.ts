@@ -102,10 +102,9 @@ export class ApiLogger implements ApiLoggerInterface {
       // If request.auth exists, encode it as Basic Auth and add it in cloned headers
       if (request.auth?.username && request.auth?.password) {
         const authString = `${request.auth.username}:${request.auth.password}`;
-        (clonedHeaders as Record<
-          string,
-          string
-        >).Authorization = `Basic ${Buffer.from(authString, 'utf-8').toString(
+        (
+          clonedHeaders as Record<string, string>
+        ).Authorization = `Basic ${Buffer.from(authString, 'utf-8').toString(
           'base64'
         )}`;
       }

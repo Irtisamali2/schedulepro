@@ -20,8 +20,8 @@ import NotFound from "@/pages/not-found";
 
 function App() {
   const [location] = useLocation();
-  const isAdminPage = location.startsWith("/admin");
-  const isOnboardingPage = location.startsWith("/onboarding");
+  const isAdminPage = location?.startsWith("/admin") ?? false;
+  const isOnboardingPage = location?.startsWith("/onboarding") ?? false;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">

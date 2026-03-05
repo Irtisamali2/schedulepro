@@ -1,4 +1,4 @@
-import { 
+import {
   users, type User, type InsertUser,
   plans, type Plan, type InsertPlan,
   onboardingSessions, type OnboardingSession, type InsertOnboardingSession,
@@ -38,26 +38,26 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Plans Management
   getPlans(): Promise<Plan[]>;
   getPlan(id: string): Promise<Plan | undefined>;
   createPlan(plan: InsertPlan): Promise<Plan>;
   updatePlan(id: string, updates: Partial<InsertPlan>): Promise<Plan>;
   deletePlan(id: string): Promise<void>;
-  
+
   // Plan Synchronization
   syncClientPlans(planId: string): Promise<void>;
   updatePlanPricing(planId: string, updates: { monthlyPrice?: number; yearlyPrice?: number; stripeProductId?: string; monthlyStripePriceId?: string; yearlyStripePriceId?: string }): Promise<Plan>;
   updateClientPlan(clientId: string, planId: string): Promise<Client>;
-  
+
   // Onboarding Management
   getOnboardingSessions(): Promise<OnboardingSession[]>;
   getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined>;
   createOnboardingSession(session: InsertOnboardingSession): Promise<OnboardingSession>;
   updateOnboardingSession(sessionId: string, updates: Partial<InsertOnboardingSession>): Promise<OnboardingSession>;
   completeOnboarding(sessionId: string): Promise<OnboardingSession>;
-  
+
   // Client Management
   getClients(): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
@@ -66,58 +66,58 @@ export interface IStorage {
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, updates: Partial<InsertClient>): Promise<Client>;
   deleteClient(id: string): Promise<void>;
-  
+
   // Legacy services (keeping for demo)
   getServices(): Promise<Service[]>;
   getService(id: number): Promise<Service | undefined>;
   createService(service: InsertService): Promise<Service>;
-  
+
   // Legacy reviews (keeping for demo)
   getReviews(): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
-  
+
   // Client-specific services
   getClientServices(clientId: string): Promise<ClientService[]>;
   createClientService(service: InsertClientService): Promise<ClientService>;
   updateClientService(id: string, updates: Partial<InsertClientService>): Promise<ClientService>;
   deleteClientService(id: string): Promise<void>;
-  
+
   // Appointments
   getAppointments(clientId: string): Promise<Appointment[]>;
   getAppointment(id: string): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment>;
   deleteAppointment(id: string): Promise<void>;
-  
+
   // Appointment Transfers
   transferAppointment(appointmentId: string, toStaffId: string, transferredBy: string, reason?: string): Promise<Appointment>;
   getAppointmentTransfers(appointmentId: string): Promise<AppointmentTransfer[]>;
   getStaffTransfers(staffId: string): Promise<AppointmentTransfer[]>;
-  
+
   // Operating Hours
   getOperatingHours(clientId: string): Promise<OperatingHours[]>;
   setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]>;
-  
+
   // Leads
   getLeads(clientId: string): Promise<Lead[]>;
   getLead(id: string): Promise<Lead | undefined>;
   createLead(lead: InsertLead): Promise<Lead>;
   updateLead(id: string, updates: Partial<InsertLead>): Promise<Lead>;
   deleteLead(id: string): Promise<void>;
-  
+
   // Client Websites
   getClientWebsite(clientId: string): Promise<ClientWebsite | undefined>;
   createClientWebsite(website: InsertClientWebsite): Promise<ClientWebsite>;
   updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite>;
   getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined>;
-  
+
   // Appointment Slots
   getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]>;
   createAppointmentSlot(slot: InsertAppointmentSlot): Promise<AppointmentSlot>;
   updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot>;
   deleteAppointmentSlot(id: string): Promise<void>;
   getAvailableSlots(clientId: string, date: string): Promise<string[]>;
-  
+
   // Team Members
   getTeamMembers(clientId: string): Promise<TeamMember[]>;
   getTeamMember(id: string): Promise<TeamMember | undefined>;
@@ -212,7 +212,7 @@ export interface IStorage {
   getStripeSecretKey(clientId: string): Promise<string | null>;
   validateStripeConfig(clientId: string): Promise<boolean>;
   clearStripeConfig(clientId: string): Promise<void>;
-  
+
   // SMTP Email Configuration
   updateSmtpConfig(clientId: string, config: {
     smtpHost?: string;
@@ -237,7 +237,7 @@ export interface IStorage {
   }>;
   testSmtpConfig(clientId: string): Promise<boolean>;
   clearSmtpConfig(clientId: string): Promise<void>;
-  
+
   // Contact Messages / Super Admin Leads
   getContactMessages(): Promise<ContactMessage[]>;
   getContactMessage(id: string): Promise<ContactMessage | undefined>;
@@ -298,9 +298,9 @@ class MemStorage implements IStorage {
 
   constructor() {
     // Only initialize demo data in development or when explicitly requested
-    const shouldSeedDemo = process.env.SEED_DEMO_DATA === 'true' || 
-                          (process.env.NODE_ENV !== 'production' && !process.env.DEPLOY_TARGET);
-    
+    const shouldSeedDemo = process.env.SEED_DEMO_DATA === 'true' ||
+      (process.env.NODE_ENV !== 'production' && !process.env.DEPLOY_TARGET);
+
     if (shouldSeedDemo) {
       console.log('🌱 Seeding demo data for development...');
       this.initializeData();
@@ -330,7 +330,7 @@ class MemStorage implements IStorage {
     });
 
     await this.createReviewPlatform({
-      name: "trustpilot", 
+      name: "trustpilot",
       displayName: "Trust Pilot",
       rating: 4.8,
       maxRating: 5,
@@ -356,6 +356,8 @@ class MemStorage implements IStorage {
       name: "Free Demo",
       monthlyPrice: 0,
       monthlyEnabled: true,
+      yearlyPrice: 0,
+      yearlyEnabled: true,
       features: ["7-day trial", "1 User", "2GB Storage", "Basic Features"],
       maxUsers: 1,
       storageGB: 2,
@@ -368,6 +370,9 @@ class MemStorage implements IStorage {
       name: "Basic",
       monthlyPrice: 15.00,
       monthlyEnabled: true,
+      yearlyPrice: 180.00,
+      yearlyDiscount: 20, // 20% off = $144/yr
+      yearlyEnabled: true,
       features: ["1 User", "10GB Storage", "Basic Support", "Online Booking", "Client Management"],
       maxUsers: 1,
       storageGB: 10,
@@ -379,7 +384,10 @@ class MemStorage implements IStorage {
     await this.createPlan({
       name: "Team",
       monthlyPrice: 99.99,
-      monthlyEnabled: true, 
+      monthlyEnabled: true,
+      yearlyPrice: 1199.88,
+      yearlyDiscount: 20, // 20% off = ~$960/yr
+      yearlyEnabled: true,
       features: ["5 Users", "100GB Storage", "Priority Support", "Advanced Analytics"],
       maxUsers: 5,
       storageGB: 100,
@@ -394,7 +402,7 @@ class MemStorage implements IStorage {
       password: "demo123",
       role: "CLIENT"
     });
-    
+
     await this.createUser({
       email: "jane@techstartup.com",
       password: "demo123",
@@ -416,7 +424,7 @@ class MemStorage implements IStorage {
 
     await this.createClient({
       businessName: "Tech Startup Inc",
-      contactPerson: "Jane Doe", 
+      contactPerson: "Jane Doe",
       email: "jane@techstartup.com",
       phone: "555-0102",
       planId: "plan_3",
@@ -701,7 +709,7 @@ class MemStorage implements IStorage {
   async updatePlan(id: string, updates: Partial<InsertPlan>): Promise<Plan> {
     const index = this.plans.findIndex(p => p.id === id);
     if (index === -1) throw new Error("Plan not found");
-    
+
     this.plans[index] = { ...this.plans[index], ...updates };
     return this.plans[index];
   }
@@ -711,34 +719,34 @@ class MemStorage implements IStorage {
     if (index === -1) throw new Error("Plan not found");
     this.plans.splice(index, 1);
   }
-  
+
   // Plan synchronization methods
   async syncClientPlans(planId: string): Promise<void> {
     // In memory storage - plans are already synced since they reference the same objects
     console.log(`🔄 Syncing plan ${planId} for all clients (MemStorage - no action needed)`);
   }
-  
+
   async updatePlanPricing(planId: string, updates: { monthlyPrice?: number; yearlyPrice?: number; stripeProductId?: string; monthlyStripePriceId?: string; yearlyStripePriceId?: string }): Promise<Plan> {
     const planIndex = this.plans.findIndex(p => p.id === planId);
     if (planIndex === -1) throw new Error("Plan not found");
-    
+
     this.plans[planIndex] = { ...this.plans[planIndex], ...updates };
-    
+
     // Auto-sync all clients using this plan
     await this.syncClientPlans(planId);
-    
+
     return this.plans[planIndex];
   }
-  
+
   async updateClientPlan(clientId: string, planId: string): Promise<Client> {
     const clientIndex = this.clients.findIndex(c => c.id === clientId);
     if (clientIndex === -1) throw new Error("Client not found");
-    
+
     const plan = this.plans.find(p => p.id === planId);
     if (!plan) throw new Error("Plan not found");
-    
+
     this.clients[clientIndex] = { ...this.clients[clientIndex], planId, updatedAt: new Date() };
-    
+
     return this.clients[clientIndex];
   }
 
@@ -770,9 +778,9 @@ class MemStorage implements IStorage {
   async updateOnboardingSession(sessionId: string, updates: Partial<InsertOnboardingSession>): Promise<OnboardingSession> {
     const index = this.onboardingSessions.findIndex(s => s.sessionId === sessionId);
     if (index === -1) throw new Error("Onboarding session not found");
-    
-    this.onboardingSessions[index] = { 
-      ...this.onboardingSessions[index], 
+
+    this.onboardingSessions[index] = {
+      ...this.onboardingSessions[index],
       ...updates,
       updatedAt: new Date()
     };
@@ -782,7 +790,7 @@ class MemStorage implements IStorage {
   async completeOnboarding(sessionId: string): Promise<OnboardingSession> {
     const index = this.onboardingSessions.findIndex(s => s.sessionId === sessionId);
     if (index === -1) throw new Error("Onboarding session not found");
-    
+
     this.onboardingSessions[index] = {
       ...this.onboardingSessions[index],
       isCompleted: true,
@@ -855,7 +863,7 @@ class MemStorage implements IStorage {
   async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> {
     const index = this.clients.findIndex(c => c.id === id);
     if (index === -1) throw new Error("Client not found");
-    
+
     this.clients[index] = {
       ...this.clients[index],
       ...updates,
@@ -940,7 +948,7 @@ class MemStorage implements IStorage {
   async updateClientService(id: string, updates: Partial<InsertClientService>): Promise<ClientService> {
     const index = this.clientServices.findIndex(s => s.id === id);
     if (index === -1) throw new Error("Client service not found");
-    
+
     this.clientServices[index] = {
       ...this.clientServices[index],
       ...updates,
@@ -993,7 +1001,7 @@ class MemStorage implements IStorage {
   async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> {
     const index = this.appointments.findIndex(a => a.id === id);
     if (index === -1) throw new Error("Appointment not found");
-    
+
     this.appointments[index] = {
       ...this.appointments[index],
       ...updates,
@@ -1012,7 +1020,7 @@ class MemStorage implements IStorage {
   async transferAppointment(appointmentId: string, toStaffId: string, transferredBy: string, reason?: string): Promise<Appointment> {
     const appointment = await this.getAppointment(appointmentId);
     if (!appointment) throw new Error("Appointment not found");
-    
+
     // Create transfer record
     const transfer: AppointmentTransfer = {
       id: `transfer_${this.appointmentTransfers.length + 1}`,
@@ -1024,9 +1032,9 @@ class MemStorage implements IStorage {
       reason: reason || null,
       createdAt: new Date(),
     };
-    
+
     this.appointmentTransfers.push(transfer);
-    
+
     // Update appointment with new assigned staff
     return await this.updateAppointment(appointmentId, { assignedTo: toStaffId });
   }
@@ -1049,7 +1057,7 @@ class MemStorage implements IStorage {
   async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> {
     // Remove existing hours for this client
     this.operatingHours = this.operatingHours.filter(h => h.clientId !== clientId);
-    
+
     // Add new hours
     const newHours: OperatingHours[] = hours.map((h, index) => ({
       id: `hours_${clientId}_${h.dayOfWeek}`,
@@ -1063,7 +1071,7 @@ class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date()
     }));
-    
+
     this.operatingHours.push(...newHours);
     return newHours;
   }
@@ -1102,7 +1110,7 @@ class MemStorage implements IStorage {
   async updateLead(id: string, updates: Partial<InsertLead>): Promise<Lead> {
     const index = this.leads.findIndex(l => l.id === id);
     if (index === -1) throw new Error("Lead not found");
-    
+
     this.leads[index] = {
       ...this.leads[index],
       ...updates,
@@ -1149,7 +1157,7 @@ class MemStorage implements IStorage {
   async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> {
     const index = this.clientWebsites.findIndex(w => w.clientId === clientId);
     if (index === -1) throw new Error("Client website not found");
-    
+
     this.clientWebsites[index] = {
       ...this.clientWebsites[index],
       ...updates,
@@ -1186,7 +1194,7 @@ class MemStorage implements IStorage {
   async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> {
     const index = this.appointmentSlots.findIndex(slot => slot.id === id);
     if (index === -1) throw new Error("Appointment slot not found");
-    
+
     this.appointmentSlots[index] = {
       ...this.appointmentSlots[index],
       ...updates,
@@ -1206,36 +1214,36 @@ class MemStorage implements IStorage {
     const [year, month, day] = date.split('-').map(Number);
     const localDate = new Date(year, month - 1, day); // month is 0-indexed
     const dayOfWeek = localDate.getDay(); // 0-6 (Sunday-Saturday)
-    
+
     console.log(`getAvailableSlots: date=${date}, parsed=(${year},${month},${day}), dayOfWeek=${dayOfWeek}`);
-    
+
     // Get slot configurations for this day
-    const daySlots = this.appointmentSlots.filter(slot => 
-      slot.clientId === clientId && 
-      slot.dayOfWeek === dayOfWeek && 
+    const daySlots = this.appointmentSlots.filter(slot =>
+      slot.clientId === clientId &&
+      slot.dayOfWeek === dayOfWeek &&
       slot.isActive
     );
-    
+
     console.log(`Found ${daySlots.length} slot configurations for dayOfWeek ${dayOfWeek}`);
-    
+
     if (daySlots.length === 0) return [];
-    
+
     // Get existing appointments for this date
-    const existingAppointments = this.appointments.filter(apt => 
-      apt.clientId === clientId && 
+    const existingAppointments = this.appointments.filter(apt =>
+      apt.clientId === clientId &&
       new Date(apt.appointmentDate).toDateString() === localDate.toDateString()
     );
-    
+
     const bookedTimes = existingAppointments.map(apt => apt.startTime);
-    
+
     // Generate available time slots using Set to prevent duplicates
     const availableSlots = new Set<string>();
-    
+
     for (const slotConfig of daySlots) {
       const start = this.timeToMinutes(slotConfig.startTime);
       const end = this.timeToMinutes(slotConfig.endTime);
       const duration = slotConfig.slotDuration || 30;
-      
+
       for (let time = start; time < end; time += duration) {
         const timeString = this.minutesToTime(time);
         if (!bookedTimes.includes(timeString)) {
@@ -1243,7 +1251,7 @@ class MemStorage implements IStorage {
         }
       }
     }
-    
+
     const result = Array.from(availableSlots).sort();
     return result;
   }
@@ -1292,7 +1300,7 @@ class MemStorage implements IStorage {
   async updateTeamMember(id: string, updates: Partial<InsertTeamMember>): Promise<TeamMember> {
     const index = this.teamMembers.findIndex(member => member.id === id);
     if (index === -1) throw new Error("Team member not found");
-    
+
     this.teamMembers[index] = {
       ...this.teamMembers[index],
       ...updates,
@@ -1337,7 +1345,7 @@ class MemStorage implements IStorage {
   async updateReviewPlatform(id: string, updates: Partial<InsertReviewPlatform>): Promise<ReviewPlatform> {
     const index = this.reviewPlatforms.findIndex(platform => platform.id === id);
     if (index === -1) throw new Error("Review platform not found");
-    
+
     this.reviewPlatforms[index] = {
       ...this.reviewPlatforms[index],
       ...updates,
@@ -1387,7 +1395,7 @@ class MemStorage implements IStorage {
   async updateReviewPlatformConnection(id: string, updates: Partial<InsertReviewPlatformConnection>): Promise<ReviewPlatformConnection> {
     const index = this.reviewPlatformConnections.findIndex(c => c.id === id);
     if (index === -1) throw new Error("Review platform connection not found");
-    
+
     this.reviewPlatformConnections[index] = {
       ...this.reviewPlatformConnections[index],
       ...updates,
@@ -1408,7 +1416,7 @@ class MemStorage implements IStorage {
 
     // Mock sync implementation - in real app this would call external APIs
     const mockReviewData = this.generateMockReviewData(connection.platform);
-    
+
     return this.updateReviewPlatformConnection(connectionId, {
       averageRating: mockReviewData.averageRating,
       totalReviews: mockReviewData.totalReviews,
@@ -1456,7 +1464,7 @@ class MemStorage implements IStorage {
   async updatePlatformReview(id: string, updates: Partial<InsertPlatformReview>): Promise<PlatformReview> {
     const index = this.platformReviews.findIndex(r => r.id === id);
     if (index === -1) throw new Error("Platform review not found");
-    
+
     this.platformReviews[index] = {
       ...this.platformReviews[index],
       ...updates,
@@ -1523,7 +1531,7 @@ class MemStorage implements IStorage {
   async updateDomainConfiguration(id: string, updates: Partial<InsertDomainConfiguration>): Promise<DomainConfiguration> {
     const index = this.domainConfigurations.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Domain configuration not found");
-    
+
     this.domainConfigurations[index] = {
       ...this.domainConfigurations[index],
       ...updates,
@@ -1547,12 +1555,12 @@ class MemStorage implements IStorage {
     const attemptNumber = existingLogs.length + 1;
 
     let verificationResult;
-    
+
     try {
       // Perform real DNS verification based on verification method
       if (domain.verificationMethod === "DNS_TXT") {
         verificationResult = await dnsVerificationService.verifyDomainViaDNS(
-          domain.domain, 
+          domain.domain,
           domain.verificationToken || ""
         );
       } else if (domain.verificationMethod === "CNAME") {
@@ -1698,7 +1706,7 @@ class MemStorage implements IStorage {
   async updateGoogleBusinessProfile(clientId: string, updates: Partial<InsertGoogleBusinessProfile>): Promise<GoogleBusinessProfile> {
     const index = this.googleBusinessProfiles.findIndex(profile => profile.clientId === clientId);
     if (index === -1) throw new Error("Google Business Profile not found");
-    
+
     this.googleBusinessProfiles[index] = {
       ...this.googleBusinessProfiles[index],
       ...updates,
@@ -1761,7 +1769,7 @@ class MemStorage implements IStorage {
   async updateNewsletterSubscription(id: string, updates: Partial<InsertNewsletterSubscription>): Promise<NewsletterSubscription> {
     const index = this.newsletterSubscriptions.findIndex(sub => sub.id === id);
     if (index === -1) throw new Error("Newsletter subscription not found");
-    
+
     this.newsletterSubscriptions[index] = {
       ...this.newsletterSubscriptions[index],
       ...updates,
@@ -1809,7 +1817,7 @@ class MemStorage implements IStorage {
   async updateWebsiteStaff(id: string, updates: Partial<InsertWebsiteStaff>): Promise<WebsiteStaff> {
     const index = this.websiteStaff.findIndex(staff => staff.id === id);
     if (index === -1) throw new Error("Website staff member not found");
-    
+
     this.websiteStaff[index] = {
       ...this.websiteStaff[index],
       ...updates,
@@ -1858,7 +1866,7 @@ class MemStorage implements IStorage {
   async updateServicePricingTier(id: string, updates: Partial<InsertServicePricingTier>): Promise<ServicePricingTier> {
     const index = this.servicePricingTiers.findIndex(tier => tier.id === id);
     if (index === -1) throw new Error("Service pricing tier not found");
-    
+
     this.servicePricingTiers[index] = {
       ...this.servicePricingTiers[index],
       ...updates,
@@ -1906,7 +1914,7 @@ class MemStorage implements IStorage {
   async updateWebsiteTestimonial(id: string, updates: Partial<InsertWebsiteTestimonial>): Promise<WebsiteTestimonial> {
     const index = this.websiteTestimonials.findIndex(testimonial => testimonial.id === id);
     if (index === -1) throw new Error("Website testimonial not found");
-    
+
     this.websiteTestimonials[index] = {
       ...this.websiteTestimonials[index],
       ...updates,
@@ -1961,7 +1969,7 @@ class MemStorage implements IStorage {
   async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> {
     const index = this.payments.findIndex(payment => payment.id === id);
     if (index === -1) throw new Error("Payment not found");
-    
+
     this.payments[index] = {
       ...this.payments[index],
       ...updates,
@@ -1980,14 +1988,14 @@ class MemStorage implements IStorage {
 
   async calculateServiceAmount(clientId: string, serviceId: string): Promise<number> {
     // Get the service for the specific client
-    const service = this.clientServices.find(s => 
+    const service = this.clientServices.find(s =>
       s.clientId === clientId && s.id === serviceId && s.isActive
     );
-    
+
     if (!service) {
       throw new Error("Service not found or inactive");
     }
-    
+
     return service.price;
   }
 
@@ -1995,7 +2003,7 @@ class MemStorage implements IStorage {
     if (!tipPercentage || tipPercentage <= 0) {
       return baseAmount;
     }
-    
+
     const tipAmount = (baseAmount * tipPercentage) / 100;
     return baseAmount + tipAmount;
   }
@@ -2007,7 +2015,7 @@ class MemStorage implements IStorage {
   async updateStripeConfig(clientId: string, publicKey: string, secretKey: string): Promise<void> {
     const clientIndex = this.clients.findIndex(c => c.id === clientId);
     if (clientIndex === -1) throw new Error("Client not found");
-    
+
     // Store public key only - secret key would be encrypted in real DB
     this.clients[clientIndex] = {
       ...this.clients[clientIndex],
@@ -2039,7 +2047,7 @@ class MemStorage implements IStorage {
   async clearStripeConfig(clientId: string): Promise<void> {
     const clientIndex = this.clients.findIndex(c => c.id === clientId);
     if (clientIndex === -1) throw new Error("Client not found");
-    
+
     this.clients[clientIndex] = {
       ...this.clients[clientIndex],
       stripePublicKey: null,
@@ -2064,7 +2072,7 @@ class MemStorage implements IStorage {
   }): Promise<void> {
     const clientIndex = this.clients.findIndex(c => c.id === clientId);
     if (clientIndex === -1) throw new Error("Client not found");
-    
+
     this.clients[clientIndex] = {
       ...this.clients[clientIndex],
       ...config,
@@ -2085,18 +2093,18 @@ class MemStorage implements IStorage {
   }> {
     const client = this.clients.find(c => c.id === clientId);
     if (!client) throw new Error("Client not found");
-    
+
     const isConfigured = !!(client.smtpHost && client.smtpPort && client.smtpUsername && client.smtpPassword && client.smtpFromEmail);
-    
+
     console.log('SMTP getConfig for', clientId, {
       smtpHost: client.smtpHost,
-      smtpPort: client.smtpPort, 
+      smtpPort: client.smtpPort,
       smtpUsername: client.smtpUsername,
       smtpPassword: '***',
       smtpFromEmail: client.smtpFromEmail,
       isConfigured
     });
-    
+
     return {
       smtpHost: client.smtpHost || null,
       smtpPort: client.smtpPort || null,
@@ -2113,7 +2121,7 @@ class MemStorage implements IStorage {
   async testSmtpConfig(clientId: string): Promise<boolean> {
     const client = this.clients.find(c => c.id === clientId);
     if (!client || !client.smtpEnabled) return false;
-    
+
     // Basic validation - in real implementation, this would test the connection
     return !!(client.smtpHost && client.smtpPort && client.smtpUsername && client.smtpPassword && client.smtpFromEmail);
   }
@@ -2121,7 +2129,7 @@ class MemStorage implements IStorage {
   async clearSmtpConfig(clientId: string): Promise<void> {
     const clientIndex = this.clients.findIndex(c => c.id === clientId);
     if (clientIndex === -1) throw new Error("Client not found");
-    
+
     this.clients[clientIndex] = {
       ...this.clients[clientIndex],
       smtpHost: null,
@@ -2141,7 +2149,7 @@ class MemStorage implements IStorage {
     try {
       // Ensure data directory exists
       await fs.mkdir(path.dirname(this.contactMessagesFile), { recursive: true });
-      
+
       // Try to load existing data
       const data = await fs.readFile(this.contactMessagesFile, 'utf8');
       this.contactMessages = JSON.parse(data);
@@ -2178,7 +2186,7 @@ class MemStorage implements IStorage {
     if (this.contactMessages.length === 0) {
       await this.loadContactMessages();
     }
-    
+
     const newMessage: ContactMessage = {
       id: `contact_${Date.now()}`,
       name: message.name,
@@ -2201,10 +2209,10 @@ class MemStorage implements IStorage {
     if (this.contactMessages.length === 0) {
       await this.loadContactMessages();
     }
-    
+
     const messageIndex = this.contactMessages.findIndex(m => m.id === id);
     if (messageIndex === -1) throw new Error("Contact message not found");
-    
+
     this.contactMessages[messageIndex] = {
       ...this.contactMessages[messageIndex],
       ...updates,
@@ -2219,10 +2227,10 @@ class MemStorage implements IStorage {
     if (this.contactMessages.length === 0) {
       await this.loadContactMessages();
     }
-    
+
     const messageIndex = this.contactMessages.findIndex(m => m.id === id);
     if (messageIndex === -1) throw new Error("Contact message not found");
-    
+
     this.contactMessages.splice(messageIndex, 1);
     await this.saveContactMessages();
   }
@@ -2246,11 +2254,11 @@ class PostgreSQLStorage implements IStorage {
 
   private async createTables() {
     const dbInstance = this.ensureDB();
-    
+
     try {
       // Create essential tables if they don't exist
       console.log("🔧 Creating database tables if they don't exist...");
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "users" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2261,7 +2269,7 @@ class PostgreSQLStorage implements IStorage {
           "updated_at" timestamp DEFAULT now()
         );
       `);
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "plans" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2284,7 +2292,7 @@ class PostgreSQLStorage implements IStorage {
           "created_at" timestamp DEFAULT now()
         );
       `);
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "review_platforms" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2300,7 +2308,7 @@ class PostgreSQLStorage implements IStorage {
           "updated_at" timestamp DEFAULT now()
         );
       `);
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "onboarding_sessions" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2314,7 +2322,7 @@ class PostgreSQLStorage implements IStorage {
           "completed_at" timestamp
         );
       `);
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "contact_messages" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2329,7 +2337,7 @@ class PostgreSQLStorage implements IStorage {
           "updated_at" timestamp DEFAULT now()
         );
       `);
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "clients" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2509,7 +2517,7 @@ class PostgreSQLStorage implements IStorage {
           "updated_at" timestamp DEFAULT now()
         );
       `);
-      
+
       await dbInstance.execute(sql`
         CREATE TABLE IF NOT EXISTS "domain_configurations" (
           "id" text PRIMARY KEY NOT NULL,
@@ -2565,10 +2573,10 @@ class PostgreSQLStorage implements IStorage {
 
   private async runMigrations() {
     const dbInstance = this.ensureDB();
-    
+
     try {
       console.log("🔧 Running database migrations for missing columns...");
-      
+
       // Check if client_services table has required columns and add them if missing
       const clientServicesColumns = await dbInstance.execute(sql`
         SELECT column_name 
@@ -2576,26 +2584,26 @@ class PostgreSQLStorage implements IStorage {
         WHERE table_name = 'client_services' 
           AND column_name IN ('stripe_product_id', 'stripe_price_id', 'enable_online_payments');
       `);
-      
+
       const existingColumns = new Set(clientServicesColumns.rows.map((row: any) => row.column_name));
-      
+
       if (!existingColumns.has('stripe_product_id')) {
         console.log("Adding stripe_product_id to client_services table...");
         await dbInstance.execute(sql`ALTER TABLE client_services ADD COLUMN stripe_product_id text;`);
       }
-      
+
       if (!existingColumns.has('stripe_price_id')) {
         console.log("Adding stripe_price_id to client_services table...");
         await dbInstance.execute(sql`ALTER TABLE client_services ADD COLUMN stripe_price_id text;`);
       }
-      
+
       if (!existingColumns.has('enable_online_payments')) {
         console.log("Adding enable_online_payments to client_services table...");
         await dbInstance.execute(sql`ALTER TABLE client_services ADD COLUMN enable_online_payments boolean DEFAULT false;`);
         // Update existing records to have default value
         await dbInstance.execute(sql`UPDATE client_services SET enable_online_payments = false WHERE enable_online_payments IS NULL;`);
       }
-      
+
       console.log("✅ Database migrations completed successfully");
     } catch (error) {
       console.error("❌ Migration failed:", error);
@@ -2606,17 +2614,17 @@ class PostgreSQLStorage implements IStorage {
 
   private async initializeDatabase() {
     if (this.initialized) return;
-    
+
     try {
       const dbInstance = this.ensureDB();
       console.log("🔄 Initializing PostgreSQL database tables...");
-      
+
       // First create tables, run migrations, then ensure super admin, then seed data
       await this.createTables();
       await this.runMigrations();
       await this.ensureSuperAdmin();
       await this.seedDemoData();
-      
+
       this.initialized = true;
       console.log("✅ PostgreSQL database initialized successfully");
     } catch (error) {
@@ -2627,7 +2635,7 @@ class PostgreSQLStorage implements IStorage {
 
   private async ensureSuperAdmin() {
     const dbInstance = this.ensureDB();
-    
+
     try {
       // Check if super admin already exists
       const existingAdmin = await dbInstance
@@ -2635,7 +2643,7 @@ class PostgreSQLStorage implements IStorage {
         .from(users)
         .where(eq(users.email, "admin@scheduled-platform.com"))
         .limit(1);
-      
+
       if (existingAdmin.length > 0) {
         console.log("👤 Super admin user already exists, skipping creation");
         return;
@@ -2644,13 +2652,13 @@ class PostgreSQLStorage implements IStorage {
       // Create super admin user for deployment access
       const adminPassword = "SecurePlatform2025!@#$%";
       console.log("👤 Creating super admin user...");
-      
+
       await this.createUser({
         email: "admin@scheduled-platform.com",
         password: adminPassword,
         role: "SUPER_ADMIN"
       });
-      
+
       console.log("✅ Super admin user created successfully");
       console.log(`📧 Admin Email: admin@scheduled-platform.com`);
       console.log(`🔑 Admin Password: ${adminPassword}`);
@@ -2662,7 +2670,7 @@ class PostgreSQLStorage implements IStorage {
 
   private async seedDemoData() {
     const dbInstance = this.ensureDB();
-    
+
     try {
       // Check if data already exists
       const existingPlans = await dbInstance.select().from(plans).limit(1);
@@ -2672,7 +2680,7 @@ class PostgreSQLStorage implements IStorage {
       }
 
       console.log("🌱 Seeding demo data for production...");
-      
+
       // Insert demo plans (Free Demo, Basic, Team)
       await dbInstance.insert(plans).values([
         {
@@ -2687,7 +2695,7 @@ class PostgreSQLStorage implements IStorage {
           trialDays: 7
         },
         {
-          id: "plan_2", 
+          id: "plan_2",
           name: "Basic",
           monthlyPrice: 15,
           yearlyPrice: 150,
@@ -2697,7 +2705,7 @@ class PostgreSQLStorage implements IStorage {
         },
         {
           id: "plan_3",
-          name: "Team", 
+          name: "Team",
           monthlyPrice: 99.99,
           yearlyPrice: 999.99,
           features: ["5 Users", "100GB Storage", "Priority Support", "Advanced Analytics"],
@@ -2789,60 +2797,60 @@ class PostgreSQLStorage implements IStorage {
     const dbInstance = this.ensureDB();
     await dbInstance.delete(plans).where(eq(plans.id, id));
   }
-  
+
   // Plan synchronization methods
   async syncClientPlans(planId: string): Promise<void> {
     const dbInstance = this.ensureDB();
-    
+
     // Find all clients using this plan
     const affectedClients = await dbInstance
       .select()
       .from(clients)
       .where(eq(clients.planId, planId));
-    
+
     console.log(`🔄 Syncing plan ${planId} for ${affectedClients.length} clients`);
-    
+
     // In PostgreSQL, the plan data is already updated, clients automatically get the latest plan data
     // when they query their plan information since they reference it by planId
   }
-  
+
   async updatePlanPricing(planId: string, updates: { monthlyPrice?: number; yearlyPrice?: number; stripeProductId?: string; monthlyStripePriceId?: string; yearlyStripePriceId?: string }): Promise<Plan> {
     const dbInstance = this.ensureDB();
-    
+
     const [updatedPlan] = await dbInstance
       .update(plans)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(plans.id, planId))
       .returning();
-    
+
     if (!updatedPlan) throw new Error("Plan not found");
-    
+
     // Auto-sync all clients using this plan
     await this.syncClientPlans(planId);
-    
+
     return updatedPlan;
   }
-  
+
   async updateClientPlan(clientId: string, planId: string): Promise<Client> {
     const dbInstance = this.ensureDB();
-    
+
     // Verify plan exists
     const plan = await dbInstance
       .select()
       .from(plans)
       .where(eq(plans.id, planId))
       .limit(1);
-    
+
     if (plan.length === 0) throw new Error("Plan not found");
-    
+
     const [updatedClient] = await dbInstance
       .update(clients)
       .set({ planId, updatedAt: new Date() })
       .where(eq(clients.id, clientId))
       .returning();
-    
+
     if (!updatedClient) throw new Error("Client not found");
-    
+
     return updatedClient;
   }
 
@@ -2886,27 +2894,27 @@ class PostgreSQLStorage implements IStorage {
 
   // Note: For brevity, implementing key methods first. Other methods would follow same pattern
   // using Drizzle ORM operations instead of in-memory arrays
-  
+
   // Onboarding session implementations 
-  async getOnboardingSessions(): Promise<OnboardingSession[]> { 
+  async getOnboardingSessions(): Promise<OnboardingSession[]> {
     const dbInstance = this.ensureDB();
     const sessions = await dbInstance.select().from(onboardingSessions);
     return sessions;
   }
-  async getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined> { 
+  async getOnboardingSession(sessionId: string): Promise<OnboardingSession | undefined> {
     const dbInstance = this.ensureDB();
     const sessions = await dbInstance
       .select()
       .from(onboardingSessions)
       .where(eq(onboardingSessions.sessionId, sessionId))
       .limit(1);
-    
+
     return sessions.length > 0 ? sessions[0] : undefined;
   }
   async createOnboardingSession(session: InsertOnboardingSession): Promise<OnboardingSession> {
     const dbInstance = this.ensureDB();
     const sessionId = `onb_${Date.now()}`;
-    
+
     const result = await dbInstance.insert(onboardingSessions).values({
       id: sessionId,
       sessionId: session.sessionId,
@@ -2927,7 +2935,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(onboardingSessions.sessionId, sessionId))
       .returning();
-    
+
     if (result.length === 0) throw new Error("Onboarding session not found");
     return result[0];
   }
@@ -2935,40 +2943,40 @@ class PostgreSQLStorage implements IStorage {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .update(onboardingSessions)
-      .set({ 
-        isCompleted: true, 
-        completedAt: new Date(), 
-        updatedAt: new Date() 
+      .set({
+        isCompleted: true,
+        completedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(onboardingSessions.sessionId, sessionId))
       .returning();
-    
+
     if (result.length === 0) throw new Error("Onboarding session not found");
     return result[0];
   }
-  async getClients(): Promise<Client[]> { 
+  async getClients(): Promise<Client[]> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance.select().from(clients);
     return result;
   }
-  async getClient(id: string): Promise<Client | undefined> { 
+  async getClient(id: string): Promise<Client | undefined> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select()
       .from(clients)
       .where(eq(clients.id, id))
       .limit(1);
-    
+
     return result.length > 0 ? result[0] : undefined;
   }
-  async getClientByEmail(email: string): Promise<Client | undefined> { 
+  async getClientByEmail(email: string): Promise<Client | undefined> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select()
       .from(clients)
       .where(eq(clients.email, email))
       .limit(1);
-    
+
     return result.length > 0 ? result[0] : undefined;
   }
   async getClientBySubdomain(subdomain: string): Promise<Client | undefined> {
@@ -3012,13 +3020,13 @@ class PostgreSQLStorage implements IStorage {
       .innerJoin(clients, eq(clientWebsites.clientId, clients.id))
       .where(eq(clientWebsites.subdomain, subdomain))
       .limit(1);
-    
+
     return result.length > 0 ? result[0] : undefined;
   }
   async createClient(client: InsertClient): Promise<Client> {
     const dbInstance = this.ensureDB();
     const clientId = `client_${Date.now()}`;
-    
+
     const [newClient] = await dbInstance.insert(clients).values({
       id: clientId,
       businessName: client.businessName,
@@ -3061,7 +3069,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(clients.id, id))
       .returning();
-    
+
     if (!updatedClient) throw new Error("Client not found");
     return updatedClient;
   }
@@ -3082,19 +3090,19 @@ class PostgreSQLStorage implements IStorage {
   }
   async getReviews(): Promise<Review[]> { return []; }
   async createReview(review: InsertReview): Promise<Review> { throw new Error("Not implemented"); }
-  async getClientServices(clientId: string): Promise<ClientService[]> { 
+  async getClientServices(clientId: string): Promise<ClientService[]> {
     const dbInstance = this.ensureDB();
     const services = await dbInstance
       .select()
       .from(clientServices)
       .where(eq(clientServices.clientId, clientId));
-    
+
     return services;
   }
   async createClientService(service: InsertClientService): Promise<ClientService> {
     const dbInstance = this.ensureDB();
     const serviceId = `service_${Date.now()}`;
-    
+
     const [newService] = await dbInstance.insert(clientServices).values({
       id: serviceId,
       clientId: service.clientId,
@@ -3116,7 +3124,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(clientServices.id, id))
       .returning();
-    
+
     if (!updatedService) throw new Error("Client service not found");
     return updatedService;
   }
@@ -3124,29 +3132,29 @@ class PostgreSQLStorage implements IStorage {
     const dbInstance = this.ensureDB();
     await dbInstance.delete(clientServices).where(eq(clientServices.id, id));
   }
-  async getAppointments(clientId: string): Promise<Appointment[]> { 
+  async getAppointments(clientId: string): Promise<Appointment[]> {
     const dbInstance = this.ensureDB();
     const clientAppointments = await dbInstance
       .select()
       .from(appointments)
       .where(eq(appointments.clientId, clientId));
-    
+
     return clientAppointments;
   }
-  async getAppointment(id: string): Promise<Appointment | undefined> { 
+  async getAppointment(id: string): Promise<Appointment | undefined> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select()
       .from(appointments)
       .where(eq(appointments.id, id))
       .limit(1);
-    
+
     return result.length > 0 ? result[0] : undefined;
   }
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
     const dbInstance = this.ensureDB();
     const appointmentId = `appt_${Date.now()}`;
-    
+
     const [newAppointment] = await dbInstance.insert(appointments).values({
       id: appointmentId,
       clientId: appointment.clientId,
@@ -3177,7 +3185,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(appointments.id, id))
       .returning();
-    
+
     if (!updatedAppointment) throw new Error("Appointment not found");
     return updatedAppointment;
   }
@@ -3189,10 +3197,10 @@ class PostgreSQLStorage implements IStorage {
   // Appointment transfer methods
   async transferAppointment(appointmentId: string, toStaffId: string, transferredBy: string, reason?: string): Promise<Appointment> {
     const dbInstance = this.ensureDB();
-    
+
     const appointment = await this.getAppointment(appointmentId);
     if (!appointment) throw new Error("Appointment not found");
-    
+
     // Create transfer record
     const transferId = `transfer_${Date.now()}`;
     await dbInstance.insert(appointmentTransfers).values({
@@ -3205,7 +3213,7 @@ class PostgreSQLStorage implements IStorage {
       reason: reason || null,
       createdAt: new Date(),
     });
-    
+
     // Update appointment with new assigned staff
     return await this.updateAppointment(appointmentId, { assignedTo: toStaffId });
   }
@@ -3216,7 +3224,7 @@ class PostgreSQLStorage implements IStorage {
       .select()
       .from(appointmentTransfers)
       .where(eq(appointmentTransfers.appointmentId, appointmentId));
-    
+
     return transfers;
   }
 
@@ -3228,26 +3236,26 @@ class PostgreSQLStorage implements IStorage {
       .where(
         sql`${appointmentTransfers.fromStaffId} = ${staffId} OR ${appointmentTransfers.toStaffId} = ${staffId}`
       );
-    
+
     return transfers;
   }
 
   async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
   async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> { return []; }
-  async getLeads(clientId: string): Promise<Lead[]> { 
+  async getLeads(clientId: string): Promise<Lead[]> {
     const dbInstance = this.ensureDB();
     const clientLeads = await dbInstance
       .select()
       .from(leads)
       .where(eq(leads.clientId, clientId));
-    
+
     return clientLeads;
   }
   async getLead(id: string): Promise<Lead | undefined> { return undefined; }
   async createLead(lead: InsertLead): Promise<Lead> {
     const dbInstance = this.ensureDB();
     const leadId = `lead_${Date.now()}`;
-    
+
     const [newLead] = await dbInstance.insert(leads).values({
       id: leadId,
       clientId: lead.clientId,
@@ -3274,7 +3282,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(leads.id, id))
       .returning();
-    
+
     if (!updatedLead) throw new Error("Lead not found");
     return updatedLead;
   }
@@ -3302,14 +3310,14 @@ class PostgreSQLStorage implements IStorage {
   }
   async updateClientWebsite(clientId: string, updates: Partial<InsertClientWebsite>): Promise<ClientWebsite> {
     const dbInstance = this.ensureDB();
-    
+
     // First, try to update existing website
     const [updatedWebsite] = await dbInstance
       .update(clientWebsites)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(clientWebsites.clientId, clientId))
       .returning();
-    
+
     // If no website exists, create a new one
     if (!updatedWebsite) {
       const websiteId = `website_${Date.now()}`;
@@ -3334,7 +3342,7 @@ class PostgreSQLStorage implements IStorage {
         .returning();
       return newWebsite;
     }
-    
+
     return updatedWebsite;
   }
   async getPublicWebsite(subdomain: string): Promise<ClientWebsite | undefined> {
@@ -3346,19 +3354,19 @@ class PostgreSQLStorage implements IStorage {
       .limit(1);
     return website;
   }
-  async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> { 
+  async getAppointmentSlots(clientId: string): Promise<AppointmentSlot[]> {
     const dbInstance = this.ensureDB();
     const slots = await dbInstance
       .select()
       .from(appointmentSlots)
       .where(eq(appointmentSlots.clientId, clientId));
-    
+
     return slots;
   }
   async createAppointmentSlot(slot: InsertAppointmentSlot): Promise<AppointmentSlot> {
     const dbInstance = this.ensureDB();
     const slotId = `slot_${Date.now()}`;
-    
+
     const [newSlot] = await dbInstance.insert(appointmentSlots).values({
       id: slotId,
       clientId: slot.clientId,
@@ -3374,17 +3382,17 @@ class PostgreSQLStorage implements IStorage {
   }
   async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
   async deleteAppointmentSlot(id: string): Promise<void> { throw new Error("Not implemented"); }
-  
+
   async getAvailableSlots(clientId: string, date: string): Promise<string[]> {
     const dbInstance = this.ensureDB();
-    
+
     // Parse date as local calendar date to avoid UTC/timezone issues
     const [year, month, day] = date.split('-').map(Number);
     const localDate = new Date(year, month - 1, day); // month is 0-indexed
     const dayOfWeek = localDate.getDay(); // 0-6 (Sunday-Saturday)
-    
+
     console.log(`DBStorage.getAvailableSlots: date=${date}, parsed=(${year},${month},${day}), dayOfWeek=${dayOfWeek}`);
-    
+
     // Get slot configurations for this day from database
     const daySlots = await dbInstance
       .select()
@@ -3396,17 +3404,17 @@ class PostgreSQLStorage implements IStorage {
           eq(appointmentSlots.isActive, true)
         )
       );
-    
+
     console.log(`Found ${daySlots.length} slot configurations for dayOfWeek ${dayOfWeek}`);
-    
+
     if (daySlots.length === 0) return [];
-    
+
     // Get existing appointments for this date from database
     const existingAppointments = await dbInstance
       .select()
       .from(appointments)
       .where(eq(appointments.clientId, clientId));
-    
+
     // Filter appointments by date (compare date strings to avoid timezone issues)
     const bookedTimes = existingAppointments
       .filter((apt: typeof appointments.$inferSelect) => {
@@ -3414,15 +3422,15 @@ class PostgreSQLStorage implements IStorage {
         return aptDate.toDateString() === localDate.toDateString();
       })
       .map((apt: typeof appointments.$inferSelect) => apt.startTime);
-    
+
     // Generate available time slots using Set to prevent duplicates
     const availableSlots = new Set<string>();
-    
+
     for (const slotConfig of daySlots) {
       const start = this.timeToMinutes(slotConfig.startTime);
       const end = this.timeToMinutes(slotConfig.endTime);
       const duration = slotConfig.slotDuration || 30;
-      
+
       for (let time = start; time < end; time += duration) {
         const timeString = this.minutesToTime(time);
         if (!bookedTimes.includes(timeString)) {
@@ -3430,36 +3438,36 @@ class PostgreSQLStorage implements IStorage {
         }
       }
     }
-    
+
     const result = Array.from(availableSlots).sort();
     console.log(`DBStorage.getAvailableSlots returning ${result.length} slots:`, result);
     return result;
   }
-  
+
   private timeToMinutes(timeString: string): number {
     const [hours, minutes] = timeString.split(':').map(Number);
     return hours * 60 + minutes;
   }
-  
+
   private minutesToTime(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
-  async getTeamMembers(clientId: string): Promise<TeamMember[]> { 
+  async getTeamMembers(clientId: string): Promise<TeamMember[]> {
     const dbInstance = this.ensureDB();
     const members = await dbInstance
       .select()
       .from(teamMembers)
       .where(eq(teamMembers.clientId, clientId));
-    
+
     return members;
   }
   async getTeamMember(id: string): Promise<TeamMember | undefined> { return undefined; }
   async createTeamMember(member: InsertTeamMember): Promise<TeamMember> {
     const dbInstance = this.ensureDB();
     const memberId = `team_${Date.now()}`;
-    
+
     const [newMember] = await dbInstance.insert(teamMembers).values({
       id: memberId,
       clientId: member.clientId,
@@ -3485,7 +3493,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(teamMembers.id, id))
       .returning();
-    
+
     if (!updatedMember) throw new Error("Team member not found");
     return updatedMember;
   }
@@ -3540,7 +3548,7 @@ class PostgreSQLStorage implements IStorage {
     const id = `domain_${Date.now()}`;
     const [createdDomain] = await dbInstance
       .insert(domainConfigurations)
-      .values({ 
+      .values({
         id,
         clientId: domain.clientId,
         domainType: domain.domainType,
@@ -3570,7 +3578,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(domainConfigurations.id, id))
       .returning();
-    
+
     if (!updatedDomain) throw new Error("Domain configuration not found");
     return updatedDomain;
   }
@@ -3585,7 +3593,7 @@ class PostgreSQLStorage implements IStorage {
       .set({ status: 'VERIFIED', verifiedAt: new Date(), updatedAt: new Date() })
       .where(eq(domainConfigurations.id, id))
       .returning();
-    
+
     if (!domain) throw new Error("Domain configuration not found");
     return domain;
   }
@@ -3616,29 +3624,29 @@ class PostgreSQLStorage implements IStorage {
   async createWebsiteTestimonial(testimonial: InsertWebsiteTestimonial): Promise<WebsiteTestimonial> { throw new Error("Not implemented"); }
   async updateWebsiteTestimonial(id: string, updates: Partial<InsertWebsiteTestimonial>): Promise<WebsiteTestimonial> { throw new Error("Not implemented"); }
   async deleteWebsiteTestimonial(id: string): Promise<void> { throw new Error("Not implemented"); }
-  async getPayments(clientId: string): Promise<Payment[]> { 
+  async getPayments(clientId: string): Promise<Payment[]> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select()
       .from(payments)
       .where(eq(payments.clientId, clientId));
-    
+
     return result;
   }
-  async getPayment(id: string): Promise<Payment | undefined> { 
+  async getPayment(id: string): Promise<Payment | undefined> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select()
       .from(payments)
       .where(eq(payments.id, id))
       .limit(1);
-    
+
     return result.length > 0 ? result[0] : undefined;
   }
   async createPayment(payment: InsertPayment): Promise<Payment> {
     const dbInstance = this.ensureDB();
     const paymentId = `payment_${Date.now()}`;
-    
+
     const [newPayment] = await dbInstance.insert(payments).values({
       id: paymentId,
       clientId: payment.clientId,
@@ -3668,67 +3676,67 @@ class PostgreSQLStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(payments.id, id))
       .returning();
-    
+
     if (!updatedPayment) throw new Error("Payment not found");
     return updatedPayment;
   }
-  async getPaymentsByAppointment(appointmentId: string): Promise<Payment[]> { 
+  async getPaymentsByAppointment(appointmentId: string): Promise<Payment[]> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select()
       .from(payments)
       .where(eq(payments.appointmentId, appointmentId));
-    
+
     return result;
   }
   async calculateServiceAmount(clientId: string, serviceId: string): Promise<number> { return 0; }
   async calculateTotalWithTip(baseAmount: number, tipPercentage?: number): Promise<number> { return baseAmount; }
   async updateStripeConfig(clientId: string, publicKey: string, secretKey: string): Promise<void> {
     const dbInstance = this.ensureDB();
-    
+
     const [updatedClient] = await dbInstance
       .update(clients)
-      .set({ 
+      .set({
         stripePublicKey: publicKey,
         stripeSecretKey: secretKey, // Note: In production, this should be encrypted
         updatedAt: new Date()
       })
       .where(eq(clients.id, clientId))
       .returning();
-    
+
     if (!updatedClient) throw new Error("Client not found");
   }
-  async getStripePublicKey(clientId: string): Promise<string | null> { 
+  async getStripePublicKey(clientId: string): Promise<string | null> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select({ stripePublicKey: clients.stripePublicKey })
       .from(clients)
       .where(eq(clients.id, clientId))
       .limit(1);
-    
+
     return result.length > 0 ? result[0].stripePublicKey : null;
   }
-  async getStripeSecretKey(clientId: string): Promise<string | null> { 
+  async getStripeSecretKey(clientId: string): Promise<string | null> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select({ stripeSecretKey: clients.stripeSecretKey })
       .from(clients)
       .where(eq(clients.id, clientId))
       .limit(1);
-    
+
     return result.length > 0 ? result[0].stripeSecretKey : null;
   }
-  async validateStripeConfig(clientId: string): Promise<boolean> { 
+  async validateStripeConfig(clientId: string): Promise<boolean> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
-      .select({ 
+      .select({
         stripePublicKey: clients.stripePublicKey,
-        stripeSecretKey: clients.stripeSecretKey 
+        stripeSecretKey: clients.stripeSecretKey
       })
       .from(clients)
       .where(eq(clients.id, clientId))
       .limit(1);
-    
+
     // Check client-specific Stripe configuration first, then fall back to global env variables
     const hasClientConfig = result.length > 0 && !!(result[0].stripePublicKey && result[0].stripeSecretKey);
     const hasGlobalConfig = !!(process.env.STRIPE_SECRET_KEY && process.env.VITE_STRIPE_PUBLIC_KEY);
@@ -3736,17 +3744,17 @@ class PostgreSQLStorage implements IStorage {
   }
   async clearStripeConfig(clientId: string): Promise<void> {
     const dbInstance = this.ensureDB();
-    
+
     const [updatedClient] = await dbInstance
       .update(clients)
-      .set({ 
+      .set({
         stripePublicKey: null,
         stripeSecretKey: null,
         updatedAt: new Date()
       })
       .where(eq(clients.id, clientId))
       .returning();
-    
+
     if (!updatedClient) throw new Error("Client not found");
   }
   async updateSmtpConfig(clientId: string, config: {
@@ -3760,19 +3768,19 @@ class PostgreSQLStorage implements IStorage {
     smtpEnabled?: boolean;
   }): Promise<void> {
     const dbInstance = this.ensureDB();
-    
+
     const [updatedClient] = await dbInstance
       .update(clients)
-      .set({ 
+      .set({
         ...config,
         updatedAt: new Date()
       })
       .where(eq(clients.id, clientId))
       .returning();
-    
+
     if (!updatedClient) throw new Error("Client not found");
   }
-  async getSmtpConfig(clientId: string): Promise<any> { 
+  async getSmtpConfig(clientId: string): Promise<any> {
     const dbInstance = this.ensureDB();
     const result = await dbInstance
       .select({
@@ -3788,14 +3796,14 @@ class PostgreSQLStorage implements IStorage {
       .from(clients)
       .where(eq(clients.id, clientId))
       .limit(1);
-    
+
     if (result.length === 0) {
       return { isConfigured: false, smtpHost: null, smtpPort: null, smtpUsername: null, smtpPassword: null, smtpFromEmail: null, smtpFromName: null, smtpSecure: null, smtpEnabled: null };
     }
-    
+
     const client = result[0];
     const isConfigured = !!(client.smtpHost && client.smtpPort && client.smtpUsername && client.smtpPassword && client.smtpFromEmail);
-    
+
     return {
       isConfigured,
       smtpHost: client.smtpHost,
@@ -3808,7 +3816,7 @@ class PostgreSQLStorage implements IStorage {
       smtpEnabled: client.smtpEnabled
     };
   }
-  async testSmtpConfig(clientId: string): Promise<boolean> { 
+  async testSmtpConfig(clientId: string): Promise<boolean> {
     // Note: In a real implementation, this would attempt to send a test email
     // For now, we'll just validate that the configuration exists
     const config = await this.getSmtpConfig(clientId);
@@ -3816,10 +3824,10 @@ class PostgreSQLStorage implements IStorage {
   }
   async clearSmtpConfig(clientId: string): Promise<void> {
     const dbInstance = this.ensureDB();
-    
+
     const [updatedClient] = await dbInstance
       .update(clients)
-      .set({ 
+      .set({
         smtpHost: null,
         smtpPort: null,
         smtpUsername: null,
@@ -3832,7 +3840,7 @@ class PostgreSQLStorage implements IStorage {
       })
       .where(eq(clients.id, clientId))
       .returning();
-    
+
     if (!updatedClient) throw new Error("Client not found");
   }
 }
@@ -3845,26 +3853,26 @@ function createStorage(): IStorage {
   const isCoolify = process.env.DEPLOY_TARGET === 'coolify' || !!process.env.COOLIFY_BRANCH || !!process.env.COOLIFY_PROJECT_UUID;
   const isProduction = process.env.NODE_ENV === 'production' || isCoolify;
   const hasDatabaseUrl = !!process.env.DATABASE_URL;
-  
+
   // Enhanced detection logging
   console.log(`🔧 Database Environment Detection:`);
   console.log(`  - Replit: ${isReplit ? 'Yes' : 'No'}`);
   console.log(`  - Coolify: ${isCoolify ? 'Yes' : 'No'}`);
   console.log(`  - Production: ${isProduction ? 'Yes' : 'No'}`);
   console.log(`  - DATABASE_URL present: ${hasDatabaseUrl ? 'Yes' : 'No'}`);
-  
+
   // Use PostgreSQL for production environments (Coolify, Vercel, or any production with database)
   const useDatabase = (isCoolify || isVercel || isProduction) && hasDatabaseUrl;
-  
+
   const storageType = useDatabase ? 'PostgreSQL' : 'MemStorage';
   const environment = isReplit ? 'Replit' : (isCoolify ? 'Coolify' : (isVercel ? 'Vercel' : 'Unknown'));
-  
+
   console.log(`🔧 Environment: ${environment}`);
   console.log(`💾 Storage: ${storageType}`);
   console.log(`🗄️  Database URL present: ${hasDatabaseUrl ? 'Yes' : 'No'}`);
   console.log(`🚀 Production mode: ${isProduction ? 'Yes' : 'No'}`);
   console.log(`📊 Demo data: ${useDatabase ? 'Disabled (Production)' : 'Enabled (Development)'}`);
-  
+
   if (useDatabase) {
     console.log(`✅ Using PostgreSQL database for production data`);
     return new PostgreSQLStorage();

@@ -29,19 +29,15 @@ type AllValues<T extends AnyObjectSchema> = {
   [P in keyof T]: { key: P; value: T[P][0]; schema: T[P][1] };
 }[keyof T];
 
-export type MappedObjectType<T extends AnyObjectSchema> = OptionalizeObject<
-  {
-    [P in AllValues<T>['value']]: SchemaMappedType<
-      Extract<AllValues<T>, { value: P }>['schema']
-    >;
-  }
->;
+export type MappedObjectType<T extends AnyObjectSchema> = OptionalizeObject<{
+  [P in AllValues<T>['value']]: SchemaMappedType<
+    Extract<AllValues<T>, { value: P }>['schema']
+  >;
+}>;
 
-export type ObjectType<T extends AnyObjectSchema> = OptionalizeObject<
-  {
-    [K in keyof T]: SchemaType<T[K][1]>;
-  }
->;
+export type ObjectType<T extends AnyObjectSchema> = OptionalizeObject<{
+  [K in keyof T]: SchemaType<T[K][1]>;
+}>;
 
 export interface ObjectXmlOptions {
   isAttr?: boolean;

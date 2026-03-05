@@ -85,6 +85,23 @@ export interface SchemaValidationError extends SchemaContext {
 }
 
 /**
+ * Check if the value is valid for the given schema.
+ *
+ * @param value Value to validate
+ * @param schema Schema for type
+ */
+export function isMappedValueValidForSchema<T>(
+  value: unknown,
+  schema: Schema<T>
+): value is T {
+  const contextCreator = createSchemaContextCreator(
+    createNewSchemaContext(value, schema.type())
+  );
+  const validationResult = schema.validateBeforeUnmap(value, contextCreator);
+  return validationResult.length === 0;
+}
+
+/**
  * Validate and map the value using the given schema.
  *
  * This method should be used after JSON deserialization.
