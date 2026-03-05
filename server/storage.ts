@@ -38,6 +38,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserPassword(userId: string, newPassword: string): Promise<void>;
 
   // Plans Management
   getPlans(): Promise<Plan[]>;
@@ -238,6 +239,29 @@ export interface IStorage {
   testSmtpConfig(clientId: string): Promise<boolean>;
   clearSmtpConfig(clientId: string): Promise<void>;
 
+  // System SMTP Configuration (Super Admin level)
+  getSystemSmtpConfig(): Promise<{
+    smtpHost: string | null;
+    smtpPort: number | null;
+    smtpUsername: string | null;
+    smtpPassword: string | null;
+    smtpFromEmail: string | null;
+    smtpFromName: string | null;
+    smtpSecure: boolean | null;
+    smtpEnabled: boolean | null;
+    isConfigured: boolean;
+  }>;
+  updateSystemSmtpConfig(config: {
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUsername?: string;
+    smtpPassword?: string;
+    smtpFromEmail?: string;
+    smtpFromName?: string;
+    smtpSecure?: boolean;
+    smtpEnabled?: boolean;
+  }): Promise<void>;
+
   // Contact Messages / Super Admin Leads
   getContactMessages(): Promise<ContactMessage[]>;
   getContactMessage(id: string): Promise<ContactMessage | undefined>;
@@ -262,6 +286,8 @@ class MemStorage implements IStorage {
   private payments: Payment[] = [];
   private contactMessages: ContactMessage[] = [];
   private contactMessagesFile = path.join(process.cwd(), 'data', 'contact-messages.json');
+  private systemSettingsFile = path.join(process.cwd(), 'data', 'system-settings.json');
+  private systemSettings: Record<string, any> = {};
   private clientWebsites: ClientWebsite[] = [
     {
       id: "website_1",
@@ -670,6 +696,17 @@ class MemStorage implements IStorage {
     };
     this.users.push(newUser);
     return newUser;
+  }
+
+  async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) throw new Error("User not found");
+    // Store plain text to match the existing unified client-login comparison
+    this.users[userIndex] = {
+      ...this.users[userIndex],
+      password: newPassword,
+      updatedAt: new Date(),
+    };
   }
 
   // Plan methods
@@ -2144,6 +2181,77 @@ class MemStorage implements IStorage {
     };
   }
 
+  // System Settings Methods (for Super Admin SMTP, etc.)
+  private async loadSystemSettings(): Promise<void> {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      const data = await fs.readFile(this.systemSettingsFile, 'utf8');
+      this.systemSettings = JSON.parse(data);
+      console.log('✅ Loaded system settings from file');
+    } catch {
+      this.systemSettings = {};
+      console.log('📝 Starting with empty system settings (file not found)');
+    }
+  }
+
+  private async saveSystemSettings(): Promise<void> {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      await fs.writeFile(this.systemSettingsFile, JSON.stringify(this.systemSettings, null, 2));
+    } catch (error) {
+      console.error('❌ Failed to save system settings:', error);
+    }
+  }
+
+  async getSystemSmtpConfig(): Promise<{
+    smtpHost: string | null;
+    smtpPort: number | null;
+    smtpUsername: string | null;
+    smtpPassword: string | null;
+    smtpFromEmail: string | null;
+    smtpFromName: string | null;
+    smtpSecure: boolean | null;
+    smtpEnabled: boolean | null;
+    isConfigured: boolean;
+  }> {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    const smtp = this.systemSettings.smtp || {};
+    const isConfigured = !!(smtp.smtpHost && smtp.smtpPort && smtp.smtpUsername && smtp.smtpPassword && smtp.smtpFromEmail);
+    return {
+      smtpHost: smtp.smtpHost || null,
+      smtpPort: smtp.smtpPort || null,
+      smtpUsername: smtp.smtpUsername || null,
+      smtpPassword: smtp.smtpPassword || null,
+      smtpFromEmail: smtp.smtpFromEmail || null,
+      smtpFromName: smtp.smtpFromName || null,
+      smtpSecure: smtp.smtpSecure !== undefined ? smtp.smtpSecure : true,
+      smtpEnabled: smtp.smtpEnabled || false,
+      isConfigured,
+    };
+  }
+
+  async updateSystemSmtpConfig(config: {
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUsername?: string;
+    smtpPassword?: string;
+    smtpFromEmail?: string;
+    smtpFromName?: string;
+    smtpSecure?: boolean;
+    smtpEnabled?: boolean;
+  }): Promise<void> {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    this.systemSettings.smtp = {
+      ...(this.systemSettings.smtp || {}),
+      ...config,
+    };
+    await this.saveSystemSettings();
+  }
+
   // Contact Messages / Super Admin Leads Methods
   private async loadContactMessages(): Promise<void> {
     try {
@@ -2759,6 +2867,16 @@ class PostgreSQLStorage implements IStorage {
       updatedAt: new Date()
     }).returning();
     return newUser;
+  }
+
+  async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    const [updated] = await dbInstance
+      .update(users)
+      .set({ password: newPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!updated) throw new Error("User not found");
   }
 
   // Plans Management  
@@ -3842,6 +3960,78 @@ class PostgreSQLStorage implements IStorage {
       .returning();
 
     if (!updatedClient) throw new Error("Client not found");
+  }
+
+  // System SMTP Configuration (file-based, shared with MemStorage)
+  private systemSettingsFile = path.join(process.cwd(), 'data', 'system-settings.json');
+  private systemSettings: Record<string, any> = {};
+
+  private async loadSystemSettings(): Promise<void> {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      const data = await fs.readFile(this.systemSettingsFile, 'utf8');
+      this.systemSettings = JSON.parse(data);
+    } catch {
+      this.systemSettings = {};
+    }
+  }
+
+  private async saveSystemSettings(): Promise<void> {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      await fs.writeFile(this.systemSettingsFile, JSON.stringify(this.systemSettings, null, 2));
+    } catch (error) {
+      console.error('❌ Failed to save system settings:', error);
+    }
+  }
+
+  async getSystemSmtpConfig(): Promise<{
+    smtpHost: string | null;
+    smtpPort: number | null;
+    smtpUsername: string | null;
+    smtpPassword: string | null;
+    smtpFromEmail: string | null;
+    smtpFromName: string | null;
+    smtpSecure: boolean | null;
+    smtpEnabled: boolean | null;
+    isConfigured: boolean;
+  }> {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    const smtp = this.systemSettings.smtp || {};
+    const isConfigured = !!(smtp.smtpHost && smtp.smtpPort && smtp.smtpUsername && smtp.smtpPassword && smtp.smtpFromEmail);
+    return {
+      smtpHost: smtp.smtpHost || null,
+      smtpPort: smtp.smtpPort || null,
+      smtpUsername: smtp.smtpUsername || null,
+      smtpPassword: smtp.smtpPassword || null,
+      smtpFromEmail: smtp.smtpFromEmail || null,
+      smtpFromName: smtp.smtpFromName || null,
+      smtpSecure: smtp.smtpSecure !== undefined ? smtp.smtpSecure : true,
+      smtpEnabled: smtp.smtpEnabled || false,
+      isConfigured,
+    };
+  }
+
+  async updateSystemSmtpConfig(config: {
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUsername?: string;
+    smtpPassword?: string;
+    smtpFromEmail?: string;
+    smtpFromName?: string;
+    smtpSecure?: boolean;
+    smtpEnabled?: boolean;
+  }): Promise<void> {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    this.systemSettings.smtp = {
+      ...(this.systemSettings.smtp || {}),
+      ...config,
+    };
+    await this.saveSystemSettings();
   }
 }
 

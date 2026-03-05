@@ -37,7 +37,9 @@ import {
   AlertTriangle,
   Mail,
   Upload,
-  Download
+  Download,
+  ArrowLeft,
+  ChevronLeft
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
@@ -968,7 +970,13 @@ export default function ClientDashboard() {
                   <Button
                     variant={activeView === item.id ? "default" : "ghost"}
                     className={`w-full justify-start ${!isSidebarOpen ? 'px-2' : ''}`}
-                    onClick={() => setActiveView(item.id)}
+                    onClick={() => {
+                      setActiveView(item.id);
+                      // On mobile, close sidebar after selection
+                      if (window.innerWidth < 1024) {
+                        setIsSidebarOpen(false);
+                      }
+                    }}
                   >
                     <Icon className={`w-5 h-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
                     {isSidebarOpen && (
@@ -1013,22 +1021,34 @@ export default function ClientDashboard() {
       <div className="flex-1 flex flex-col ml-0 lg:ml-16 min-w-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b">
-          <div className="px-6 py-4">
+          <div className="px-4 py-3 md:px-6 md:py-4">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 {/* Mobile Menu Button */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="lg:hidden"
+                  className="lg:hidden shrink-0"
                   data-testid="button-mobile-menu"
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{clientData.businessName}</h1>
-                  <p className="text-sm text-gray-600">
+                {/* Mobile Back Button - shown when not on overview */}
+                {activeView !== 'overview' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveView('overview')}
+                    className="lg:hidden shrink-0"
+                    aria-label="Back to overview"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </Button>
+                )}
+                <div className="min-w-0">
+                  <h1 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{clientData.businessName}</h1>
+                  <p className="text-xs md:text-sm text-gray-600 hidden sm:block">
                     {isTeamMember() ? 'Team Member Dashboard' : 'Business Dashboard'}
                     {teamContext && (
                       <span className="ml-2 text-blue-600">• Limited Access</span>
@@ -1036,8 +1056,8 @@ export default function ClientDashboard() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <Badge variant="outline" className="capitalize">
+              <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                <Badge variant="outline" className="capitalize text-xs">
                   {clientData.status}
                 </Badge>
               </div>

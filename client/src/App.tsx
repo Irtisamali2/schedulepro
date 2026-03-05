@@ -5,7 +5,10 @@ import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
 import OnboardingFlow from "@/pages/OnboardingFlow";
 import ClientDashboard from "@/pages/ClientDashboard";
 import ClientLogin from "@/pages/ClientLogin";
+import ClientForgotPassword from "@/pages/ClientForgotPassword";
 import TeamLogin from "@/pages/TeamLogin";
+import TeamForgotPassword from "@/pages/TeamForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import TeamDashboard from "@/pages/TeamDashboard";
 import AdvancedWebsiteBuilder from "@/pages/AdvancedWebsiteBuilder";
 import WYSIWYGWebsiteBuilder from "@/pages/WYSIWYGWebsiteBuilder";
@@ -40,6 +43,7 @@ function App() {
           
           {/* Client Login & Dashboard */}
           <Route path="/client-login" component={ClientLogin} />
+          <Route path="/forgot-password" component={ClientForgotPassword} />
           <Route path="/client-dashboard" component={ClientDashboard} />
           
           {/* Review Platform Management */}
@@ -47,7 +51,11 @@ function App() {
           
           {/* Team Member Login & Dashboard */}
           <Route path="/team-login" component={TeamLogin} />
+          <Route path="/team-forgot-password" component={TeamForgotPassword} />
           <Route path="/team-dashboard" component={TeamDashboard} />
+
+          {/* Shared Password Reset */}
+          <Route path="/reset-password" component={ResetPassword} />
           
           {/* Website Builder */}
           <Route path="/website-builder" component={ElementorStyleBuilder} />

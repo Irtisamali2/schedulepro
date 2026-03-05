@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PaymentManagement from "./PaymentManagement";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,6 +133,20 @@ export default function SuperAdminDashboard() {
   });
   const [newFeature, setNewFeature] = useState('');
 
+  // System SMTP state
+  const [smtpForm, setSmtpForm] = useState({
+    smtpHost: '',
+    smtpPort: 587,
+    smtpUsername: '',
+    smtpPassword: '',
+    smtpFromEmail: '',
+    smtpFromName: '',
+    smtpSecure: false,
+    smtpEnabled: false
+  });
+  const [smtpTestEmail, setSmtpTestEmail] = useState('');
+  const [smtpSaved, setSmtpSaved] = useState(false);
+
   // Review platforms state
   const [editingPlatform, setEditingPlatform] = useState<any>(null);
   const [showAddPlatformForm, setShowAddPlatformForm] = useState(false);
@@ -245,6 +259,75 @@ export default function SuperAdminDashboard() {
     queryFn: async () => {
       const response = await fetch('/api/review-platforms');
       if (!response.ok) throw new Error('Failed to fetch review platforms');
+      return response.json();
+    }
+  });
+
+  // System SMTP query
+  const { data: systemSmtpData } = useQuery({
+    queryKey: ['/api/admin/system-smtp'],
+    queryFn: async () => {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await fetch('/api/admin/system-smtp', {
+        headers: { 'x-user-id': u.id, 'x-user-role': u.role }
+      });
+      if (!response.ok) throw new Error('Failed to fetch system SMTP');
+      return response.json();
+    }
+  });
+
+  // Populate SMTP form when data loads
+  useEffect(() => {
+    if (systemSmtpData) {
+      const d = systemSmtpData as any;
+      setSmtpForm({
+        smtpHost: d.smtpHost || '',
+        smtpPort: d.smtpPort || 587,
+        smtpUsername: d.smtpUsername || '',
+        smtpPassword: '',
+        smtpFromEmail: d.smtpFromEmail || '',
+        smtpFromName: d.smtpFromName || '',
+        smtpSecure: d.smtpSecure || false,
+        smtpEnabled: d.smtpEnabled || false
+      });
+    }
+  }, [systemSmtpData]);
+
+  const updateSystemSmtpMutation = useMutation({
+    mutationFn: async (smtpData: typeof smtpForm) => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await fetch('/api/admin/system-smtp', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+          'x-user-role': user.role
+        },
+        body: JSON.stringify(smtpData)
+      });
+      if (!response.ok) throw new Error('Failed to update system SMTP');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/system-smtp'] });
+      setSmtpSaved(true);
+      setTimeout(() => setSmtpSaved(false), 3000);
+    }
+  });
+
+  const testSystemSmtpMutation = useMutation({
+    mutationFn: async (testEmail: string) => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await fetch('/api/admin/system-smtp/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+          'x-user-role': user.role
+        },
+        body: JSON.stringify({ testEmail })
+      });
+      if (!response.ok) throw new Error('Failed to send test email');
       return response.json();
     }
   });
@@ -567,6 +650,7 @@ export default function SuperAdminDashboard() {
     { id: "onboarding", label: "Onboarding", icon: UserPlus },
     { id: "leads", label: "Leads", icon: Mail },
     { id: "reviews", label: "Reviews", icon: Star },
+    { id: "email", label: "Email / SMTP", icon: Settings },
   ];
 
   return (
@@ -2413,6 +2497,203 @@ export default function SuperAdminDashboard() {
                           Trustpilot Business
                         </a>
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeView === "email" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">System Email / SMTP Configuration</h2>
+                  <p className="text-gray-600">Configure the system-wide SMTP settings used for sending password reset emails to clients</p>
+                </div>
+
+                {smtpSaved && (
+                  <Alert className="border-green-200 bg-green-50">
+                    <AlertDescription className="text-green-800">
+                      SMTP settings saved successfully!
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="w-5 h-5" />
+                      SMTP Server Settings
+                    </CardTitle>
+                    <CardDescription>
+                      These settings are used to send forgot-password emails to business owners (clients).
+                      Team member forgot-password emails use each client's own SMTP settings with this as fallback.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-3 pb-2">
+                      <Label htmlFor="smtpEnabled" className="font-medium">Enable System SMTP</Label>
+                      <input
+                        type="checkbox"
+                        id="smtpEnabled"
+                        checked={smtpForm.smtpEnabled}
+                        onChange={(e) => setSmtpForm({ ...smtpForm, smtpEnabled: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtpHost">SMTP Host</Label>
+                        <Input
+                          id="smtpHost"
+                          value={smtpForm.smtpHost}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpHost: e.target.value })}
+                          placeholder="smtp.gmail.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtpPort">SMTP Port</Label>
+                        <Input
+                          id="smtpPort"
+                          type="number"
+                          value={smtpForm.smtpPort}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpPort: parseInt(e.target.value) || 587 })}
+                          placeholder="587"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtpUsername">SMTP Username</Label>
+                        <Input
+                          id="smtpUsername"
+                          value={smtpForm.smtpUsername}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpUsername: e.target.value })}
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtpPassword">SMTP Password</Label>
+                        <Input
+                          id="smtpPassword"
+                          type="password"
+                          value={smtpForm.smtpPassword}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpPassword: e.target.value })}
+                          placeholder="Leave blank to keep existing password"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtpFromEmail">From Email</Label>
+                        <Input
+                          id="smtpFromEmail"
+                          value={smtpForm.smtpFromEmail}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpFromEmail: e.target.value })}
+                          placeholder="noreply@scheduledpros.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtpFromName">From Name</Label>
+                        <Input
+                          id="smtpFromName"
+                          value={smtpForm.smtpFromName}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpFromName: e.target.value })}
+                          placeholder="Scheduled Pros"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Label htmlFor="smtpSecure" className="font-medium">Use SSL/TLS (Port 465)</Label>
+                      <input
+                        type="checkbox"
+                        id="smtpSecure"
+                        checked={smtpForm.smtpSecure}
+                        onChange={(e) => setSmtpForm({ ...smtpForm, smtpSecure: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => updateSystemSmtpMutation.mutate(smtpForm)}
+                      disabled={updateSystemSmtpMutation.isPending}
+                      className="w-full md:w-auto"
+                    >
+                      {updateSystemSmtpMutation.isPending ? 'Saving...' : 'Save SMTP Settings'}
+                    </Button>
+
+                    {updateSystemSmtpMutation.isError && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertDescription className="text-red-800">
+                          Failed to save SMTP settings. Please try again.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Test Email Connection</CardTitle>
+                    <CardDescription>Send a test email to verify your SMTP settings are working correctly</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-3">
+                      <Input
+                        value={smtpTestEmail}
+                        onChange={(e) => setSmtpTestEmail(e.target.value)}
+                        placeholder="Enter test email address"
+                        type="email"
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => testSystemSmtpMutation.mutate(smtpTestEmail)}
+                        disabled={testSystemSmtpMutation.isPending || !smtpTestEmail}
+                        variant="outline"
+                      >
+                        {testSystemSmtpMutation.isPending ? 'Sending...' : 'Send Test Email'}
+                      </Button>
+                    </div>
+                    {testSystemSmtpMutation.isSuccess && (
+                      <Alert className="border-green-200 bg-green-50">
+                        <AlertDescription className="text-green-800">
+                          Test email sent successfully!
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {testSystemSmtpMutation.isError && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertDescription className="text-red-800">
+                          Failed to send test email. Please check your SMTP settings.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>How SMTP is Used</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm text-gray-700">
+                      <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                        <Mail className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-blue-900">Client Forgot Password</p>
+                          <p className="text-blue-700">Uses this system SMTP to send reset emails to business owners.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                        <Mail className="w-5 h-5 text-purple-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-purple-900">Team Member Forgot Password</p>
+                          <p className="text-purple-700">Uses the client's (business owner's) configured SMTP first. Falls back to this system SMTP if none is configured.</p>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

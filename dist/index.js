@@ -1802,6 +1802,8 @@ var MemStorage = class {
   payments = [];
   contactMessages = [];
   contactMessagesFile = path.join(process.cwd(), "data", "contact-messages.json");
+  systemSettingsFile = path.join(process.cwd(), "data", "system-settings.json");
+  systemSettings = {};
   clientWebsites = [
     {
       id: "website_1",
@@ -2164,6 +2166,15 @@ var MemStorage = class {
     };
     this.users.push(newUser);
     return newUser;
+  }
+  async updateUserPassword(userId, newPassword) {
+    const userIndex = this.users.findIndex((u) => u.id === userId);
+    if (userIndex === -1) throw new Error("User not found");
+    this.users[userIndex] = {
+      ...this.users[userIndex],
+      password: newPassword,
+      updatedAt: /* @__PURE__ */ new Date()
+    };
   }
   // Plan methods
   async getPlans() {
@@ -3394,6 +3405,54 @@ var MemStorage = class {
       updatedAt: /* @__PURE__ */ new Date()
     };
   }
+  // System Settings Methods (for Super Admin SMTP, etc.)
+  async loadSystemSettings() {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      const data = await fs.readFile(this.systemSettingsFile, "utf8");
+      this.systemSettings = JSON.parse(data);
+      console.log("\u2705 Loaded system settings from file");
+    } catch {
+      this.systemSettings = {};
+      console.log("\u{1F4DD} Starting with empty system settings (file not found)");
+    }
+  }
+  async saveSystemSettings() {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      await fs.writeFile(this.systemSettingsFile, JSON.stringify(this.systemSettings, null, 2));
+    } catch (error) {
+      console.error("\u274C Failed to save system settings:", error);
+    }
+  }
+  async getSystemSmtpConfig() {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    const smtp = this.systemSettings.smtp || {};
+    const isConfigured = !!(smtp.smtpHost && smtp.smtpPort && smtp.smtpUsername && smtp.smtpPassword && smtp.smtpFromEmail);
+    return {
+      smtpHost: smtp.smtpHost || null,
+      smtpPort: smtp.smtpPort || null,
+      smtpUsername: smtp.smtpUsername || null,
+      smtpPassword: smtp.smtpPassword || null,
+      smtpFromEmail: smtp.smtpFromEmail || null,
+      smtpFromName: smtp.smtpFromName || null,
+      smtpSecure: smtp.smtpSecure !== void 0 ? smtp.smtpSecure : true,
+      smtpEnabled: smtp.smtpEnabled || false,
+      isConfigured
+    };
+  }
+  async updateSystemSmtpConfig(config) {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    this.systemSettings.smtp = {
+      ...this.systemSettings.smtp || {},
+      ...config
+    };
+    await this.saveSystemSettings();
+  }
   // Contact Messages / Super Admin Leads Methods
   async loadContactMessages() {
     try {
@@ -3927,6 +3986,11 @@ var PostgreSQLStorage = class {
       updatedAt: /* @__PURE__ */ new Date()
     }).returning();
     return newUser;
+  }
+  async updateUserPassword(userId, newPassword) {
+    const dbInstance = this.ensureDB();
+    const [updated] = await dbInstance.update(users).set({ password: newPassword, updatedAt: /* @__PURE__ */ new Date() }).where(eq(users.id, userId)).returning();
+    if (!updated) throw new Error("User not found");
   }
   // Plans Management  
   async getPlans() {
@@ -4810,6 +4874,54 @@ var PostgreSQLStorage = class {
     }).where(eq(clients.id, clientId)).returning();
     if (!updatedClient) throw new Error("Client not found");
   }
+  // System SMTP Configuration (file-based, shared with MemStorage)
+  systemSettingsFile = path.join(process.cwd(), "data", "system-settings.json");
+  systemSettings = {};
+  async loadSystemSettings() {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      const data = await fs.readFile(this.systemSettingsFile, "utf8");
+      this.systemSettings = JSON.parse(data);
+    } catch {
+      this.systemSettings = {};
+    }
+  }
+  async saveSystemSettings() {
+    try {
+      await fs.mkdir(path.dirname(this.systemSettingsFile), { recursive: true });
+      await fs.writeFile(this.systemSettingsFile, JSON.stringify(this.systemSettings, null, 2));
+    } catch (error) {
+      console.error("\u274C Failed to save system settings:", error);
+    }
+  }
+  async getSystemSmtpConfig() {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    const smtp = this.systemSettings.smtp || {};
+    const isConfigured = !!(smtp.smtpHost && smtp.smtpPort && smtp.smtpUsername && smtp.smtpPassword && smtp.smtpFromEmail);
+    return {
+      smtpHost: smtp.smtpHost || null,
+      smtpPort: smtp.smtpPort || null,
+      smtpUsername: smtp.smtpUsername || null,
+      smtpPassword: smtp.smtpPassword || null,
+      smtpFromEmail: smtp.smtpFromEmail || null,
+      smtpFromName: smtp.smtpFromName || null,
+      smtpSecure: smtp.smtpSecure !== void 0 ? smtp.smtpSecure : true,
+      smtpEnabled: smtp.smtpEnabled || false,
+      isConfigured
+    };
+  }
+  async updateSystemSmtpConfig(config) {
+    if (Object.keys(this.systemSettings).length === 0) {
+      await this.loadSystemSettings();
+    }
+    this.systemSettings.smtp = {
+      ...this.systemSettings.smtp || {},
+      ...config
+    };
+    await this.saveSystemSettings();
+  }
 };
 function createStorage() {
   const isReplit2 = !!process.env.REPL_ID || process.env.DEPLOY_TARGET === "replit";
@@ -5215,6 +5327,8 @@ __name(createRateLimitMiddleware, "createRateLimitMiddleware");
 
 // server/routes.ts
 import bcrypt2 from "bcrypt";
+import nodemailer2 from "nodemailer";
+var passwordResetTokens = /* @__PURE__ */ new Map();
 var stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 var requireAdmin = /* @__PURE__ */ __name(async (req, res, next) => {
   try {
@@ -8113,6 +8227,338 @@ async function registerRoutes(app2) {
     } catch (error) {
       console.error("Team member login error:", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  });
+  async function sendEmailViaSystemSmtp(to, subject, html, text2) {
+    const config = await storage.getSystemSmtpConfig();
+    if (!config.isConfigured || !config.smtpEnabled) {
+      throw new Error("System SMTP is not configured or not enabled. Please configure SMTP in the Super Admin dashboard.");
+    }
+    const transporter = nodemailer2.createTransport({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      secure: config.smtpSecure === true,
+      auth: {
+        user: config.smtpUsername,
+        pass: config.smtpPassword
+      }
+    });
+    await transporter.sendMail({
+      from: `"${config.smtpFromName || "Scheduled Platform"}" <${config.smtpFromEmail}>`,
+      to,
+      subject,
+      html,
+      text: text2
+    });
+  }
+  __name(sendEmailViaSystemSmtp, "sendEmailViaSystemSmtp");
+  async function sendEmailViaClientOrSystemSmtp(clientId, to, subject, html, text2) {
+    const clientConfig = await storage.getSmtpConfig(clientId);
+    if (clientConfig.isConfigured && clientConfig.smtpEnabled) {
+      const client = await storage.getClient(clientId);
+      if (client && client.smtpPassword) {
+        try {
+          const transporter = nodemailer2.createTransport({
+            host: clientConfig.smtpHost,
+            port: clientConfig.smtpPort,
+            secure: clientConfig.smtpSecure === true,
+            auth: {
+              user: clientConfig.smtpUsername,
+              pass: client.smtpPassword
+            }
+          });
+          await transporter.sendMail({
+            from: `"${clientConfig.smtpFromName || "Scheduled Platform"}" <${clientConfig.smtpFromEmail}>`,
+            to,
+            subject,
+            html,
+            text: text2
+          });
+          return;
+        } catch (err) {
+          console.warn("Client SMTP failed, falling back to system SMTP:", err);
+        }
+      }
+    }
+    await sendEmailViaSystemSmtp(to, subject, html, text2);
+  }
+  __name(sendEmailViaClientOrSystemSmtp, "sendEmailViaClientOrSystemSmtp");
+  app2.post("/api/auth/forgot-password/client", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      const user = await storage.getUserByEmail(email);
+      if (user && user.role === "CLIENT") {
+        const token = uuidv4();
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1e3);
+        for (const [key, value] of passwordResetTokens.entries()) {
+          if (value.email === email && value.type === "client") {
+            passwordResetTokens.delete(key);
+          }
+        }
+        passwordResetTokens.set(token, { email, type: "client", expiresAt });
+        const baseUrl = process.env.BASE_URL || "https://scheduledpros.com";
+        const resetLink = `${baseUrl}/reset-password?token=${token}&type=client`;
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #2563eb;">Password Reset Request</h2>
+            <p>Hello,</p>
+            <p>You requested a password reset for your Scheduled Pros business account.</p>
+            <p>Click the button below to reset your password. This link will expire in <strong>1 hour</strong>.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}"
+                style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                Reset Password
+              </a>
+            </div>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="color: #6b7280; word-break: break-all; font-size: 14px;">${resetLink}</p>
+            <p>If you didn't request this, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #9ca3af; font-size: 12px;">Scheduled Pros Platform</p>
+          </div>
+        `;
+        const text2 = `Password Reset Request
+
+Click the link below to reset your password (expires in 1 hour):
+${resetLink}
+
+If you didn't request this, please ignore this email.`;
+        try {
+          await sendEmailViaSystemSmtp(email, "Reset Your Password - Scheduled Pros", html, text2);
+          console.log(`\u2705 Client password reset email sent to: ${email}`);
+        } catch (emailError) {
+          console.error("Failed to send client password reset email:", emailError);
+        }
+      }
+      res.json({ message: "If an account exists for this email, a reset link has been sent." });
+    } catch (error) {
+      console.error("Forgot password (client) error:", error);
+      res.status(500).json({ error: "Failed to process request" });
+    }
+  });
+  app2.post("/api/auth/forgot-password/team", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      const clients2 = await storage.getClients();
+      let foundTeamMember = null;
+      let foundClientId;
+      for (const client of clients2) {
+        try {
+          const members = await storage.getTeamMembers(client.id);
+          const member = members.find((m) => m.email === email && m.isActive !== false);
+          if (member) {
+            foundTeamMember = member;
+            foundClientId = client.id;
+            break;
+          }
+        } catch {
+        }
+      }
+      if (foundTeamMember && foundClientId) {
+        const token = uuidv4();
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1e3);
+        for (const [key, value] of passwordResetTokens.entries()) {
+          if (value.email === email && value.type === "team") {
+            passwordResetTokens.delete(key);
+          }
+        }
+        passwordResetTokens.set(token, { email, type: "team", expiresAt, clientId: foundClientId });
+        const baseUrl = process.env.BASE_URL || "https://scheduledpros.com";
+        const resetLink = `${baseUrl}/reset-password?token=${token}&type=team`;
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #2563eb;">Team Member Password Reset</h2>
+            <p>Hello ${foundTeamMember.name},</p>
+            <p>You requested a password reset for your team member account.</p>
+            <p>Click the button below to reset your password. This link will expire in <strong>1 hour</strong>.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}"
+                style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                Reset Password
+              </a>
+            </div>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="color: #6b7280; word-break: break-all; font-size: 14px;">${resetLink}</p>
+            <p>If you didn't request this, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #9ca3af; font-size: 12px;">Scheduled Pros Platform</p>
+          </div>
+        `;
+        const text2 = `Team Member Password Reset
+
+Hello ${foundTeamMember.name},
+
+Click the link below to reset your password (expires in 1 hour):
+${resetLink}
+
+If you didn't request this, please ignore this email.`;
+        try {
+          await sendEmailViaClientOrSystemSmtp(foundClientId, email, "Reset Your Password - Scheduled Pros", html, text2);
+          console.log(`\u2705 Team member password reset email sent to: ${email}`);
+        } catch (emailError) {
+          console.error("Failed to send team member password reset email:", emailError);
+        }
+      }
+      res.json({ message: "If a team member account exists for this email, a reset link has been sent." });
+    } catch (error) {
+      console.error("Forgot password (team) error:", error);
+      res.status(500).json({ error: "Failed to process request" });
+    }
+  });
+  app2.get("/api/auth/validate-reset-token", (req, res) => {
+    const { token, type } = req.query;
+    if (!token) {
+      return res.json({ valid: false });
+    }
+    const tokenData = passwordResetTokens.get(token);
+    if (!tokenData) {
+      return res.json({ valid: false });
+    }
+    if (tokenData.type !== type) {
+      return res.json({ valid: false });
+    }
+    if (/* @__PURE__ */ new Date() > tokenData.expiresAt) {
+      passwordResetTokens.delete(token);
+      return res.json({ valid: false });
+    }
+    res.json({ valid: true });
+  });
+  app2.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, type, password } = req.body;
+      if (!token || !type || !password) {
+        return res.status(400).json({ error: "Token, type, and password are required" });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+      const tokenData = passwordResetTokens.get(token);
+      if (!tokenData) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+      if (tokenData.type !== type) {
+        return res.status(400).json({ error: "Invalid reset token" });
+      }
+      if (/* @__PURE__ */ new Date() > tokenData.expiresAt) {
+        passwordResetTokens.delete(token);
+        return res.status(400).json({ error: "Reset token has expired. Please request a new one." });
+      }
+      if (type === "client") {
+        const user = await storage.getUserByEmail(tokenData.email);
+        if (!user || user.role !== "CLIENT") {
+          return res.status(404).json({ error: "Account not found" });
+        }
+        const hashedPassword = await bcrypt2.hash(password, 10);
+        await storage.updateUserPassword(user.id, hashedPassword);
+        const client = await storage.getClientByEmail(tokenData.email);
+        if (client) {
+          await storage.updateClient(client.id, { updatedAt: /* @__PURE__ */ new Date() });
+        }
+      } else if (type === "team") {
+        const clients2 = await storage.getClients();
+        let updated = false;
+        for (const client of clients2) {
+          try {
+            const members = await storage.getTeamMembers(client.id);
+            const member = members.find((m) => m.email === tokenData.email);
+            if (member) {
+              await storage.updateTeamMember(member.id, { password });
+              updated = true;
+              break;
+            }
+          } catch {
+          }
+        }
+        if (!updated) {
+          return res.status(404).json({ error: "Team member account not found" });
+        }
+      } else {
+        return res.status(400).json({ error: "Invalid account type" });
+      }
+      passwordResetTokens.delete(token);
+      res.json({ message: "Password has been reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+  app2.get("/api/admin/system-smtp", async (req, res) => {
+    try {
+      const config = await storage.getSystemSmtpConfig();
+      res.json({
+        smtpHost: config.smtpHost,
+        smtpPort: config.smtpPort,
+        smtpUsername: config.smtpUsername,
+        smtpFromEmail: config.smtpFromEmail,
+        smtpFromName: config.smtpFromName,
+        smtpSecure: config.smtpSecure,
+        smtpEnabled: config.smtpEnabled,
+        isConfigured: config.isConfigured,
+        // Return masked password indicator
+        hasPassword: !!config.smtpPassword
+      });
+    } catch (error) {
+      console.error("Get system SMTP error:", error);
+      res.status(500).json({ error: "Failed to get system SMTP configuration" });
+    }
+  });
+  app2.put("/api/admin/system-smtp", async (req, res) => {
+    try {
+      const { smtpHost, smtpPort, smtpUsername, smtpPassword, smtpFromEmail, smtpFromName, smtpSecure, smtpEnabled } = req.body;
+      await storage.updateSystemSmtpConfig({
+        ...smtpHost !== void 0 && { smtpHost },
+        ...smtpPort !== void 0 && { smtpPort: parseInt(smtpPort) },
+        ...smtpUsername !== void 0 && { smtpUsername },
+        ...smtpPassword !== void 0 && smtpPassword !== "" && { smtpPassword },
+        ...smtpFromEmail !== void 0 && { smtpFromEmail },
+        ...smtpFromName !== void 0 && { smtpFromName },
+        ...smtpSecure !== void 0 && { smtpSecure },
+        ...smtpEnabled !== void 0 && { smtpEnabled }
+      });
+      res.json({ message: "System SMTP configuration updated successfully" });
+    } catch (error) {
+      console.error("Update system SMTP error:", error);
+      res.status(500).json({ error: "Failed to update system SMTP configuration" });
+    }
+  });
+  app2.post("/api/admin/system-smtp/test", async (req, res) => {
+    try {
+      const { testEmail } = req.body;
+      if (!testEmail) {
+        return res.status(400).json({ error: "Test email address is required" });
+      }
+      const config = await storage.getSystemSmtpConfig();
+      if (!config.isConfigured) {
+        return res.status(400).json({ error: "System SMTP is not configured" });
+      }
+      const transporter = nodemailer2.createTransport({
+        host: config.smtpHost,
+        port: config.smtpPort,
+        secure: config.smtpSecure === true,
+        auth: {
+          user: config.smtpUsername,
+          pass: config.smtpPassword
+        }
+      });
+      await transporter.verify();
+      await transporter.sendMail({
+        from: `"${config.smtpFromName || "Scheduled Platform"}" <${config.smtpFromEmail}>`,
+        to: testEmail,
+        subject: "System SMTP Test Email - Scheduled Pros",
+        html: `<div style="font-family: Arial, sans-serif; padding: 20px;"><h2>System SMTP Test</h2><p>This is a test email from the Scheduled Pros platform system SMTP configuration.</p><p>If you received this, your system SMTP is working correctly!</p></div>`,
+        text: "System SMTP Test\n\nThis is a test email from the Scheduled Pros platform system SMTP configuration.\n\nIf you received this, your system SMTP is working correctly!"
+      });
+      res.json({ success: true, message: `Test email sent successfully to ${testEmail}` });
+    } catch (error) {
+      console.error("System SMTP test error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ success: false, error: `SMTP test failed: ${errorMessage}` });
     }
   });
   app2.get("/api/public/:subdomain", async (req, res) => {
