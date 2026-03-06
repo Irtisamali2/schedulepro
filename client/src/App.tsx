@@ -1,9 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
+import { lazy, Suspense } from "react";
 import LandingPage from "@/pages/LandingPage";
-import SuperAdminLogin from "@/pages/SuperAdminLogin";
-import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
-import OnboardingFlow from "@/pages/OnboardingFlow";
-import ClientDashboard from "@/pages/ClientDashboard";
 import ClientLogin from "@/pages/ClientLogin";
 import ClientForgotPassword from "@/pages/ClientForgotPassword";
 import TeamLogin from "@/pages/TeamLogin";
@@ -21,13 +18,39 @@ import TermsAndConditions from "@/pages/TermsAndConditions";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/not-found";
 
+// Lazy-load heavy pages to reduce initial bundle size and improve iOS app startup
+const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
+const OnboardingFlow = lazy(() => import("@/pages/OnboardingFlow"));
+const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
+const TeamDashboard = lazy(() => import("@/pages/TeamDashboard"));
+const AdvancedWebsiteBuilder = lazy(() => import("@/pages/AdvancedWebsiteBuilder"));
+const WYSIWYGWebsiteBuilder = lazy(() => import("@/pages/WYSIWYGWebsiteBuilder"));
+const ElementorStyleBuilder = lazy(() => import("@/pages/ElementorStyleBuilder"));
+const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
+const ClientWebsite = lazy(() => import("@/pages/ClientWebsite"));
+const ReviewPlatformConnections = lazy(() => import("@/pages/ReviewPlatformConnections"));
+const MultiStepBooking = lazy(() => import("@/pages/MultiStepBooking"));
+const TermsAndConditions = lazy(() => import("@/pages/TermsAndConditions"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [location] = useLocation();
   const isAdminPage = location?.startsWith("/admin") ?? false;
   const isOnboardingPage = location?.startsWith("/onboarding") ?? false;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 safe-top safe-bottom">
       <main className="flex-grow">
         <Switch>
           {/* Public Landing Page */}

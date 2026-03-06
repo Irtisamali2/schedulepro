@@ -6,22 +6,33 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
+      launchShowDuration: 2000,
+      launchAutoHide: true,
       backgroundColor: "#3b5ac2",
-      androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP"
-    }
+      showSpinner: false,
+      launchFadeOutDuration: 300,
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#3b5ac2',
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true,
+    },
   },
   ios: {
-    contentInset: "always",
-    backgroundColor: "#ffffff",
-    preferredContentMode: "mobile",
-    scheme: "scheduled"
+    contentInset: 'automatic',
+    backgroundColor: '#ffffff',
+    preferredContentMode: 'mobile',
+    scheme: 'scheduled',
+    allowsLinkPreview: false,
+    scrollEnabled: true,
   },
   server: {
-    hostname: "app.scheduled.app",
-    androidScheme: "https"
-  }
+    androidScheme: 'https',
+    iosScheme: 'capacitor',
+  },
 };
 
 export default config;

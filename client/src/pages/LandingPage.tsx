@@ -207,9 +207,11 @@ export default function LandingPage() {
                   e.currentTarget.style.transform = 'translateY(0px)';
                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(238, 175, 124, 0.2)';
                 }}
-                onClick={() => handleGetStarted('plan_1')}
+                onClick={() => {
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
-                Get Started
+                Sign Up
               </Button>
 
               {/* Mobile menu button */}
