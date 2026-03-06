@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { 
+import {
   Phone,
   Mail,
   MapPin,
@@ -25,12 +25,14 @@ import EditableImage from '@/components/EditableImage';
 import { useEditableWebsite } from '@/contexts/EditableWebsiteContext';
 import { apiRequest } from '@/lib/queryClient';
 import LeadForm from '@/components/LeadForm';
+import HomeServicesTemplate from '@/components/templates/HomeServicesTemplate';
+import PetCareTemplate from '@/components/templates/PetCareTemplate';
 
 // Import Figma assets
 import heroImage from '@assets/Image (3)_1757807495639.png';
 import contentsLogo from '@assets/Contents_1757807495638.png';
 import staffMember1 from '@assets/Ellipse 54_1757064789129.png';
-import staffMember2 from '@assets/Ellipse 55_1757064789130.png'; 
+import staffMember2 from '@assets/Ellipse 55_1757064789130.png';
 import staffMember3 from '@assets/Ellipse 56_1757064789130.png';
 import testimonialAvatar from '@assets/Ellipse 57_1757064789131.png';
 
@@ -91,11 +93,11 @@ interface FigmaDesignedWebsiteProps {
   onDragEnd?: () => void;
 }
 
-export default function FigmaDesignedWebsite({ 
-  clientId, 
+export default function FigmaDesignedWebsite({
+  clientId,
   subdomain,
-  isBuilderPreview = false, 
-  onDeleteSection, 
+  isBuilderPreview = false,
+  onDeleteSection,
   onEditSection,
   onDragStart,
   onDragOver,
@@ -173,7 +175,7 @@ export default function FigmaDesignedWebsite({
     mutationFn: async (updates: { sectionId: string; field: string; value: string }) => {
       // Get fresh website data from query cache
       const currentWebsiteData = queryClient.getQueryData<any>([`/api/public/client/${clientId}/website`]);
-      
+
       // Parse current sections
       let currentSections: any[] = [];
       if (currentWebsiteData?.sections) {
@@ -184,11 +186,11 @@ export default function FigmaDesignedWebsite({
           currentSections = [];
         }
       }
-      
+
       // Find the section to update
       const updatedSections = [...currentSections];
       const sectionIndex = updatedSections.findIndex(s => s.id === updates.sectionId || s.type === updates.sectionId);
-      
+
       // Parse value if it's a JSON string (for nested objects like settings)
       let parsedValue = updates.value;
       try {
@@ -201,7 +203,7 @@ export default function FigmaDesignedWebsite({
         // Not JSON, use the raw value
         parsedValue = updates.value;
       }
-      
+
       if (sectionIndex >= 0) {
         updatedSections[sectionIndex] = {
           ...updatedSections[sectionIndex],
@@ -225,7 +227,7 @@ export default function FigmaDesignedWebsite({
           sections: JSON.stringify(updatedSections)
         }
       );
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -283,7 +285,7 @@ export default function FigmaDesignedWebsite({
 
   // Use real admin data when available, fallback to assets only for display purposes
   const displayStaff = staff.length > 0 ? staff : defaultStaffWithAssets;
-  
+
   // Convert client services to display format similar to pricing tiers
   const convertedServices = clientServices.map(service => ({
     id: service.id,
@@ -294,7 +296,7 @@ export default function FigmaDesignedWebsite({
     buttonText: 'Book Now',
     isFromAdminServices: true // Mark as admin service for priority
   }));
-  
+
   // Prioritize admin services over pricing tiers - if admin services exist, show only those
   // Otherwise fall back to pricing tiers
   const allDisplayPricing = clientServices.length > 0 ? convertedServices : pricingTiers;
@@ -340,6 +342,43 @@ export default function FigmaDesignedWebsite({
     );
   }
 
+  // Route to appropriate template based on templateId
+  const templateId = websiteData?.templateId || 'default';
+
+  if (templateId === 'home_services') {
+    return (
+      <HomeServicesTemplate
+        clientId={clientId}
+        subdomain={subdomain}
+        isBuilderPreview={isBuilderPreview}
+        onDeleteSection={onDeleteSection}
+        onEditSection={onEditSection}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+      />
+    );
+  }
+
+  if (templateId === 'pet_care') {
+    return (
+      <PetCareTemplate
+        clientId={clientId}
+        websiteSections={websiteSections}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+        businessName={businessName}
+        isBuilderPreview={isBuilderPreview}
+        onDeleteSection={onDeleteSection}
+        onEditSection={onEditSection}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+      />
+    );
+  }
+
+  // Default template (current Graceful Hair beauty salon template)
   return (
     <div className="min-h-screen bg-white" data-testid="figma-designed-website">
       {/* Header */}
@@ -376,7 +415,7 @@ export default function FigmaDesignedWebsite({
                 <a href="#pricing" className="text-gray-700 hover:text-gray-900">Pricing</a>
                 <a href="#contact" className="text-gray-700 hover:text-gray-900">Contact</a>
               </nav>
-              <Button 
+              <Button
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full"
                 data-testid="contact-button"
               >
@@ -395,9 +434,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('hero') : undefined}
         onSettings={onEditSection ? () => onEditSection('hero') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'hero', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'hero',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -405,8 +444,8 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section 
-          id="home" 
+        <section
+          id="home"
           className="relative min-h-screen flex items-center"
           style={{
             background: websiteSections.find(s => s.type === 'hero')?.backgroundColor || `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`
@@ -440,7 +479,7 @@ export default function FigmaDesignedWebsite({
                 {heroContent}
               </EditableText>
               <Link href={`/booking/${clientId}`}>
-                <Button 
+                <Button
                   className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold"
                   data-testid="hero-cta-button"
                 >
@@ -451,16 +490,16 @@ export default function FigmaDesignedWebsite({
             </div>
             <div className="relative" data-testid="hero-image">
               <EditableImage
-                src={heroImageUrl} 
-                alt="Hero image" 
+                src={heroImageUrl}
+                alt="Hero image"
                 className="w-full h-auto rounded-lg shadow-2xl"
                 data-testid="hero-image-img"
                 sectionId="hero"
                 elementId="hero-image"
                 onUpdate={(newImageUrl) => {
-                  updateContentMutation.mutate({ 
-                    sectionId: 'hero', 
-                    field: 'settings', 
+                  updateContentMutation.mutate({
+                    sectionId: 'hero',
+                    field: 'settings',
                     value: JSON.stringify({ ...websiteSections.find(s => s.type === 'hero')?.settings, heroImage: newImageUrl })
                   });
                 }}
@@ -478,9 +517,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('staff') : undefined}
         onSettings={onEditSection ? () => onEditSection('staff') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'staff', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'staff',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -488,9 +527,9 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section 
-          id="staff" 
-          className="py-20" 
+        <section
+          id="staff"
+          className="py-20"
           style={{ backgroundColor: websiteSections.find(s => s.type === 'staff')?.backgroundColor || '#F9FAFB' }}
           data-testid="staff-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -513,7 +552,7 @@ export default function FigmaDesignedWebsite({
                 <div key={member.id} className="text-center" data-testid={`staff-member-${index}`}>
                   <div className="relative w-48 h-48 mx-auto mb-6">
                     <EditableImage
-                      src={member.profileImage} 
+                      src={member.profileImage}
                       alt={member.name}
                       className="w-full h-full rounded-full object-cover shadow-lg"
                       data-testid={`staff-image-${index}`}
@@ -577,9 +616,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('pricing') : undefined}
         onSettings={onEditSection ? () => onEditSection('pricing') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'pricing', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'pricing',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -587,9 +626,9 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section 
-          id="pricing" 
-          className="py-20" 
+        <section
+          id="pricing"
+          className="py-20"
           style={{ backgroundColor: websiteSections.find(s => s.type === 'pricing')?.backgroundColor || '#FFFFFF' }}
           data-testid="pricing-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -622,8 +661,8 @@ export default function FigmaDesignedWebsite({
             {allDisplayPricing.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {allDisplayPricing.map((tier, index) => (
-                  <Card 
-                    key={tier.id} 
+                  <Card
+                    key={tier.id}
                     className={`relative ${tier.isPopular ? 'bg-purple-600 text-white scale-105 shadow-xl' : 'bg-white'}`}
                     data-testid={`pricing-tier-${index}`}
                   >
@@ -652,12 +691,11 @@ export default function FigmaDesignedWebsite({
                         ))}
                       </ul>
                       <Link href={`/booking/${clientId}`}>
-                        <Button 
-                          className={`w-full ${
-                            tier.isPopular 
-                              ? 'bg-pink-500 hover:bg-pink-600 text-white' 
-                              : 'bg-purple-600 hover:bg-purple-700 text-white'
-                          }`}
+                        <Button
+                          className={`w-full ${tier.isPopular
+                            ? 'bg-pink-500 hover:bg-pink-600 text-white'
+                            : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            }`}
                           data-testid={`tier-button-${index}`}
                         >
                           {tier.buttonText || 'Book Now'}
@@ -685,9 +723,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('testimonials') : undefined}
         onSettings={onEditSection ? () => onEditSection('testimonials') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'testimonials', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'testimonials',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -695,7 +733,7 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section 
+        <section
           className="py-20 relative"
           style={{
             background: websiteSections.find(s => s.type === 'testimonials')?.backgroundColor || 'linear-gradient(135deg, #1e1b4b 0%, #581c87 100%)'
@@ -711,9 +749,9 @@ export default function FigmaDesignedWebsite({
                 <div className="flex justify-center mb-8">
                   <div className="flex">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star 
-                        key={i} 
-                        className="h-6 w-6 text-yellow-400 fill-yellow-400" 
+                      <Star
+                        key={i}
+                        className="h-6 w-6 text-yellow-400 fill-yellow-400"
                         data-testid={`testimonial-star-${i}`}
                       />
                     ))}
@@ -732,8 +770,8 @@ export default function FigmaDesignedWebsite({
                   {`"${displayTestimonials[currentTestimonial].testimonialText}"`}
                 </EditableText>
                 <div className="flex items-center justify-center">
-                  <img 
-                    src={displayTestimonials[currentTestimonial].customerImage} 
+                  <img
+                    src={displayTestimonials[currentTestimonial].customerImage}
                     alt={displayTestimonials[currentTestimonial].customerName}
                     className="w-16 h-16 rounded-full mr-4"
                     data-testid="testimonial-avatar"
@@ -765,7 +803,7 @@ export default function FigmaDesignedWebsite({
                     </EditableText>
                   </div>
                 </div>
-                
+
                 {displayTestimonials.length > 1 && (
                   <div className="flex justify-center mt-8 space-x-4">
                     <button
@@ -798,9 +836,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('contact') : undefined}
         onSettings={onEditSection ? () => onEditSection('contact') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'contact', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'contact',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -808,9 +846,9 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section 
-          id="contact" 
-          className="py-20" 
+        <section
+          id="contact"
+          className="py-20"
           style={{ backgroundColor: websiteSections.find(s => s.type === 'contact')?.backgroundColor || '#FFFFFF' }}
           data-testid="contact-section">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -840,7 +878,7 @@ export default function FigmaDesignedWebsite({
                 {websiteSections.find(s => s.type === 'contact')?.description || 'Fill out the form below and we\'ll get back to you within 24 hours.'}
               </EditableText>
             </div>
-            <LeadForm 
+            <LeadForm
               clientId={clientId || identifier || ''}
               title=""
               description=""
@@ -860,9 +898,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('newsletter') : undefined}
         onSettings={onEditSection ? () => onEditSection('newsletter') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'newsletter', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'newsletter',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -870,8 +908,8 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <section 
-          className="py-20" 
+        <section
+          className="py-20"
           style={{ backgroundColor: websiteSections.find(s => s.type === 'newsletter')?.backgroundColor || '#F9FAFB' }}
           data-testid="newsletter-section">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -913,8 +951,8 @@ export default function FigmaDesignedWebsite({
                   required
                   data-testid="newsletter-email-input"
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2"
                   disabled={newsletterMutation.isPending}
                   data-testid="newsletter-submit-button"
@@ -936,9 +974,9 @@ export default function FigmaDesignedWebsite({
         onDelete={onDeleteSection ? () => onDeleteSection('footer') : undefined}
         onSettings={onEditSection ? () => onEditSection('footer') : undefined}
         onBackgroundColorChange={(color) => {
-          updateContentMutation.mutate({ 
-            sectionId: 'footer', 
-            field: 'backgroundColor', 
+          updateContentMutation.mutate({
+            sectionId: 'footer',
+            field: 'backgroundColor',
             value: color
           });
         }}
@@ -946,8 +984,8 @@ export default function FigmaDesignedWebsite({
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <footer 
-          className="text-white py-16" 
+        <footer
+          className="text-white py-16"
           style={{ backgroundColor: websiteSections.find(s => s.type === 'footer')?.backgroundColor || '#581C87' }}
           data-testid="footer">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -978,7 +1016,7 @@ export default function FigmaDesignedWebsite({
                   {footerDescription}
                 </EditableText>
               </div>
-              
+
               <div>
                 <h4 className="text-lg font-semibold mb-4" data-testid="footer-contact-title">Contact Info</h4>
                 <div className="space-y-2">
@@ -1029,7 +1067,7 @@ export default function FigmaDesignedWebsite({
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="text-lg font-semibold mb-4" data-testid="footer-services-title">Services</h4>
                 <ul className="space-y-2 text-purple-200">
@@ -1039,7 +1077,7 @@ export default function FigmaDesignedWebsite({
                   <li data-testid="footer-service-4">Hair Treatments</li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="text-lg font-semibold mb-4" data-testid="footer-social-title">Follow Us</h4>
                 <div className="flex space-x-4">
@@ -1058,7 +1096,7 @@ export default function FigmaDesignedWebsite({
                 </div>
               </div>
             </div>
-            
+
             <div className="border-t border-purple-800 mt-12 pt-8 text-center">
               <p className="text-purple-200" data-testid="footer-copyright">
                 © 2024 {client?.businessName || 'Graceful Hair'}. All rights reserved.

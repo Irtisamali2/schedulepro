@@ -1,0 +1,26 @@
+🔧 Database Environment Detection:
+  - Replit: No
+  - Coolify: No
+  - Production: Yes
+  - DATABASE_URL present: Yes
+✅ Initializing Neon PostgreSQL connection
+🔧 Database Environment Detection:
+  - Replit: No
+  - Coolify: No
+  - Production: Yes
+  - DATABASE_URL present: Yes
+🔧 Environment: Unknown
+💾 Storage: PostgreSQL
+🗄️  Database URL present: Yes
+🚀 Production mode: Yes
+📊 Demo data: Disabled (Production)
+✅ Using PostgreSQL database for production data
+🔄 Initializing PostgreSQL database tables...
+🔧 Creating database tables if they don't exist...
+2026-01-14T12:45:20.675Z serving on port 5001
+✅ Database tables created successfully
+🔧 Running database migrations for missing columns...
+✅ Database migrations completed successfully
+👤 Super admin user already exists, skipping creation
+📊 Demo data already exists, skipping seed
+✅ PostgreSQL database initialized successfully

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { 
+import {
   Calendar,
   CalendarPlus,
   Users,
@@ -35,7 +35,11 @@ import {
   CreditCard,
   Shield,
   AlertTriangle,
-  Mail
+  Mail,
+  Upload,
+  Download,
+  ArrowLeft,
+  ChevronLeft
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
@@ -136,7 +140,7 @@ export default function ClientDashboard() {
 
   // Check if user is a team member (not the business owner)
   const isTeamMember = () => !!teamContext;
-  
+
   // Modal states
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
@@ -146,14 +150,18 @@ export default function ClientDashboard() {
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [isCsvImportModalOpen, setIsCsvImportModalOpen] = useState(false);
   const [selectedCalendarAppointment, setSelectedCalendarAppointment] = useState<Appointment | null>(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
-  
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvImportProgress, setCsvImportProgress] = useState('');
+  const [csvImportErrors, setCsvImportErrors] = useState<string[]>([]);
+
   // Edit states
   const [editingService, setEditingService] = useState<ClientService | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  
+
   // Form states
   const [serviceForm, setServiceForm] = useState({
     name: '',
@@ -163,7 +171,7 @@ export default function ClientDashboard() {
     category: '',
     isActive: true
   });
-  
+
   const [appointmentForm, setAppointmentForm] = useState({
     customerName: '',
     customerEmail: '',
@@ -173,7 +181,7 @@ export default function ClientDashboard() {
     startTime: '',
     status: 'PENDING'
   });
-  
+
   const [leadForm, setLeadForm] = useState({
     name: '',
     email: '',
@@ -190,7 +198,7 @@ export default function ClientDashboard() {
     source: 'all',
     status: 'all'
   });
-  
+
   const [websiteSettings, setWebsiteSettings] = useState({
     title: '',
     description: '',
@@ -200,7 +208,7 @@ export default function ClientDashboard() {
     contactEmail: '',
     contactPhone: ''
   });
-  
+
   const [slotForm, setSlotForm] = useState({
     dayOfWeek: 1,
     startTime: '09:00',
@@ -212,19 +220,19 @@ export default function ClientDashboard() {
     // Load client data from localStorage (set during onboarding)
     const storedClient = localStorage.getItem('clientData');
     const storedUser = localStorage.getItem('clientUser');
-    
+
     if (!storedClient || !storedUser) {
       setLocation('/client-login');
       return;
     }
-    
+
     const userData = JSON.parse(storedUser);
     const clientData = JSON.parse(storedClient);
-    
+
     // Check if this is a team member login vs business owner login
     const teamContextData = localStorage.getItem("teamMemberContext");
     const teamSession = localStorage.getItem("teamMemberSession");
-    
+
     // Business owners should never have team member context - they have full access
     if (userData.role === 'CLIENT' || userData.role === 'BUSINESS_OWNER' || userData.userType === 'BUSINESS_OWNER') {
       // Clear any team member context for business owners - they should have full client admin access
@@ -237,7 +245,7 @@ export default function ClientDashboard() {
       try {
         const context = JSON.parse(teamContextData);
         setTeamContext(context);
-        
+
         // Set active view to the team member's assigned section
         if (context.activeSection) {
           setActiveView(context.activeSection);
@@ -247,7 +255,7 @@ export default function ClientDashboard() {
         console.error("Error parsing team context:", error);
       }
     }
-    
+
     setClientData(clientData);
   }, [setLocation]);
 
@@ -273,17 +281,17 @@ export default function ClientDashboard() {
 
   // Filtered leads based on search and filter criteria - must be after leads is defined
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = leadFilters.searchText === '' || 
+    const matchesSearch = leadFilters.searchText === '' ||
       lead.name.toLowerCase().includes(leadFilters.searchText.toLowerCase()) ||
       lead.email.toLowerCase().includes(leadFilters.searchText.toLowerCase()) ||
       lead.phone.includes(leadFilters.searchText);
-    
+
     const matchesSource = leadFilters.source === 'all' || lead.source === leadFilters.source;
     const matchesStatus = leadFilters.status === 'all' || lead.status === leadFilters.status;
-    
+
     return matchesSearch && matchesSource && matchesStatus;
   });
-  
+
   const { data: appointmentSlots = [] } = useQuery<any[]>({
     queryKey: [`/api/client/${clientData?.id}/appointment-slots`],
     enabled: !!clientData?.id
@@ -310,7 +318,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to create service', variant: 'destructive' });
     }
   });
-  
+
   const updateServiceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await fetch(`/api/client/${clientData?.id}/services/${id}`, {
@@ -331,7 +339,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to update service', variant: 'destructive' });
     }
   });
-  
+
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/client/${clientData?.id}/services/${id}`, {
@@ -348,7 +356,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to delete service', variant: 'destructive' });
     }
   });
-  
+
   // Mutations for Appointments
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -356,7 +364,7 @@ export default function ClientDashboard() {
       const selectedService = services.find(service => service.id === data.serviceId);
       const serviceDuration = selectedService?.durationMinutes || 60;
       const servicePrice = selectedService?.price ? parseFloat(selectedService.price.toString().replace(/[^\d.]/g, '')) : 0;
-      
+
       // Calculate end time based on start time + duration
       const [hours, minutes] = data.startTime.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
@@ -364,7 +372,7 @@ export default function ClientDashboard() {
       const endHours = Math.floor(endMinutes / 60);
       const endMins = endMinutes % 60;
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
-      
+
       // Prepare complete appointment data with all required schema fields
       const appointmentData = {
         ...data,
@@ -376,7 +384,7 @@ export default function ClientDashboard() {
         emailConfirmation: false,
         smsConfirmation: false
       };
-      
+
       const response = await apiRequest(
         `/api/client/${clientData?.id}/appointments`,
         'POST',
@@ -395,7 +403,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to create appointment', variant: 'destructive' });
     }
   });
-  
+
   const updateAppointmentStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const response = await apiRequest(
@@ -414,12 +422,12 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to update appointment status', variant: 'destructive' });
     }
   });
-  
+
   const getServiceName = (serviceId: string) => {
     const service = services.find(s => s.id === serviceId);
     return service ? service.name : 'Unknown Service';
   };
-  
+
   const updateAppointmentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await apiRequest(
@@ -440,7 +448,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to update appointment', variant: 'destructive' });
     }
   });
-  
+
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest(
@@ -458,7 +466,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to delete appointment', variant: 'destructive' });
     }
   });
-  
+
   // Mutations for Leads
   const createLeadMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -476,7 +484,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to create lead', variant: 'destructive' });
     }
   });
-  
+
   const updateLeadMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await apiRequest(`/api/client/${clientData?.id}/leads/${id}`, 'PUT', { ...data, estimatedValue: data.estimatedValue ? parseFloat(data.estimatedValue) : 0 });
@@ -493,7 +501,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to update lead', variant: 'destructive' });
     }
   });
-  
+
   const deleteLeadMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await apiRequest(`/api/client/${clientData?.id}/leads/${id}`, 'DELETE');
@@ -508,7 +516,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to delete lead', variant: 'destructive' });
     }
   });
-  
+
   // Website update mutation
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -528,7 +536,7 @@ export default function ClientDashboard() {
       toast({ title: 'Failed to update website', variant: 'destructive' });
     }
   });
-  
+
   // Slot management mutations
   const createSlotMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -546,7 +554,7 @@ export default function ClientDashboard() {
       setSlotForm({ dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotDuration: 30 });
     }
   });
-  
+
   const deleteSlotMutation = useMutation({
     mutationFn: async (slotId: string) => {
       const response = await fetch(`/api/client/${clientData?.id}/appointment-slots/${slotId}`, {
@@ -566,7 +574,7 @@ export default function ClientDashboard() {
     localStorage.removeItem('clientUser');
     setLocation('/');
   };
-  
+
   // Helper functions
   const openServiceModal = (service?: ClientService) => {
     if (service) {
@@ -585,7 +593,7 @@ export default function ClientDashboard() {
     }
     setIsServiceModalOpen(true);
   };
-  
+
   const openAppointmentModal = (appointment?: Appointment) => {
     if (appointment) {
       setEditingAppointment(appointment);
@@ -604,7 +612,180 @@ export default function ClientDashboard() {
     }
     setIsAppointmentModalOpen(true);
   };
-  
+
+  // CSV Import Functions
+  const downloadSampleCsv = () => {
+    // Get the first service ID if available, otherwise use placeholder
+    const firstServiceId = services.length > 0 ? services[0].id : 'YOUR_SERVICE_ID';
+    const secondServiceId = services.length > 1 ? services[1].id : firstServiceId;
+
+    // Get tomorrow and day after for sample dates
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date();
+    dayAfter.setDate(dayAfter.getDate() + 2);
+
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+    const sampleData = [
+      ['customerName', 'customerEmail', 'customerPhone', 'serviceId', 'appointmentDate', 'startTime', 'notes'],
+      ['John Doe', 'john@example.com', '+1234567890', firstServiceId, formatDate(tomorrow), '09:00', 'Sample appointment 1'],
+      ['Jane Smith', 'jane@example.com', '+1234567891', secondServiceId, formatDate(dayAfter), '10:00', 'Sample appointment 2']
+    ];
+
+    // Clean CSV without comments (comments break CSV parsing)
+    const csvContent = sampleData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'appointments_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({ title: 'Sample CSV Downloaded', description: 'Sample includes your actual service IDs - ready to use!' });
+  };
+
+  const handleCsvImport = async () => {
+    if (!csvFile) {
+      toast({ title: 'No file selected', description: 'Please select a CSV file', variant: 'destructive' });
+      return;
+    }
+
+    setCsvImportProgress('Reading CSV file...');
+    setCsvImportErrors([]);
+
+    try {
+      const text = await csvFile.text();
+      const lines = text.split('\n').filter(line => line.trim());
+
+      if (lines.length < 2) {
+        toast({ title: 'Invalid CSV', description: 'CSV file is empty or has no data rows', variant: 'destructive' });
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim());
+      const requiredHeaders = ['customerName', 'customerEmail', 'customerPhone', 'serviceId', 'appointmentDate', 'startTime'];
+
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        toast({
+          title: 'Invalid CSV Format',
+          description: `Missing required columns: ${missingHeaders.join(', ')}`,
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const errors: string[] = [];
+      const appointments = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const row: any = {};
+
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+
+        // Validate required fields
+        if (!row.customerName || !row.customerEmail || !row.customerPhone || !row.serviceId || !row.appointmentDate || !row.startTime) {
+          errors.push(`Row ${i + 1}: Missing required fields`);
+          continue;
+        }
+
+        // Validate email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(row.customerEmail)) {
+          errors.push(`Row ${i + 1}: Invalid email format`);
+          continue;
+        }
+
+        // Validate date format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(row.appointmentDate)) {
+          errors.push(`Row ${i + 1}: Invalid date format (use YYYY-MM-DD)`);
+          continue;
+        }
+
+        // Validate time format (HH:MM)
+        const timeRegex = /^\d{2}:\d{2}$/;
+        if (!timeRegex.test(row.startTime)) {
+          errors.push(`Row ${i + 1}: Invalid time format (use HH:MM)`);
+          continue;
+        }
+
+        appointments.push(row);
+      }
+
+      if (appointments.length === 0) {
+        setCsvImportErrors(errors);
+        toast({ title: 'Import Failed', description: 'No valid appointments to import', variant: 'destructive' });
+        return;
+      }
+
+      setCsvImportProgress(`Importing ${appointments.length} appointments...`);
+
+      // Helper function to calculate end time
+      const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const totalMinutes = hours * 60 + minutes + durationMinutes;
+        const endHours = Math.floor(totalMinutes / 60) % 24;
+        const endMinutes = totalMinutes % 60;
+        return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+      };
+
+      // Import appointments
+      let successCount = 0;
+      for (const apt of appointments) {
+        try {
+          // Find the service to get duration and price
+          const service = services.find((s: ClientService) => s.id === apt.serviceId);
+          const duration = service?.duration || 60; // Default 60 minutes
+          const price = service?.price || 0;
+          const endTime = calculateEndTime(apt.startTime, duration);
+
+          await apiRequest(`/api/client/${clientData?.id}/appointments`, 'POST', {
+            customerName: apt.customerName,
+            customerEmail: apt.customerEmail,
+            customerPhone: apt.customerPhone,
+            serviceId: apt.serviceId,
+            appointmentDate: apt.appointmentDate,
+            startTime: apt.startTime,
+            endTime: endTime,
+            totalPrice: price,
+            status: 'PENDING',
+            notes: apt.notes || ''
+          });
+          successCount++;
+        } catch (error: any) {
+          errors.push(`${apt.customerName}: ${error.message}`);
+        }
+      }
+
+      setCsvImportErrors(errors);
+      setCsvImportProgress('');
+
+      if (successCount > 0) {
+        queryClient.invalidateQueries({ queryKey: [`/api/client/${clientData?.id}/appointments`] });
+        toast({
+          title: 'Import Complete',
+          description: `Successfully imported ${successCount} out of ${appointments.length} appointments`
+        });
+
+        if (errors.length === 0) {
+          setIsCsvImportModalOpen(false);
+          setCsvFile(null);
+        }
+      }
+    } catch (error: any) {
+      setCsvImportProgress('');
+      toast({ title: 'Import Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const openLeadModal = (lead?: Lead) => {
     if (lead) {
       setEditingLead(lead);
@@ -623,7 +804,7 @@ export default function ClientDashboard() {
     }
     setIsLeadModalOpen(true);
   };
-  
+
   const handleServiceSubmit = () => {
     if (editingService) {
       updateServiceMutation.mutate({ id: editingService.id, data: serviceForm });
@@ -638,7 +819,7 @@ export default function ClientDashboard() {
       createServiceMutation.mutate(serviceData);
     }
   };
-  
+
   const handleAppointmentSubmit = () => {
     if (editingAppointment) {
       updateAppointmentMutation.mutate({ id: editingAppointment.id, data: appointmentForm });
@@ -646,7 +827,7 @@ export default function ClientDashboard() {
       createAppointmentMutation.mutate(appointmentForm);
     }
   };
-  
+
   const handleLeadSubmit = () => {
     if (editingLead) {
       updateLeadMutation.mutate({ id: editingLead.id, data: leadForm });
@@ -654,26 +835,26 @@ export default function ClientDashboard() {
       createLeadMutation.mutate(leadForm);
     }
   };
-  
+
   const openWebsitePreview = () => {
     window.open(`/client-website/${clientData?.id}`, '_blank');
   };
-  
+
   const handleCreateSlot = () => {
     if (!slotForm.dayOfWeek && slotForm.dayOfWeek !== 0 || !slotForm.startTime || !slotForm.endTime || !slotForm.slotDuration) {
       toast({ title: 'Please fill in all slot fields', variant: 'destructive' });
       return;
     }
-    
+
     const slotData = {
       ...slotForm,
       clientId: clientData?.id,
       isActive: true
     };
-    
+
     createSlotMutation.mutate(slotData);
   };
-  
+
   // Fetch available time slots when date changes
   useEffect(() => {
     if (appointmentForm.appointmentDate && clientData?.id) {
@@ -715,7 +896,7 @@ export default function ClientDashboard() {
   // Filter menu items based on team member permissions
   const getFilteredMenuItems = () => {
     if (!isTeamMember()) return allMenuItems; // Full access for business owners
-    
+
     return allMenuItems.filter(item => {
       switch (item.id) {
         case 'overview':
@@ -754,18 +935,16 @@ export default function ClientDashboard() {
     <div className="min-h-screen bg-gray-50 flex relative">
       {/* Mobile Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-      
+
       {/* Sidebar */}
-      <aside className={`bg-white shadow-lg transition-all duration-300 ${
-        isSidebarOpen ? 'w-64' : 'w-16 lg:w-16'
-      } flex flex-col fixed lg:relative h-full z-50 lg:z-auto ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      <aside className={`bg-white shadow-lg transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16 lg:w-16'
+        } flex flex-col fixed lg:relative h-full z-50 lg:z-auto ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
         <div className="p-4 border-b">
           <div className="flex items-center">
             <Button
@@ -791,7 +970,13 @@ export default function ClientDashboard() {
                   <Button
                     variant={activeView === item.id ? "default" : "ghost"}
                     className={`w-full justify-start ${!isSidebarOpen ? 'px-2' : ''}`}
-                    onClick={() => setActiveView(item.id)}
+                    onClick={() => {
+                      setActiveView(item.id);
+                      // On mobile, close sidebar after selection
+                      if (window.innerWidth < 1024) {
+                        setIsSidebarOpen(false);
+                      }
+                    }}
                   >
                     <Icon className={`w-5 h-5 ${isSidebarOpen ? 'mr-3' : ''}`} />
                     {isSidebarOpen && (
@@ -805,7 +990,7 @@ export default function ClientDashboard() {
               );
             })}
           </ul>
-          
+
           {/* Team Member Access Notice */}
           {isTeamMember() && isSidebarOpen && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -833,25 +1018,37 @@ export default function ClientDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col ml-0 lg:ml-16">
+      <div className="flex-1 flex flex-col ml-0 lg:ml-16 min-w-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b">
-          <div className="px-6 py-4">
+          <div className="px-4 py-3 md:px-6 md:py-4">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 {/* Mobile Menu Button */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="lg:hidden"
+                  className="lg:hidden shrink-0"
                   data-testid="button-mobile-menu"
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{clientData.businessName}</h1>
-                  <p className="text-sm text-gray-600">
+                {/* Mobile Back Button - shown when not on overview */}
+                {activeView !== 'overview' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveView('overview')}
+                    className="lg:hidden shrink-0"
+                    aria-label="Back to overview"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </Button>
+                )}
+                <div className="min-w-0">
+                  <h1 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{clientData.businessName}</h1>
+                  <p className="text-xs md:text-sm text-gray-600 hidden sm:block">
                     {isTeamMember() ? 'Team Member Dashboard' : 'Business Dashboard'}
                     {teamContext && (
                       <span className="ml-2 text-blue-600">• Limited Access</span>
@@ -859,8 +1056,8 @@ export default function ClientDashboard() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <Badge variant="outline" className="capitalize">
+              <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                <Badge variant="outline" className="capitalize text-xs">
                   {clientData.status}
                 </Badge>
               </div>
@@ -869,439 +1066,528 @@ export default function ClientDashboard() {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
 
             {activeView === "overview" && (
               <div className="space-y-6">
-            {/* Metrics Cards */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">This Month Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${metrics.thisMonthRevenue.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {metrics.thisMonthAppointments} appointments
-                  </p>
-                </CardContent>
-              </Card>
+                {/* Metrics Cards */}
+                <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">This Month Revenue</CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">${metrics.thisMonthRevenue.toFixed(2)}</div>
+                      <p className="text-xs text-muted-foreground">
+                        {metrics.thisMonthAppointments} appointments
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{metrics.totalAppointments}</div>
-                  <p className="text-xs text-muted-foreground">
-                    All time bookings
-                  </p>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.totalAppointments}</div>
+                      <p className="text-xs text-muted-foreground">
+                        All time bookings
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">New Leads</CardTitle>
-                  <UserPlus className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{metrics.newLeadsThisMonth}</div>
-                  <p className="text-xs text-muted-foreground">
-                    This month
-                  </p>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">New Leads</CardTitle>
+                      <UserPlus className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.newLeadsThisMonth}</div>
+                      <p className="text-xs text-muted-foreground">
+                        This month
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{metrics.conversionRate.toFixed(1)}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    Leads to appointments
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.conversionRate.toFixed(1)}%</div>
+                      <p className="text-xs text-muted-foreground">
+                        Leads to appointments
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
 
-            {/* Recent Activity */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Appointments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {appointments.slice(0, 5).length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">No appointments yet</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {appointments.slice(0, 5).map((appointment) => (
-                        <div key={appointment.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{appointment.customerName}</p>
-                            <p className="text-sm text-gray-600">
-                              {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.startTime}
-                            </p>
-                          </div>
-                          <Badge variant={appointment.status === 'CONFIRMED' ? 'default' : 'secondary'}>
-                            {appointment.status}
-                          </Badge>
+                {/* Recent Activity */}
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Appointments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {appointments.slice(0, 5).length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No appointments yet</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {appointments.slice(0, 5).map((appointment) => (
+                            <div key={appointment.id} className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{appointment.customerName}</p>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.startTime}
+                                </p>
+                              </div>
+                              <Badge variant={appointment.status === 'CONFIRMED' ? 'default' : 'secondary'}>
+                                {appointment.status}
+                              </Badge>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      )}
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Leads</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {leads.slice(0, 5).length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">No leads yet</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {leads.slice(0, 5).map((lead) => (
-                        <div key={lead.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{lead.name}</p>
-                            <p className="text-sm text-gray-600">
-                              {lead.source} • {new Date(lead.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Badge variant={lead.status === 'CONVERTED' ? 'default' : 'secondary'}>
-                            {lead.status}
-                          </Badge>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Leads</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {leads.slice(0, 5).length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No leads yet</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {leads.slice(0, 5).map((lead) => (
+                            <div key={lead.id} className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{lead.name}</p>
+                                <p className="text-sm text-gray-600">
+                                  {lead.source} • {new Date(lead.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <Badge variant={lead.status === 'CONVERTED' ? 'default' : 'secondary'}>
+                                {lead.status}
+                              </Badge>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
 
             {activeView === "appointments" && (
               <div className="space-y-6">
-            {/* Appointment Slot Management Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Appointment Availability Management</CardTitle>
-                  <Dialog open={isSlotModalOpen} onOpenChange={setIsSlotModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">
-                        <Clock className="h-4 w-4 mr-2" />
-                        Manage Availability
-                      </Button>
-                    </DialogTrigger>
-                  <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle>Appointment Availability</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-4 gap-4">
-                        <div>
-                          <Label>Day</Label>
-                          <Select value={slotForm.dayOfWeek?.toString()} onValueChange={(value) => setSlotForm(prev => ({ ...prev, dayOfWeek: parseInt(value) }))}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select day" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0">Sunday</SelectItem>
-                              <SelectItem value="1">Monday</SelectItem>
-                              <SelectItem value="2">Tuesday</SelectItem>
-                              <SelectItem value="3">Wednesday</SelectItem>
-                              <SelectItem value="4">Thursday</SelectItem>
-                              <SelectItem value="5">Friday</SelectItem>
-                              <SelectItem value="6">Saturday</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Start Time</Label>
-                          <Input
-                            type="time"
-                            step="300"
-                            value={slotForm.startTime}
-                            onChange={(e) => setSlotForm(prev => ({ ...prev, startTime: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>End Time</Label>
-                          <Input
-                            type="time"
-                            step="300"
-                            value={slotForm.endTime}
-                            onChange={(e) => setSlotForm(prev => ({ ...prev, endTime: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Duration (min)</Label>
-                          <Input
-                            type="number"
-                            step="5"
-                            min="5"
-                            max="480"
-                            value={slotForm.slotDuration}
-                            onChange={(e) => setSlotForm(prev => ({ ...prev, slotDuration: parseInt(e.target.value) || 30 }))}
-                            placeholder="30"
-                          />
-                        </div>
-                      </div>
-                      <Button onClick={handleCreateSlot} className="w-full">
-                        Add Time Slot
-                      </Button>
-                      
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        <h4 className="font-medium">Current Availability:</h4>
-                        {appointmentSlots.length === 0 ? (
-                          <p className="text-sm text-gray-500">No availability slots configured</p>
-                        ) : (
-                          appointmentSlots.map((slot) => (
-                            <div key={slot.id} className="flex items-center justify-between p-2 border rounded">
-                              <span className="text-sm">
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][slot.dayOfWeek]} {slot.startTime}-{slot.endTime} ({slot.slotDuration}min)
-                              </span>
-                              <Button size="sm" variant="outline" onClick={() => deleteSlotMutation.mutate(slot.id)}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                {/* Appointment Slot Management Section */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle>Appointment Availability Management</CardTitle>
+                      <Dialog open={isSlotModalOpen} onOpenChange={setIsSlotModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">
+                            <Clock className="h-4 w-4 mr-2" />
+                            Manage Availability
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle>Appointment Availability</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-4 gap-4">
+                              <div>
+                                <Label>Day</Label>
+                                <Select value={slotForm.dayOfWeek?.toString()} onValueChange={(value) => setSlotForm(prev => ({ ...prev, dayOfWeek: parseInt(value) }))}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select day" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="0">Sunday</SelectItem>
+                                    <SelectItem value="1">Monday</SelectItem>
+                                    <SelectItem value="2">Tuesday</SelectItem>
+                                    <SelectItem value="3">Wednesday</SelectItem>
+                                    <SelectItem value="4">Thursday</SelectItem>
+                                    <SelectItem value="5">Friday</SelectItem>
+                                    <SelectItem value="6">Saturday</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label>Start Time</Label>
+                                <Input
+                                  type="time"
+                                  step="300"
+                                  value={slotForm.startTime}
+                                  onChange={(e) => setSlotForm(prev => ({ ...prev, startTime: e.target.value }))}
+                                />
+                              </div>
+                              <div>
+                                <Label>End Time</Label>
+                                <Input
+                                  type="time"
+                                  step="300"
+                                  value={slotForm.endTime}
+                                  onChange={(e) => setSlotForm(prev => ({ ...prev, endTime: e.target.value }))}
+                                />
+                              </div>
+                              <div>
+                                <Label>Duration (min)</Label>
+                                <Input
+                                  type="number"
+                                  step="5"
+                                  min="5"
+                                  max="480"
+                                  value={slotForm.slotDuration}
+                                  onChange={(e) => setSlotForm(prev => ({ ...prev, slotDuration: parseInt(e.target.value) || 30 }))}
+                                  placeholder="30"
+                                />
+                              </div>
                             </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Configure your available appointment times by day of the week. Click "Manage Availability" to set up time slots.</p>
-              </CardContent>
-            </Card>
-
-            {/* Appointment Booking Section */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Booked Appointments</h2>
-              <div className="flex gap-2">
-                <GlossGeniusExport clientId={clientData?.id || "1"} />
-                <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => openAppointmentModal()}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Appointment
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                    <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="customerName">Customer Name *</Label>
-                      <Input
-                        id="customerName"
-                        value={appointmentForm.customerName}
-                        onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerName: e.target.value }))}
-                        placeholder="John Doe"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="customerEmail">Customer Email *</Label>
-                      <Input
-                        id="customerEmail"
-                        type="email"
-                        value={appointmentForm.customerEmail}
-                        onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerEmail: e.target.value }))}
-                        placeholder="john@example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="customerPhone">Customer Phone</Label>
-                      <Input
-                        id="customerPhone"
-                        value={appointmentForm.customerPhone}
-                        onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerPhone: e.target.value }))}
-                        placeholder="(555) 123-4567"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="serviceSelect">Service *</Label>
-                      <Select value={appointmentForm.serviceId} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, serviceId: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select service" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {services.map((service) => (
-                            <SelectItem key={service.id} value={service.id}>
-                              {service.name} - ${service.price} ({service.durationMinutes}min)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="appointmentDate">Date *</Label>
-                        <Input
-                          id="appointmentDate"
-                          type="date"
-                          value={appointmentForm.appointmentDate}
-                          onChange={(e) => setAppointmentForm(prev => ({ ...prev, appointmentDate: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="startTime">Time *</Label>
-                        <Select value={appointmentForm.startTime} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, startTime: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableTimeSlots.length > 0 ? (
-                              availableTimeSlots.map((time) => (
-                                <SelectItem key={time} value={time}>{time}</SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no-slots-available" disabled>No available slots - Configure availability first</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="appointmentStatus">Status</Label>
-                      <Select value={appointmentForm.status} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, status: value }))}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PENDING">Pending</SelectItem>
-                          <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                          <SelectItem value="COMPLETED">Completed</SelectItem>
-                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsAppointmentModalOpen(false)}>Cancel</Button>
-                      <Button 
-                        onClick={handleAppointmentSubmit}
-                        disabled={!appointmentForm.customerName || !appointmentForm.customerEmail || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.startTime}
-                      >
-                        {editingAppointment ? 'Update' : 'Create'} Appointment
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              </div>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>All Appointments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {appointments.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">No appointments scheduled</p>
-                    <Button onClick={() => openAppointmentModal()}>Schedule Your First Appointment</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {appointments.map((appointment) => (
-                      <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{appointment.customerName}</p>
-                          <p className="text-sm text-gray-600">{appointment.customerEmail}</p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(appointment.appointmentDate).toLocaleDateString()} • {appointment.startTime} - {appointment.endTime}
-                          </p>
-                          <p className="text-sm font-medium text-blue-600">
-                            {getServiceName(appointment.serviceId)} - ${appointment.totalPrice}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={appointment.status === 'CONFIRMED' ? 'default' : appointment.status === 'PENDING' ? 'secondary' : 'destructive'}>
-                            {appointment.status}
-                          </Badge>
-                          <div className="flex gap-1 ml-2">
-                            {appointment.status === 'PENDING' && (
-                              <>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-green-600 border-green-300 hover:bg-green-50"
-                                  onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'CONFIRMED' })}
-                                >
-                                  Approve
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-red-600 border-red-300 hover:bg-red-50"
-                                  onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'REJECTED' })}
-                                >
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                            <Button variant="outline" size="sm" onClick={() => openAppointmentModal(appointment)}>
-                              <Edit className="h-4 w-4" />
+                            <Button onClick={handleCreateSlot} className="w-full">
+                              Add Time Slot
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedCalendarAppointment(appointment);
-                                setIsCalendarDialogOpen(true);
-                              }}
-                              data-testid="button-send-calendar"
+
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                              <h4 className="font-medium">Current Availability:</h4>
+                              {appointmentSlots.length === 0 ? (
+                                <p className="text-sm text-gray-500">No availability slots configured</p>
+                              ) : (
+                                appointmentSlots.map((slot) => (
+                                  <div key={slot.id} className="flex items-center justify-between p-2 border rounded">
+                                    <span className="text-sm">
+                                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][slot.dayOfWeek]} {slot.startTime}-{slot.endTime} ({slot.slotDuration}min)
+                                    </span>
+                                    <Button size="sm" variant="outline" onClick={() => deleteSlotMutation.mutate(slot.id)}>
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">Configure your available appointment times by day of the week. Click "Manage Availability" to set up time slots.</p>
+                  </CardContent>
+                </Card>
+
+                {/* Appointment Booking Section */}
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Booked Appointments</h2>
+                  <div className="flex gap-2">
+                    <GlossGeniusExport clientId={clientData?.id || "1"} />
+
+                    {/* CSV Import Dialog */}
+                    <Dialog open={isCsvImportModalOpen} onOpenChange={setIsCsvImportModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import CSV
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Import Appointments from CSV</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label>CSV File</Label>
+                            <Input
+                              type="file"
+                              accept=".csv"
+                              onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                              className="mt-2"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Upload a CSV file with appointment data
+                            </p>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={downloadSampleCsv}
+                              className="flex-1"
                             >
-                              <CalendarPlus className="h-4 w-4" />
+                              <Download className="h-4 w-4 mr-2" />
+                              Download Sample
                             </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete this appointment with {appointment.customerName}?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteAppointmentMutation.mutate(appointment.id)}>
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button
+                              onClick={handleCsvImport}
+                              disabled={!csvFile || !!csvImportProgress}
+                              className="flex-1"
+                            >
+                              {csvImportProgress || 'Import'}
+                            </Button>
+                          </div>
+
+                          {csvImportErrors.length > 0 && (
+                            <div className="bg-red-50 border border-red-200 rounded p-3 max-h-40 overflow-y-auto">
+                              <p className="text-sm font-medium text-red-800 mb-1">Import Errors:</p>
+                              <ul className="text-xs text-red-600 space-y-1">
+                                {csvImportErrors.map((error, idx) => (
+                                  <li key={idx}>• {error}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-blue-800">
+                            <p className="font-medium mb-1">Required CSV Columns:</p>
+                            <ul className="space-y-0.5">
+                              <li>• customerName</li>
+                              <li>• customerEmail</li>
+                              <li>• customerPhone</li>
+                              <li>• serviceId (from your services)</li>
+                              <li>• appointmentDate (YYYY-MM-DD)</li>
+                              <li>• startTime (HH:MM)</li>
+                              <li>• notes (optional)</li>
+                            </ul>
+                          </div>
+
+                          {/* Service IDs Reference */}
+                          <div className="bg-green-50 border border-green-200 rounded p-3 text-xs text-green-800">
+                            <p className="font-medium mb-1">Your Available Service IDs:</p>
+                            {services.length > 0 ? (
+                              <ul className="space-y-0.5 max-h-32 overflow-y-auto">
+                                {services.map((service: ClientService) => (
+                                  <li key={service.id} className="flex justify-between">
+                                    <span>{service.name}:</span>
+                                    <code className="bg-green-100 px-1 rounded font-mono">{service.id}</code>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-yellow-700">No services found. Please create services first in the Services tab.</p>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button onClick={() => openAppointmentModal()}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          New Appointment
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="customerName">Customer Name *</Label>
+                            <Input
+                              id="customerName"
+                              value={appointmentForm.customerName}
+                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerName: e.target.value }))}
+                              placeholder="John Doe"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="customerEmail">Customer Email *</Label>
+                            <Input
+                              id="customerEmail"
+                              type="email"
+                              value={appointmentForm.customerEmail}
+                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerEmail: e.target.value }))}
+                              placeholder="john@example.com"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="customerPhone">Customer Phone</Label>
+                            <Input
+                              id="customerPhone"
+                              value={appointmentForm.customerPhone}
+                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerPhone: e.target.value }))}
+                              placeholder="(555) 123-4567"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="serviceSelect">Service *</Label>
+                            <Select value={appointmentForm.serviceId} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, serviceId: value }))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select service" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {services.map((service) => (
+                                  <SelectItem key={service.id} value={service.id}>
+                                    {service.name} - ${service.price} ({service.durationMinutes}min)
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="appointmentDate">Date *</Label>
+                              <Input
+                                id="appointmentDate"
+                                type="date"
+                                value={appointmentForm.appointmentDate}
+                                onChange={(e) => setAppointmentForm(prev => ({ ...prev, appointmentDate: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="startTime">Time *</Label>
+                              <Select value={appointmentForm.startTime} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, startTime: value }))}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select time" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableTimeSlots.length > 0 ? (
+                                    availableTimeSlots.map((time) => (
+                                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                                    ))
+                                  ) : (
+                                    <SelectItem value="no-slots-available" disabled>No available slots - Configure availability first</SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="appointmentStatus">Status</Label>
+                            <Select value={appointmentForm.status} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, status: value }))}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PENDING">Pending</SelectItem>
+                                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                                <SelectItem value="COMPLETED">Completed</SelectItem>
+                                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsAppointmentModalOpen(false)}>Cancel</Button>
+                            <Button
+                              onClick={handleAppointmentSubmit}
+                              disabled={!appointmentForm.customerName || !appointmentForm.customerEmail || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.startTime}
+                            >
+                              {editingAppointment ? 'Update' : 'Create'} Appointment
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Appointments</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {appointments.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500 mb-4">No appointments scheduled</p>
+                        <Button onClick={() => openAppointmentModal()}>Schedule Your First Appointment</Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {appointments.map((appointment) => (
+                          <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <p className="font-medium">{appointment.customerName}</p>
+                              <p className="text-sm text-gray-600">{appointment.customerEmail}</p>
+                              <p className="text-sm text-gray-600">
+                                {new Date(appointment.appointmentDate).toLocaleDateString()} • {appointment.startTime} - {appointment.endTime}
+                              </p>
+                              <p className="text-sm font-medium text-blue-600">
+                                {getServiceName(appointment.serviceId)} - ${appointment.totalPrice}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={appointment.status === 'CONFIRMED' ? 'default' : appointment.status === 'PENDING' ? 'secondary' : 'destructive'}>
+                                {appointment.status}
+                              </Badge>
+                              <div className="flex gap-1 ml-2">
+                                {appointment.status === 'PENDING' && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-green-600 border-green-300 hover:bg-green-50"
+                                      onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'CONFIRMED' })}
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-600 border-red-300 hover:bg-red-50"
+                                      onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'REJECTED' })}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                <Button variant="outline" size="sm" onClick={() => openAppointmentModal(appointment)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedCalendarAppointment(appointment);
+                                    setIsCalendarDialogOpen(true);
+                                  }}
+                                  data-testid="button-send-calendar"
+                                >
+                                  <CalendarPlus className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete this appointment with {appointment.customerName}?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deleteAppointmentMutation.mutate(appointment.id)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
 
             {activeView === "services" && (
-              <ServicesManagement 
+              <ServicesManagement
                 hasPermission={hasPermission}
                 clientId={clientData?.id || "client_1"}
               />
@@ -1309,586 +1595,586 @@ export default function ClientDashboard() {
 
             {activeView === "leads" && (
               <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Leads</h2>
-              <Dialog open={isLeadModalOpen} onOpenChange={setIsLeadModalOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => openLeadModal()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Lead
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>{editingLead ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="leadName">Name *</Label>
-                      <Input
-                        id="leadName"
-                        value={leadForm.name}
-                        onChange={(e) => setLeadForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Jane Smith"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="leadEmail">Email *</Label>
-                      <Input
-                        id="leadEmail"
-                        type="email"
-                        value={leadForm.email}
-                        onChange={(e) => setLeadForm(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="jane@example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="leadPhone">Phone</Label>
-                      <Input
-                        id="leadPhone"
-                        value={leadForm.phone}
-                        onChange={(e) => setLeadForm(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="(555) 123-4567"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="leadSource">Source</Label>
-                      <Select value={leadForm.source} onValueChange={(value) => setLeadForm(prev => ({ ...prev, source: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select source" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="website">Website</SelectItem>
-                          <SelectItem value="referral">Referral</SelectItem>
-                          <SelectItem value="social-media">Social Media</SelectItem>
-                          <SelectItem value="google">Google</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="leadStatus">Status</Label>
-                      <Select value={leadForm.status} onValueChange={(value) => setLeadForm(prev => ({ ...prev, status: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="new">New</SelectItem>
-                          <SelectItem value="contacted">Contacted</SelectItem>
-                          <SelectItem value="qualified">Qualified</SelectItem>
-                          <SelectItem value="converted">Converted</SelectItem>
-                          <SelectItem value="lost">Lost</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="leadNotes">Notes</Label>
-                      <Textarea
-                        id="leadNotes"
-                        value={leadForm.notes}
-                        onChange={(e) => setLeadForm(prev => ({ ...prev, notes: e.target.value }))}
-                        placeholder="Lead notes and details..."
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="leadValue">Estimated Value ($)</Label>
-                      <Input
-                        id="leadValue"
-                        type="number"
-                        value={leadForm.estimatedValue}
-                        onChange={(e) => setLeadForm(prev => ({ ...prev, estimatedValue: e.target.value }))}
-                        placeholder="500.00"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsLeadModalOpen(false)}>Cancel</Button>
-                      <Button 
-                        onClick={handleLeadSubmit}
-                        disabled={!leadForm.name || !leadForm.email}
-                      >
-                        {editingLead ? 'Update' : 'Create'} Lead
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Leads</h2>
+                  <Dialog open={isLeadModalOpen} onOpenChange={setIsLeadModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => openLeadModal()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Lead
                       </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            
-            {/* Filtering Controls */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search leads by name, email, or phone..."
-                  value={leadFilters.searchText}
-                  onChange={(e) => setLeadFilters(prev => ({ ...prev, searchText: e.target.value }))}
-                  className="w-full"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Select value={leadFilters.source} onValueChange={(value) => setLeadFilters(prev => ({ ...prev, source: value }))}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Source" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Sources</SelectItem>
-                    <SelectItem value="website">Website</SelectItem>
-                    <SelectItem value="referral">Referral</SelectItem>
-                    <SelectItem value="social-media">Social Media</SelectItem>
-                    <SelectItem value="google-search">Google Search</SelectItem>
-                    <SelectItem value="walk-in">Walk-in</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={leadFilters.status} onValueChange={(value) => setLeadFilters(prev => ({ ...prev, status: value }))}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="NEW">New</SelectItem>
-                    <SelectItem value="CONTACTED">Contacted</SelectItem>
-                    <SelectItem value="QUALIFIED">Qualified</SelectItem>
-                    <SelectItem value="CONVERTED">Converted</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Lead Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredLeads.length === 0 ? (leads.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">No leads captured yet</p>
-                    <Button onClick={() => openLeadModal()}>Add Your First Lead</Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">No leads match your current filters</p>
-                    <Button onClick={() => setLeadFilters({ searchText: '', source: 'all', status: 'all' })}>Clear Filters</Button>
-                  </div>
-                )) : (
-                  <div className="space-y-4">
-                    {filteredLeads.map((lead) => (
-                      <div key={lead.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{editingLead ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
                         <div>
-                          <p className="font-medium">{lead.name}</p>
-                          <p className="text-sm text-gray-600">{lead.email} • {lead.phone}</p>
-                          <p className="text-sm text-gray-600">
-                            Source: {lead.source} • {new Date(lead.createdAt).toLocaleDateString()}
-                          </p>
-                          {lead.notes && (
-                            <p className="text-sm text-gray-500 mt-1">{lead.notes}</p>
-                          )}
+                          <Label htmlFor="leadName">Name *</Label>
+                          <Input
+                            id="leadName"
+                            value={leadForm.name}
+                            onChange={(e) => setLeadForm(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="Jane Smith"
+                          />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={lead.status === 'CONVERTED' ? 'default' : 'secondary'}>
-                            {lead.status}
-                          </Badge>
-                          {lead.estimatedValue > 0 && (
-                            <span className="text-sm">${lead.estimatedValue}</span>
-                          )}
-                          <div className="flex gap-1 ml-2">
-                            <Button variant="outline" size="sm" onClick={() => openLeadModal(lead)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Lead</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete the lead for {lead.name}?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteLeadMutation.mutate(lead.id)}>
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                        <div>
+                          <Label htmlFor="leadEmail">Email *</Label>
+                          <Input
+                            id="leadEmail"
+                            type="email"
+                            value={leadForm.email}
+                            onChange={(e) => setLeadForm(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="jane@example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="leadPhone">Phone</Label>
+                          <Input
+                            id="leadPhone"
+                            value={leadForm.phone}
+                            onChange={(e) => setLeadForm(prev => ({ ...prev, phone: e.target.value }))}
+                            placeholder="(555) 123-4567"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="leadSource">Source</Label>
+                          <Select value={leadForm.source} onValueChange={(value) => setLeadForm(prev => ({ ...prev, source: value }))}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select source" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="website">Website</SelectItem>
+                              <SelectItem value="referral">Referral</SelectItem>
+                              <SelectItem value="social-media">Social Media</SelectItem>
+                              <SelectItem value="google">Google</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="leadStatus">Status</Label>
+                          <Select value={leadForm.status} onValueChange={(value) => setLeadForm(prev => ({ ...prev, status: value }))}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="new">New</SelectItem>
+                              <SelectItem value="contacted">Contacted</SelectItem>
+                              <SelectItem value="qualified">Qualified</SelectItem>
+                              <SelectItem value="converted">Converted</SelectItem>
+                              <SelectItem value="lost">Lost</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="leadNotes">Notes</Label>
+                          <Textarea
+                            id="leadNotes"
+                            value={leadForm.notes}
+                            onChange={(e) => setLeadForm(prev => ({ ...prev, notes: e.target.value }))}
+                            placeholder="Lead notes and details..."
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="leadValue">Estimated Value ($)</Label>
+                          <Input
+                            id="leadValue"
+                            type="number"
+                            value={leadForm.estimatedValue}
+                            onChange={(e) => setLeadForm(prev => ({ ...prev, estimatedValue: e.target.value }))}
+                            placeholder="500.00"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setIsLeadModalOpen(false)}>Cancel</Button>
+                          <Button
+                            onClick={handleLeadSubmit}
+                            disabled={!leadForm.name || !leadForm.email}
+                          >
+                            {editingLead ? 'Update' : 'Create'} Lead
+                          </Button>
                         </div>
                       </div>
-                    ))}
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {/* Filtering Controls */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Search leads by name, email, or phone..."
+                      value={leadFilters.searchText}
+                      onChange={(e) => setLeadFilters(prev => ({ ...prev, searchText: e.target.value }))}
+                      className="w-full"
+                    />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <div className="flex gap-2">
+                    <Select value={leadFilters.source} onValueChange={(value) => setLeadFilters(prev => ({ ...prev, source: value }))}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Sources</SelectItem>
+                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="referral">Referral</SelectItem>
+                        <SelectItem value="social-media">Social Media</SelectItem>
+                        <SelectItem value="google-search">Google Search</SelectItem>
+                        <SelectItem value="walk-in">Walk-in</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={leadFilters.status} onValueChange={(value) => setLeadFilters(prev => ({ ...prev, status: value }))}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="NEW">New</SelectItem>
+                        <SelectItem value="CONTACTED">Contacted</SelectItem>
+                        <SelectItem value="QUALIFIED">Qualified</SelectItem>
+                        <SelectItem value="CONVERTED">Converted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Lead Management</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {filteredLeads.length === 0 ? (leads.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500 mb-4">No leads captured yet</p>
+                        <Button onClick={() => openLeadModal()}>Add Your First Lead</Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500 mb-4">No leads match your current filters</p>
+                        <Button onClick={() => setLeadFilters({ searchText: '', source: 'all', status: 'all' })}>Clear Filters</Button>
+                      </div>
+                    )) : (
+                      <div className="space-y-4">
+                        {filteredLeads.map((lead) => (
+                          <div key={lead.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <p className="font-medium">{lead.name}</p>
+                              <p className="text-sm text-gray-600">{lead.email} • {lead.phone}</p>
+                              <p className="text-sm text-gray-600">
+                                Source: {lead.source} • {new Date(lead.createdAt).toLocaleDateString()}
+                              </p>
+                              {lead.notes && (
+                                <p className="text-sm text-gray-500 mt-1">{lead.notes}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={lead.status === 'CONVERTED' ? 'default' : 'secondary'}>
+                                {lead.status}
+                              </Badge>
+                              {lead.estimatedValue > 0 && (
+                                <span className="text-sm">${lead.estimatedValue}</span>
+                              )}
+                              <div className="flex gap-1 ml-2">
+                                <Button variant="outline" size="sm" onClick={() => openLeadModal(lead)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Lead</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete the lead for {lead.name}?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deleteLeadMutation.mutate(lead.id)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
 
             {activeView === "analytics" && (
               <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Analytics</h2>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Revenue charts coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
+                <h2 className="text-2xl font-bold">Analytics</h2>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Lead Sources</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Lead source analytics coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Revenue Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-8">
+                        <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Revenue charts coming soon</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Lead Sources</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-8">
+                        <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Lead source analytics coming soon</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
 
             {activeView === "website" && (
               <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Your Business Website</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={openWebsitePreview}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Preview Website
-                </Button>
-                <Dialog open={isWebsiteModalOpen} onOpenChange={setIsWebsiteModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Website Settings
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle>Website Configuration</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="websiteTitle">Website Title</Label>
-                        <Input
-                          id="websiteTitle"
-                          value={websiteSettings.title}
-                          onChange={(e) => setWebsiteSettings(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder={clientData?.businessName || 'Your Business'}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="websiteDescription">Description</Label>
-                        <Textarea
-                          id="websiteDescription"
-                          value={websiteSettings.description}
-                          onChange={(e) => setWebsiteSettings(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Welcome to our business..."
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="primaryColor">Primary Color</Label>
-                        <Input
-                          id="primaryColor"
-                          type="color"
-                          value={websiteSettings.primaryColor}
-                          onChange={(e) => setWebsiteSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="contactEmail">Contact Email</Label>
-                          <Input
-                            id="contactEmail"
-                            type="email"
-                            value={websiteSettings.contactEmail}
-                            onChange={(e) => setWebsiteSettings(prev => ({ ...prev, contactEmail: e.target.value }))}
-                            placeholder={clientData?.email}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="contactPhone">Contact Phone</Label>
-                          <Input
-                            id="contactPhone"
-                            value={websiteSettings.contactPhone}
-                            onChange={(e) => setWebsiteSettings(prev => ({ ...prev, contactPhone: e.target.value }))}
-                            placeholder={clientData?.phone}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id="showServices"
-                            checked={websiteSettings.showServices}
-                            onChange={(e) => setWebsiteSettings(prev => ({ ...prev, showServices: e.target.checked }))}
-                          />
-                          <Label htmlFor="showServices">Show services on website</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id="showBooking"
-                            checked={websiteSettings.showBooking}
-                            onChange={(e) => setWebsiteSettings(prev => ({ ...prev, showBooking: e.target.checked }))}
-                          />
-                          <Label htmlFor="showBooking">Enable online booking</Label>
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsWebsiteModalOpen(false)}>Cancel</Button>
-                        <Button onClick={() => updateWebsiteMutation.mutate(websiteSettings)}>
-                          Save Settings
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Website Preview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold">{websiteSettings.title || clientData?.businessName}</h3>
-                      <p className="text-sm text-gray-600">{websiteSettings.description || 'Professional services for all your needs'}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-500">✓ Contact Information</p>
-                      {websiteSettings.showServices && <p className="text-xs text-gray-500">✓ Service Listings</p>}
-                      {websiteSettings.showBooking && <p className="text-xs text-gray-500">✓ Online Booking</p>}
-                    </div>
-                  </div>
-                  <div className="mt-4 text-center space-y-2">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Your Business Website</h2>
+                  <div className="flex gap-2">
                     <Button variant="outline" onClick={openWebsitePreview}>
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      View Full Website
+                      Preview Website
                     </Button>
-                    <br />
-                    <Button 
-                      variant="default" 
-                      onClick={() => setLocation(`/website-builder?clientId=${clientData?.id}`)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Advanced Website Builder
-                    </Button>
+                    <Dialog open={isWebsiteModalOpen} onOpenChange={setIsWebsiteModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Settings className="h-4 w-4 mr-2" />
+                          Website Settings
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle>Website Configuration</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="websiteTitle">Website Title</Label>
+                            <Input
+                              id="websiteTitle"
+                              value={websiteSettings.title}
+                              onChange={(e) => setWebsiteSettings(prev => ({ ...prev, title: e.target.value }))}
+                              placeholder={clientData?.businessName || 'Your Business'}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="websiteDescription">Description</Label>
+                            <Textarea
+                              id="websiteDescription"
+                              value={websiteSettings.description}
+                              onChange={(e) => setWebsiteSettings(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="Welcome to our business..."
+                              rows={3}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="primaryColor">Primary Color</Label>
+                            <Input
+                              id="primaryColor"
+                              type="color"
+                              value={websiteSettings.primaryColor}
+                              onChange={(e) => setWebsiteSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="contactEmail">Contact Email</Label>
+                              <Input
+                                id="contactEmail"
+                                type="email"
+                                value={websiteSettings.contactEmail}
+                                onChange={(e) => setWebsiteSettings(prev => ({ ...prev, contactEmail: e.target.value }))}
+                                placeholder={clientData?.email}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="contactPhone">Contact Phone</Label>
+                              <Input
+                                id="contactPhone"
+                                value={websiteSettings.contactPhone}
+                                onChange={(e) => setWebsiteSettings(prev => ({ ...prev, contactPhone: e.target.value }))}
+                                placeholder={clientData?.phone}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="showServices"
+                                checked={websiteSettings.showServices}
+                                onChange={(e) => setWebsiteSettings(prev => ({ ...prev, showServices: e.target.checked }))}
+                              />
+                              <Label htmlFor="showServices">Show services on website</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="showBooking"
+                                checked={websiteSettings.showBooking}
+                                onChange={(e) => setWebsiteSettings(prev => ({ ...prev, showBooking: e.target.checked }))}
+                              />
+                              <Label htmlFor="showBooking">Enable online booking</Label>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsWebsiteModalOpen(false)}>Cancel</Button>
+                            <Button onClick={() => updateWebsiteMutation.mutate(websiteSettings)}>
+                              Save Settings
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Website Features</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Public Landing Page</span>
-                      <Badge variant="default">Active</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Service Showcase</span>
-                      <Badge variant={websiteSettings.showServices ? "default" : "secondary"}>
-                        {websiteSettings.showServices ? "Enabled" : "Disabled"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Online Booking</span>
-                      <Badge variant={websiteSettings.showBooking ? "default" : "secondary"}>
-                        {websiteSettings.showBooking ? "Enabled" : "Disabled"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Mobile Responsive</span>
-                      <Badge variant="default">Yes</Badge>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm text-gray-600">Website URL:</p>
-                    <p className="text-sm font-mono bg-gray-100 p-2 rounded">
-                      /client-website/{clientData?.id}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Website Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <div className="mb-4">
+                          <h3 className="text-lg font-semibold">{websiteSettings.title || clientData?.businessName}</h3>
+                          <p className="text-sm text-gray-600">{websiteSettings.description || 'Professional services for all your needs'}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-xs text-gray-500">✓ Contact Information</p>
+                          {websiteSettings.showServices && <p className="text-xs text-gray-500">✓ Service Listings</p>}
+                          {websiteSettings.showBooking && <p className="text-xs text-gray-500">✓ Online Booking</p>}
+                        </div>
+                      </div>
+                      <div className="mt-4 text-center space-y-2">
+                        <Button variant="outline" onClick={openWebsitePreview}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View Full Website
+                        </Button>
+                        <br />
+                        <Button
+                          variant="default"
+                          onClick={() => setLocation(`/website-builder?clientId=${clientData?.id}`)}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Advanced Website Builder
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Website Features</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Public Landing Page</span>
+                          <Badge variant="default">Active</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Service Showcase</span>
+                          <Badge variant={websiteSettings.showServices ? "default" : "secondary"}>
+                            {websiteSettings.showServices ? "Enabled" : "Disabled"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Online Booking</span>
+                          <Badge variant={websiteSettings.showBooking ? "default" : "secondary"}>
+                            {websiteSettings.showBooking ? "Enabled" : "Disabled"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Mobile Responsive</span>
+                          <Badge variant="default">Yes</Badge>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t">
+                        <p className="text-sm text-gray-600">Website URL:</p>
+                        <p className="text-sm font-mono bg-gray-100 p-2 rounded">
+                          /client-website/{clientData?.id}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
 
             {activeView === "settings" && (
               <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Settings</h2>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Business Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label htmlFor="businessName">Business Name</Label>
-                    <Input id="businessName" value={clientData?.businessName || ''} readOnly />
-                  </div>
-                  <div>
-                    <Label htmlFor="contactPerson">Contact Person</Label>
-                    <Input id="contactPerson" value={clientData?.contactPerson || ''} readOnly />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={clientData?.email || ''} readOnly />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" value={clientData?.phone || ''} readOnly />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" value={clientData?.businessAddress || ''} readOnly />
-                  </div>
-                </div>
-                <Dialog open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="mt-4">Edit Information</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Business Information</DialogTitle>
-                    </DialogHeader>
+                <h2 className="text-2xl font-bold">Settings</h2>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Business Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="businessName">Business Name</Label>
+                        <Input id="businessName" value={clientData?.businessName || ''} readOnly />
+                      </div>
+                      <div>
+                        <Label htmlFor="contactPerson">Contact Person</Label>
+                        <Input id="contactPerson" value={clientData?.contactPerson || ''} readOnly />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" value={clientData?.email || ''} readOnly />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input id="phone" value={clientData?.phone || ''} readOnly />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label htmlFor="address">Address</Label>
+                        <Input id="address" value={clientData?.businessAddress || ''} readOnly />
+                      </div>
+                    </div>
+                    <Dialog open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="mt-4">Edit Information</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Edit Business Information</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label htmlFor="editBusinessName">Business Name</Label>
+                              <Input id="editBusinessName" defaultValue={clientData?.businessName} />
+                            </div>
+                            <div>
+                              <Label htmlFor="editContactPerson">Contact Person</Label>
+                              <Input id="editContactPerson" defaultValue={clientData?.contactPerson} />
+                            </div>
+                            <div>
+                              <Label htmlFor="editEmail">Email</Label>
+                              <Input id="editEmail" defaultValue={clientData?.email} />
+                            </div>
+                            <div>
+                              <Label htmlFor="editPhone">Phone</Label>
+                              <Input id="editPhone" defaultValue={clientData?.phone} />
+                            </div>
+                            <div className="md:col-span-2">
+                              <Label htmlFor="editAddress">Address</Label>
+                              <Input id="editAddress" defaultValue={clientData?.businessAddress} />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsSettingsModalOpen(false)}>Cancel</Button>
+                            <Button onClick={() => {
+                              toast({ title: 'Business information updated successfully' });
+                              setIsSettingsModalOpen(false);
+                            }}>Save Changes</Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Operating Hours</CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <div className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label htmlFor="editBusinessName">Business Name</Label>
-                          <Input id="editBusinessName" defaultValue={clientData?.businessName} />
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                        <div key={day} className="flex items-center justify-between">
+                          <span className="w-20 font-medium">{day}</span>
+                          <div className="flex items-center gap-2">
+                            <Input type="time" defaultValue="09:00" className="w-24" />
+                            <span>to</span>
+                            <Input type="time" defaultValue="17:00" className="w-24" />
+                            <input type="checkbox" defaultChecked={day !== 'Sunday'} className="ml-2" />
+                            <span className="text-sm text-gray-600">Open</span>
+                          </div>
                         </div>
-                        <div>
-                          <Label htmlFor="editContactPerson">Contact Person</Label>
-                          <Input id="editContactPerson" defaultValue={clientData?.contactPerson} />
-                        </div>
-                        <div>
-                          <Label htmlFor="editEmail">Email</Label>
-                          <Input id="editEmail" defaultValue={clientData?.email} />
-                        </div>
-                        <div>
-                          <Label htmlFor="editPhone">Phone</Label>
-                          <Input id="editPhone" defaultValue={clientData?.phone} />
-                        </div>
-                        <div className="md:col-span-2">
-                          <Label htmlFor="editAddress">Address</Label>
-                          <Input id="editAddress" defaultValue={clientData?.businessAddress} />
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsSettingsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={() => {
-                          toast({ title: 'Business information updated successfully' });
-                          setIsSettingsModalOpen(false);
-                        }}>Save Changes</Button>
-                      </div>
+                      ))}
+                      <Button className="mt-4">Save Operating Hours</Button>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Operating Hours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                    <div key={day} className="flex items-center justify-between">
-                      <span className="w-20 font-medium">{day}</span>
-                      <div className="flex items-center gap-2">
-                        <Input type="time" defaultValue="09:00" className="w-24" />
-                        <span>to</span>
-                        <Input type="time" defaultValue="17:00" className="w-24" />
-                        <input type="checkbox" defaultChecked={day !== 'Sunday'} className="ml-2" />
-                        <span className="text-sm text-gray-600">Open</span>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Custom Domains</CardTitle>
+                    <CardDescription>
+                      Configure custom domains for your admin panel and client websites
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <DomainConfig clientId={clientData?.id || ''} />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Account Management</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Plan Status</p>
+                          <p className="text-sm text-gray-600">Current: {clientData?.status}</p>
+                        </div>
+                        <Badge variant="outline">{clientData?.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE'}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Subscription</p>
+                          <p className="text-sm text-gray-600">Manage your billing and plan</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsSubscriptionModalOpen(true)}
+                          data-testid="button-manage-plan"
+                        >
+                          Manage Plan
+                        </Button>
+                      </div>
+                      <div className="pt-4 border-t">
+                        <Button variant="outline" className="w-full" onClick={handleLogout}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                  <Button className="mt-4">Save Operating Hours</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Custom Domains</CardTitle>
-                <CardDescription>
-                  Configure custom domains for your admin panel and client websites
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DomainConfig clientId={clientData?.id || ''} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Plan Status</p>
-                      <p className="text-sm text-gray-600">Current: {clientData?.status}</p>
-                    </div>
-                    <Badge variant="outline">{clientData?.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE'}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Subscription</p>
-                      <p className="text-sm text-gray-600">Manage your billing and plan</p>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setIsSubscriptionModalOpen(true)}
-                      data-testid="button-manage-plan"
-                    >
-                      Manage Plan
-                    </Button>
-                  </div>
-                  <div className="pt-4 border-t">
-                    <Button variant="outline" className="w-full" onClick={handleLogout}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
             {activeView === "email" && (
               hasPermission('settings.view') || hasPermission('settings.manage') ? (
-                <SMTPConfiguration 
+                <SMTPConfiguration
                   clientId={clientData?.id || ''}
                   hasPermission={hasPermission}
                 />
@@ -1922,7 +2208,7 @@ export default function ClientDashboard() {
             {activeView === "google" && <GoogleBusinessSetup />}
 
             {activeView === "payments" && (
-              <StripeConfiguration 
+              <StripeConfiguration
                 clientId={clientData?.id || "client_1"}
                 hasPermission={hasPermission}
               />

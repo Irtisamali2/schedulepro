@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Proxy all requests to Node.js app on port 5001
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ http://127.0.0.1:5001/$1 [P,L]
+
+# Preserve host header
+RewriteCond %{HTTP:X-Forwarded-Host} ^$
+RewriteRule ^(.*)$ - [E=HTTP_X_FORWARDED_HOST:%{HTTP_HOST}]

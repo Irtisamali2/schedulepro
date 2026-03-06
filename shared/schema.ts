@@ -411,6 +411,7 @@ export const clientWebsites = pgTable("client_websites", {
   contactInfo: text("contact_info"), // JSON string
   socialLinks: text("social_links"), // JSON string
   sections: text("sections"), // JSON string for website sections
+  templateId: text("template_id").default("default"), // Template layout identifier
   showPrices: boolean("show_prices").default(true),
   allowOnlineBooking: boolean("allow_online_booking").default(true),
   isPublished: boolean("is_published").default(false),
@@ -430,6 +431,7 @@ export const insertClientWebsiteSchema = createInsertSchema(clientWebsites).pick
   contactInfo: true,
   socialLinks: true,
   sections: true,
+  templateId: true,
   showPrices: true,
   allowOnlineBooking: true,
   isPublished: true,

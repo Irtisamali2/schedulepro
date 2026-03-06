@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import FigmaDesignedWebsite from '@/components/FigmaDesignedWebsite';
 import { EditableWebsiteProvider } from '@/contexts/EditableWebsiteContext';
+import TemplateSelector from '@/components/TemplateSelector';
 
 export default function ElementorStyleBuilder() {
   const [, navigate] = useLocation();
@@ -37,7 +38,7 @@ export default function ElementorStyleBuilder() {
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editText, setEditText] = useState('');
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
-  
+
   // Get clientId from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -120,9 +121,9 @@ export default function ElementorStyleBuilder() {
       content: 'Edit this content...',
       settings: {}
     };
-    
+
     const updatedSections = [...sections, newSection];
-    
+
     if (websiteData) {
       saveWebsiteMutation.mutate({
         ...websiteData,
@@ -133,7 +134,7 @@ export default function ElementorStyleBuilder() {
 
   const handleDeleteSection = (sectionId: string) => {
     const updatedSections = sections.filter((s: any) => s.id !== sectionId);
-    
+
     if (websiteData) {
       saveWebsiteMutation.mutate({
         ...websiteData,
@@ -149,20 +150,20 @@ export default function ElementorStyleBuilder() {
 
   const handleDragOver = (e: React.DragEvent, targetSectionId: string) => {
     e.preventDefault();
-    
+
     if (!draggedSection || draggedSection === targetSectionId) return;
-    
+
     // Find indices
     const draggedIndex = sections.findIndex((s: any) => s.id === draggedSection);
     const targetIndex = sections.findIndex((s: any) => s.id === targetSectionId);
-    
+
     if (draggedIndex === -1 || targetIndex === -1) return;
-    
+
     // Reorder sections - update cache optimistically
     const newSections = [...sections];
     const [removed] = newSections.splice(draggedIndex, 1);
     newSections.splice(targetIndex, 0, removed);
-    
+
     // Update query cache optimistically
     if (websiteData) {
       queryClient.setQueryData([`/api/public/client/${clientId}/website`], {
@@ -203,7 +204,7 @@ export default function ElementorStyleBuilder() {
             {client?.businessName || 'Loading...'}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -229,9 +230,17 @@ export default function ElementorStyleBuilder() {
         {showSidebar && (
           <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
             <div className="p-6 space-y-6">
+              {/* Template Selection */}
+              <div className="pb-6 border-b border-gray-200">
+                <TemplateSelector
+                  clientId={clientId}
+                  currentTemplateId={websiteData?.templateId || 'default'}
+                />
+              </div>
+
               <div>
                 <h2 className="text-lg font-semibold mb-4">Website Settings</h2>
-                
+
                 <div className="space-y-4">
                   <div>
                     <Label>Website Title</Label>
@@ -321,8 +330,8 @@ export default function ElementorStyleBuilder() {
               <div className="pt-6 border-t border-gray-200">
                 <h3 className="font-semibold mb-3">Add Sections</h3>
                 <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
                     onClick={() => handleAddSection('hero')}
                     data-testid="add-hero-section"
@@ -330,8 +339,8 @@ export default function ElementorStyleBuilder() {
                     <Plus className="h-4 w-4 mr-2" />
                     Hero Section
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
                     onClick={() => handleAddSection('about')}
                     data-testid="add-about-section"
@@ -339,8 +348,8 @@ export default function ElementorStyleBuilder() {
                     <Plus className="h-4 w-4 mr-2" />
                     About Section
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
                     onClick={() => handleAddSection('services')}
                     data-testid="add-services-section"
@@ -348,8 +357,8 @@ export default function ElementorStyleBuilder() {
                     <Plus className="h-4 w-4 mr-2" />
                     Services Section
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
                     onClick={() => handleAddSection('contact')}
                     data-testid="add-contact-section"
@@ -372,13 +381,13 @@ export default function ElementorStyleBuilder() {
               </div>
             ) : (
               <EditableWebsiteProvider isEditable={true}>
-                <div 
+                <div
                   className="relative"
                   data-testid="editable-website-container"
                 >
                   {/* Render actual client website */}
-                  <FigmaDesignedWebsite 
-                    clientId={clientId} 
+                  <FigmaDesignedWebsite
+                    clientId={clientId}
                     isBuilderPreview={true}
                     onDeleteSection={handleDeleteSection}
                     onEditSection={(sectionId) => {
@@ -391,7 +400,7 @@ export default function ElementorStyleBuilder() {
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
                   />
-                  
+
                   {/* Editing overlay hints */}
                   <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm z-50">
                     Click on any element to edit • Drag sections to reorder

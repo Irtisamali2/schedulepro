@@ -1,0 +1,48 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+🔧 Database Environment Detection:
+  - Replit: No
+  - Coolify: No
+  - Production: No
+  - DATABASE_URL present: Yes
+✅ Initializing Neon PostgreSQL connection
+The `fetchConnectionCache` option is deprecated (now always `true`)
+🔧 Database Environment Detection:
+  - Replit: No
+  - Coolify: No
+  - Production: No
+  - DATABASE_URL present: Yes
+🔧 Environment: Unknown
+💾 Storage: MemStorage
+🗄️  Database URL present: Yes
+🚀 Production mode: No
+📊 Demo data: Enabled (Development)
+✅ Using MemStorage with demo data for development
+🌱 Seeding demo data for development...
+✅ Database connection test successful
+✅ Sample data initialized for SaaS platform
+2026-02-06T14:55:01.113Z serving on port 5000
+Error: [31m  Failed to scan for dependencies from entries:
+  D:/Vconekt/Scheduled/Scheduled/client/index.html
+D:/Vconekt/Scheduled/Scheduled/client/public/privacy-policy.html
+D:/Vconekt/Scheduled/Scheduled/client/public/terms-of-service.html
+
+  [39m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mUnterminated regular expression[0m
+
+    client/src/pages/OnboardingFlow.tsx:499:17:
+[37m      499 │           </div >[32m[37m
+          ╵                  [32m^[0m
+
+
+    at failureErrorWithLog (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:1472:15)
+    at D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:945:25
+    at runOnEndCallbacks (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:1315:45)
+    at buildResponseToResult (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:943:7)
+    at D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:955:9
+    at new Promise (<anonymous>)
+    at requestCallbacks.on-end (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:954:54)
+    at handleRequest (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:647:17)
+    at handleIncomingPacket (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:672:7)
+    at Socket.readFromStdout (D:\Vconekt\Scheduled\Scheduled\node_modules\vite\node_modules\esbuild\lib\main.js:600:7)
