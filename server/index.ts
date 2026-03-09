@@ -1,8 +1,13 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { addCorsHeaders } from "./security-headers";
 
 const app = express();
+
+// Enable CORS before any routes — required for Capacitor mobile app
+addCorsHeaders(app);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
