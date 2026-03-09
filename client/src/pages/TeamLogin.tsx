@@ -132,16 +132,16 @@ export default function TeamLogin() {
               <LogIn className="h-4 w-4 mr-2" />
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
-          </form>
-          
-          {/* Demo Credentials */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm font-medium text-blue-800 mb-2">Demo Team Member:</p>
-            <div className="text-sm text-blue-700 space-y-1">
-              <p>Email: khisal@test.com</p>
-              <p>Password: password123</p>
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setLocation("/team-forgot-password")}
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Forgot password?
+              </button>
             </div>
-          </div>
+          </form>
           
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">

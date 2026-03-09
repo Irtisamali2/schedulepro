@@ -55,18 +55,20 @@ export default function AppointmentDetails({
     if (propClientId) {
       return propClientId;
     }
-    
-    // Second: try to extract from URL patterns
-    const bookingMatch = location.match(/\/booking\/([^\/]+)/);
-    if (bookingMatch) {
-      return bookingMatch[1];
+
+    // Second: try to extract from URL patterns (with null check)
+    if (location) {
+      const bookingMatch = location.match(/\/booking\/([^\/]+)/);
+      if (bookingMatch) {
+        return bookingMatch[1];
+      }
+
+      const clientWebsiteMatch = location.match(/\/client-website\/([^\/]+)/);
+      if (clientWebsiteMatch) {
+        return clientWebsiteMatch[1];
+      }
     }
-    
-    const clientWebsiteMatch = location.match(/\/client-website\/([^\/]+)/);
-    if (clientWebsiteMatch) {
-      return clientWebsiteMatch[1];
-    }
-    
+
     // Fallback to localStorage
     const clientData = localStorage.getItem('clientData');
     if (clientData) {

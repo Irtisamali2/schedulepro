@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PaymentManagement from "./PaymentManagement";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Users,
+  DollarSign,
+  TrendingUp,
   Activity,
   Plus,
   Eye,
@@ -120,7 +120,7 @@ export default function SuperAdminDashboard() {
     monthlyDiscount: 0,
     monthlyEnabled: true,
     // Yearly pricing
-    yearlyPrice: 0, 
+    yearlyPrice: 0,
     yearlyDiscount: 0,
     yearlyEnabled: true,
     features: [] as string[],
@@ -132,7 +132,21 @@ export default function SuperAdminDashboard() {
     stripeProductId: ''
   });
   const [newFeature, setNewFeature] = useState('');
-  
+
+  // System SMTP state
+  const [smtpForm, setSmtpForm] = useState({
+    smtpHost: '',
+    smtpPort: 587,
+    smtpUsername: '',
+    smtpPassword: '',
+    smtpFromEmail: '',
+    smtpFromName: '',
+    smtpSecure: false,
+    smtpEnabled: false
+  });
+  const [smtpTestEmail, setSmtpTestEmail] = useState('');
+  const [smtpSaved, setSmtpSaved] = useState(false);
+
   // Review platforms state
   const [editingPlatform, setEditingPlatform] = useState<any>(null);
   const [showAddPlatformForm, setShowAddPlatformForm] = useState(false);
@@ -156,21 +170,21 @@ export default function SuperAdminDashboard() {
       const basePrice = period === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
       const discount = period === 'monthly' ? plan.monthlyDiscount : plan.yearlyDiscount;
       const enabled = period === 'monthly' ? plan.monthlyEnabled : plan.yearlyEnabled;
-      
+
       if (!enabled || basePrice === undefined) return null;
-      
+
       let price = basePrice;
       if (discount && discount > 0) {
         price = basePrice * (1 - discount / 100);
       }
       return price;
     }
-    
+
     // Handle old schema format (backwards compatibility)
     if (plan.price !== undefined) {
       return plan.price;
     }
-    
+
     return null;
   };
 
@@ -179,12 +193,12 @@ export default function SuperAdminDashboard() {
     if (plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined) {
       return period === 'monthly' ? 'month' : 'year';
     }
-    
+
     // Handle old schema format
     if (plan.billing) {
       return plan.billing.toLowerCase().replace('ly', '');
     }
-    
+
     return 'month';
   };
 
@@ -245,6 +259,75 @@ export default function SuperAdminDashboard() {
     queryFn: async () => {
       const response = await fetch('/api/review-platforms');
       if (!response.ok) throw new Error('Failed to fetch review platforms');
+      return response.json();
+    }
+  });
+
+  // System SMTP query
+  const { data: systemSmtpData } = useQuery({
+    queryKey: ['/api/admin/system-smtp'],
+    queryFn: async () => {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await fetch('/api/admin/system-smtp', {
+        headers: { 'x-user-id': u.id, 'x-user-role': u.role }
+      });
+      if (!response.ok) throw new Error('Failed to fetch system SMTP');
+      return response.json();
+    }
+  });
+
+  // Populate SMTP form when data loads
+  useEffect(() => {
+    if (systemSmtpData) {
+      const d = systemSmtpData as any;
+      setSmtpForm({
+        smtpHost: d.smtpHost || '',
+        smtpPort: d.smtpPort || 587,
+        smtpUsername: d.smtpUsername || '',
+        smtpPassword: '',
+        smtpFromEmail: d.smtpFromEmail || '',
+        smtpFromName: d.smtpFromName || '',
+        smtpSecure: d.smtpSecure || false,
+        smtpEnabled: d.smtpEnabled || false
+      });
+    }
+  }, [systemSmtpData]);
+
+  const updateSystemSmtpMutation = useMutation({
+    mutationFn: async (smtpData: typeof smtpForm) => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await fetch('/api/admin/system-smtp', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+          'x-user-role': user.role
+        },
+        body: JSON.stringify(smtpData)
+      });
+      if (!response.ok) throw new Error('Failed to update system SMTP');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/system-smtp'] });
+      setSmtpSaved(true);
+      setTimeout(() => setSmtpSaved(false), 3000);
+    }
+  });
+
+  const testSystemSmtpMutation = useMutation({
+    mutationFn: async (testEmail: string) => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await fetch('/api/admin/system-smtp/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+          'x-user-role': user.role
+        },
+        body: JSON.stringify({ testEmail })
+      });
+      if (!response.ok) throw new Error('Failed to send test email');
       return response.json();
     }
   });
@@ -327,7 +410,7 @@ export default function SuperAdminDashboard() {
         monthlyPrice: 0,
         monthlyDiscount: 0,
         monthlyEnabled: true,
-        yearlyPrice: 0, 
+        yearlyPrice: 0,
         yearlyDiscount: 0,
         yearlyEnabled: true,
         features: [],
@@ -385,12 +468,12 @@ export default function SuperAdminDashboard() {
           features: planData.features
         }),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to generate Stripe product');
       }
-      
+
       return response.json();
     },
     onError: (error: any) => {
@@ -408,12 +491,12 @@ export default function SuperAdminDashboard() {
         },
         body: JSON.stringify({ clientId, planId, customerEmail }),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to create subscription');
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
@@ -552,7 +635,7 @@ export default function SuperAdminDashboard() {
   const getStatusBadge = (status: string) => {
     const colors = {
       ACTIVE: "bg-green-100 text-green-800",
-      TRIAL: "bg-yellow-100 text-yellow-800", 
+      TRIAL: "bg-yellow-100 text-yellow-800",
       INACTIVE: "bg-gray-100 text-gray-800",
       CANCELLED: "bg-red-100 text-red-800"
     };
@@ -567,24 +650,23 @@ export default function SuperAdminDashboard() {
     { id: "onboarding", label: "Onboarding", icon: UserPlus },
     { id: "leads", label: "Leads", icon: Mail },
     { id: "reviews", label: "Reviews", icon: Star },
+    { id: "email", label: "Email / SMTP", icon: Settings },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex relative">
       {/* Mobile Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-      
+
       {/* Sidebar */}
-      <aside className={`bg-white shadow-lg transition-all duration-300 ${
-        isSidebarOpen ? 'w-64' : 'w-16 lg:w-16'
-      } flex flex-col fixed lg:relative h-full z-50 lg:z-auto ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      <aside className={`bg-white shadow-lg transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16 lg:w-16'
+        } flex flex-col fixed lg:relative h-full z-50 lg:z-auto ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
         <div className="p-4 border-b">
           <div className="flex items-center">
             <Button
@@ -634,7 +716,7 @@ export default function SuperAdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col ml-0 lg:ml-16">
+      <div className="flex-1 flex flex-col ml-0 lg:ml-16 min-w-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b">
           <div className="px-6 py-4">
@@ -665,1323 +747,1323 @@ export default function SuperAdminDashboard() {
 
             {activeView === "overview" && (
               <div className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ${analyticsLoading ? '...' : analytics?.totalMRR?.toFixed(2) || '0.00'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Monthly recurring revenue</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {clientsLoading ? '...' : clients.length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Active businesses</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {clientsLoading ? '...' : clients.filter(c => c.status === 'ACTIVE').length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Paying customers</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analyticsLoading ? '...' : analytics?.churnRate?.toFixed(1) || '0.0'}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">Monthly churn</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Clients</CardTitle>
-                  <CardDescription>Latest business signups</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {clients.slice(0, 5).map((client) => (
-                      <div key={client.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{client.businessName}</p>
-                          <p className="text-sm text-gray-600">{client.contactPerson}</p>
-                        </div>
-                        <Badge className={getStatusBadge(client.status)}>
-                          {client.status}
-                        </Badge>
+                {/* Stats Cards */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        ${analyticsLoading ? '...' : analytics?.totalMRR?.toFixed(2) || '0.00'}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <p className="text-xs text-muted-foreground">Monthly recurring revenue</p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Breakdown</CardTitle>
-                  <CardDescription>Monthly revenue by plan</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {plans.map((plan) => {
-                      const planClients = clients.filter(c => c.plan === plan.name && c.status === 'ACTIVE');
-                      const monthlyPrice = getDisplayPrice(plan, 'monthly') || 0;
-                      const planRevenue = planClients.length * monthlyPrice;
-                      return (
-                        <div key={plan.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{plan.name}</p>
-                            <p className="text-sm text-gray-600">{planClients.length} clients</p>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {clientsLoading ? '...' : clients.length}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Active businesses</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {clientsLoading ? '...' : clients.filter(c => c.status === 'ACTIVE').length}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Paying customers</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+                      <Activity className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {analyticsLoading ? '...' : analytics?.churnRate?.toFixed(1) || '0.0'}%
+                      </div>
+                      <p className="text-xs text-muted-foreground">Monthly churn</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Activity */}
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Clients</CardTitle>
+                      <CardDescription>Latest business signups</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {clients.slice(0, 5).map((client) => (
+                          <div key={client.id} className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">{client.businessName}</p>
+                              <p className="text-sm text-gray-600">{client.contactPerson}</p>
+                            </div>
+                            <Badge className={getStatusBadge(client.status)}>
+                              {client.status}
+                            </Badge>
                           </div>
-                          <div className="text-right">
-                            <p className="font-medium">${planRevenue.toFixed(2)}</p>
-                            <p className="text-sm text-gray-600">monthly</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Revenue Breakdown</CardTitle>
+                      <CardDescription>Monthly revenue by plan</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {plans.map((plan) => {
+                          const planClients = clients.filter(c => c.plan === plan.name && c.status === 'ACTIVE');
+                          const monthlyPrice = getDisplayPrice(plan, 'monthly') || 0;
+                          const planRevenue = planClients.length * monthlyPrice;
+                          return (
+                            <div key={plan.id} className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{plan.name}</p>
+                                <p className="text-sm text-gray-600">{planClients.length} clients</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium">${planRevenue.toFixed(2)}</p>
+                                <p className="text-sm text-gray-600">monthly</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
 
             {activeView === "clients" && (
               <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Client Management</h2>
-              <Sheet open={isAddingClient} onOpenChange={setIsAddingClient}>
-                <SheetTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Client
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                  <SheetHeader>
-                    <SheetTitle>Add New Client</SheetTitle>
-                    <SheetDescription>
-                      Create a new client account and assign them to a plan
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="businessName">Business Name *</Label>
-                        <Input
-                          id="businessName"
-                          value={clientForm.businessName}
-                          onChange={(e) => setClientForm({ ...clientForm, businessName: e.target.value })}
-                          placeholder="Business Name"
-                        />
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Client Management</h2>
+                  <Sheet open={isAddingClient} onOpenChange={setIsAddingClient}>
+                    <SheetTrigger asChild>
+                      <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Client
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                      <SheetHeader>
+                        <SheetTitle>Add New Client</SheetTitle>
+                        <SheetDescription>
+                          Create a new client account and assign them to a plan
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="businessName">Business Name *</Label>
+                            <Input
+                              id="businessName"
+                              value={clientForm.businessName}
+                              onChange={(e) => setClientForm({ ...clientForm, businessName: e.target.value })}
+                              placeholder="Business Name"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="contactPerson">Contact Person *</Label>
+                            <Input
+                              id="contactPerson"
+                              value={clientForm.contactPerson}
+                              onChange={(e) => setClientForm({ ...clientForm, contactPerson: e.target.value })}
+                              placeholder="Full Name"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={clientForm.email}
+                            onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                            placeholder="business@example.com"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input
+                              id="phone"
+                              value={clientForm.phone}
+                              onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
+                              placeholder="(555) 123-4567"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="industry">Industry</Label>
+                            <select
+                              id="industry"
+                              className="w-full p-2 border rounded-md"
+                              value={clientForm.industry}
+                              onChange={(e) => setClientForm({ ...clientForm, industry: e.target.value })}
+                            >
+                              <option value="">Select Industry</option>
+                              <option value="Technology">Technology</option>
+                              <option value="Consulting">Consulting</option>
+                              <option value="Retail">Retail</option>
+                              <option value="Healthcare">Healthcare</option>
+                              <option value="Education">Education</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="businessAddress">Business Address</Label>
+                          <Input
+                            id="businessAddress"
+                            value={clientForm.businessAddress}
+                            onChange={(e) => setClientForm({ ...clientForm, businessAddress: e.target.value })}
+                            placeholder="123 Main St, City, State"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="planId">Plan *</Label>
+                            <select
+                              id="planId"
+                              className="w-full p-2 border rounded-md"
+                              value={clientForm.planId}
+                              onChange={(e) => setClientForm({ ...clientForm, planId: e.target.value })}
+                            >
+                              <option value="">Select Plan</option>
+                              {plans.map((plan) => (
+                                <option key={plan.id} value={plan.id}>
+                                  {plan.name} - {formatPlanPrice(plan)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <Label htmlFor="status">Status</Label>
+                            <select
+                              id="status"
+                              className="w-full p-2 border rounded-md"
+                              value={clientForm.status}
+                              onChange={(e) => setClientForm({ ...clientForm, status: e.target.value })}
+                            >
+                              <option value="TRIAL">Trial</option>
+                              <option value="ACTIVE">Active</option>
+                              <option value="INACTIVE">Inactive</option>
+                              <option value="CANCELLED">Cancelled</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="contactPerson">Contact Person *</Label>
-                        <Input
-                          id="contactPerson"
-                          value={clientForm.contactPerson}
-                          onChange={(e) => setClientForm({ ...clientForm, contactPerson: e.target.value })}
-                          placeholder="Full Name"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={clientForm.email}
-                        onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                        placeholder="business@example.com"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input
-                          id="phone"
-                          value={clientForm.phone}
-                          onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
-                          placeholder="(555) 123-4567"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="industry">Industry</Label>
-                        <select
-                          id="industry"
-                          className="w-full p-2 border rounded-md"
-                          value={clientForm.industry}
-                          onChange={(e) => setClientForm({ ...clientForm, industry: e.target.value })}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => createClientMutation.mutate(clientForm)}
+                          disabled={createClientMutation.isPending || !clientForm.businessName || !clientForm.contactPerson || !clientForm.email || !clientForm.planId}
                         >
-                          <option value="">Select Industry</option>
-                          <option value="Technology">Technology</option>
-                          <option value="Consulting">Consulting</option>
-                          <option value="Retail">Retail</option>
-                          <option value="Healthcare">Healthcare</option>
-                          <option value="Education">Education</option>
-                          <option value="Other">Other</option>
-                        </select>
+                          {createClientMutation.isPending ? "Creating..." : "Create Client"}
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsAddingClient(false)}>
+                          Cancel
+                        </Button>
                       </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="businessAddress">Business Address</Label>
-                      <Input
-                        id="businessAddress"
-                        value={clientForm.businessAddress}
-                        onChange={(e) => setClientForm({ ...clientForm, businessAddress: e.target.value })}
-                        placeholder="123 Main St, City, State"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="planId">Plan *</Label>
-                        <select
-                          id="planId"
-                          className="w-full p-2 border rounded-md"
-                          value={clientForm.planId}
-                          onChange={(e) => setClientForm({ ...clientForm, planId: e.target.value })}
-                        >
-                          <option value="">Select Plan</option>
-                          {plans.map((plan) => (
-                            <option key={plan.id} value={plan.id}>
-                              {plan.name} - {formatPlanPrice(plan)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <Label htmlFor="status">Status</Label>
-                        <select
-                          id="status"
-                          className="w-full p-2 border rounded-md"
-                          value={clientForm.status}
-                          onChange={(e) => setClientForm({ ...clientForm, status: e.target.value })}
-                        >
-                          <option value="TRIAL">Trial</option>
-                          <option value="ACTIVE">Active</option>
-                          <option value="INACTIVE">Inactive</option>
-                          <option value="CANCELLED">Cancelled</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={() => createClientMutation.mutate(clientForm)}
-                      disabled={createClientMutation.isPending || !clientForm.businessName || !clientForm.contactPerson || !clientForm.email || !clientForm.planId}
-                    >
-                      {createClientMutation.isPending ? "Creating..." : "Create Client"}
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsAddingClient(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Business
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Contact
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Plan
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Revenue
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {clients.map((client) => (
-                        <tr key={client.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {client.businessName}
-                              </div>
-                              <div className="text-sm text-gray-500">{client.email}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {client.contactPerson}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {client.plan}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge className={getStatusBadge(client.status)}>
-                              {client.status}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${client.monthlyRevenue.toFixed(2)}/mo
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <Sheet>
-                                <SheetTrigger asChild>
-                                  <Button variant="ghost" size="sm" onClick={() => setSelectedClient(client)}>
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
-                                </SheetTrigger>
-                                <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                                  <SheetHeader>
-                                    <SheetTitle>Client Details</SheetTitle>
-                                    <SheetDescription>
-                                      View and manage client information
-                                    </SheetDescription>
-                                  </SheetHeader>
-                                  {selectedClient && (
-                                    <div className="space-y-4 py-4">
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <Label>Business Name</Label>
-                                          <p className="font-medium">{selectedClient.businessName}</p>
-                                        </div>
-                                        <div>
-                                          <Label>Contact Person</Label>
-                                          <p className="font-medium">{selectedClient.contactPerson}</p>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <Label>Email</Label>
-                                        <p className="font-medium">{selectedClient.email}</p>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <Label>Plan</Label>
-                                          <p className="font-medium">{selectedClient.plan}</p>
-                                        </div>
-                                        <div>
-                                          <Label>Status</Label>
-                                          <Badge className={getStatusBadge(selectedClient.status)}>
-                                            {selectedClient.status}
-                                          </Badge>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <Label>Monthly Revenue</Label>
-                                        <p className="font-medium">${selectedClient.monthlyRevenue.toFixed(2)}</p>
-                                      </div>
-                                      <div>
-                                        <Label>Created</Label>
-                                        <p className="font-medium">{new Date(selectedClient.createdAt).toLocaleDateString()}</p>
-                                      </div>
-                                      <div>
-                                        <Label>Last Login</Label>
-                                        <p className="font-medium">
-                                          {selectedClient.lastLogin 
-                                            ? new Date(selectedClient.lastLogin).toLocaleDateString()
-                                            : 'Never'
-                                          }
-                                        </p>
-                                      </div>
-                                      
-                                      {/* Stripe Subscription Management */}
-                                      <div className="border-t pt-4 mt-4">
-                                        <h4 className="font-semibold mb-3 flex items-center">
-                                          <CreditCard className="w-4 h-4 mr-2" />
-                                          Billing & Subscription
-                                        </h4>
-                                        <div className="space-y-3">
-                                          <div className="flex justify-between items-center">
-                                            <Label>Subscription Status</Label>
-                                            <Badge className={selectedClient.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                                              {selectedClient.status === 'ACTIVE' ? 'Subscribed' : 'Trial/Inactive'}
-                                            </Badge>
-                                          </div>
-                                          
-                                          <div className="flex justify-between items-center">
-                                            <Label>Current Plan</Label>
-                                            <span className="font-medium">{selectedClient.plan}</span>
-                                          </div>
-                                          
-                                          <div className="flex space-x-2 mt-4">
-                                            <Button 
-                                              size="sm" 
-                                              onClick={() => {
-                                                const plan = plans.find(p => p.id === selectedClient.planId);
-                                                if (plan && plan.stripePriceId) {
-                                                  createSubscriptionMutation.mutate({
-                                                    clientId: selectedClient.id,
-                                                    planId: selectedClient.planId!,
-                                                    customerEmail: selectedClient.email
-                                                  });
-                                                } else {
-                                                  alert('This plan does not have Stripe pricing configured');
-                                                }
-                                              }}
-                                              disabled={createSubscriptionMutation.isPending || selectedClient.status === 'ACTIVE'}
-                                              data-testid={`button-charge-client-${selectedClient.id}`}
-                                            >
-                                              {createSubscriptionMutation.isPending ? 'Creating...' : 'Start Subscription'}
-                                            </Button>
-                                            
-                                            {selectedClient.status === 'ACTIVE' && (
-                                              <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => {
-                                                  if (confirm(`Cancel subscription for ${selectedClient.businessName}?`)) {
-                                                    // TODO: Implement subscription cancellation
-                                                    alert('Subscription cancellation feature coming soon');
-                                                  }
-                                                }}
-                                              >
-                                                Cancel Subscription
-                                              </Button>
-                                            )}
-                                          </div>
-                                          
-                                          <Alert>
-                                            <AlertCircle className="h-4 w-4" />
-                                            <AlertDescription className="text-xs">
-                                              Starting a subscription will send a payment link to the client's email.
-                                              They must complete payment to activate their subscription.
-                                            </AlertDescription>
-                                          </Alert>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </SheetContent>
-                              </Sheet>
-                              
-                              <Sheet>
-                                <SheetTrigger asChild>
-                                  <Button variant="ghost" size="sm" onClick={() => {
-                                    setSelectedClient(client);
-                                    setClientForm({
-                                      businessName: client.businessName,
-                                      contactPerson: client.contactPerson,
-                                      email: client.email,
-                                      phone: '',
-                                      businessAddress: '',
-                                      industry: '',
-                                      planId: client.planId || '',
-                                      status: client.status
-                                    });
-                                  }}>
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                </SheetTrigger>
-                                <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                                  <SheetHeader>
-                                    <SheetTitle>Edit Client</SheetTitle>
-                                    <SheetDescription>
-                                      Update client information and settings
-                                    </SheetDescription>
-                                  </SheetHeader>
-                                  {selectedClient && (
-                                    <div className="space-y-4 py-4">
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <Label htmlFor="edit-businessName">Business Name *</Label>
-                                          <Input
-                                            id="edit-businessName"
-                                            value={clientForm.businessName}
-                                            onChange={(e) => setClientForm({ ...clientForm, businessName: e.target.value })}
-                                          />
-                                        </div>
-                                        <div>
-                                          <Label htmlFor="edit-contactPerson">Contact Person *</Label>
-                                          <Input
-                                            id="edit-contactPerson"
-                                            value={clientForm.contactPerson}
-                                            onChange={(e) => setClientForm({ ...clientForm, contactPerson: e.target.value })}
-                                          />
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <Label htmlFor="edit-email">Email *</Label>
-                                        <Input
-                                          id="edit-email"
-                                          type="email"
-                                          value={clientForm.email}
-                                          onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                                        />
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <Label htmlFor="edit-planId">Plan *</Label>
-                                          <select
-                                            id="edit-planId"
-                                            className="w-full p-2 border rounded-md"
-                                            value={clientForm.planId}
-                                            onChange={(e) => setClientForm({ ...clientForm, planId: e.target.value })}
-                                          >
-                                            {plans.map((plan) => (
-                                              <option key={plan.id} value={plan.id}>
-                                                {plan.name} - {formatPlanPrice(plan)}
-                                              </option>
-                                            ))}
-                                          </select>
-                                        </div>
-                                        <div>
-                                          <Label htmlFor="edit-status">Status</Label>
-                                          <select
-                                            id="edit-status"
-                                            className="w-full p-2 border rounded-md"
-                                            value={clientForm.status}
-                                            onChange={(e) => setClientForm({ ...clientForm, status: e.target.value })}
-                                          >
-                                            <option value="TRIAL">Trial</option>
-                                            <option value="ACTIVE">Active</option>
-                                            <option value="INACTIVE">Inactive</option>
-                                            <option value="CANCELLED">Cancelled</option>
-                                          </select>
-                                        </div>
-                                      </div>
-                                      <div className="flex gap-2">
-                                        <Button 
-                                          onClick={() => updateClientMutation.mutate({
-                                            id: selectedClient.id,
-                                            updates: clientForm
-                                          })}
-                                          disabled={updateClientMutation.isPending}
-                                        >
-                                          {updateClientMutation.isPending ? "Updating..." : "Update Client"}
-                                        </Button>
-                                        <Button variant="outline" onClick={() => setSelectedClient(null)}>
-                                          Cancel
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </SheetContent>
-                              </Sheet>
-                              
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => {
-                                  if (confirm(`Are you sure you want to delete ${client.businessName}?`)) {
-                                    deleteClientMutation.mutate(client.id);
-                                  }
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                    </SheetContent>
+                  </Sheet>
                 </div>
-              </CardContent>
-            </Card>
+
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="w-full overflow-x-auto pb-4">
+                      <table className="w-full min-w-[800px]">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Business
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Contact
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Plan
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Revenue
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {clients.map((client) => (
+                            <tr key={client.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {client.businessName}
+                                  </div>
+                                  <div className="text-sm text-gray-500">{client.email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {client.contactPerson}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {client.plan}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Badge className={getStatusBadge(client.status)}>
+                                  {client.status}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${client.monthlyRevenue.toFixed(2)}/mo
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <Sheet>
+                                    <SheetTrigger asChild>
+                                      <Button variant="ghost" size="sm" onClick={() => setSelectedClient(client)}>
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                    </SheetTrigger>
+                                    <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                                      <SheetHeader>
+                                        <SheetTitle>Client Details</SheetTitle>
+                                        <SheetDescription>
+                                          View and manage client information
+                                        </SheetDescription>
+                                      </SheetHeader>
+                                      {selectedClient && (
+                                        <div className="space-y-4 py-4">
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <Label>Business Name</Label>
+                                              <p className="font-medium">{selectedClient.businessName}</p>
+                                            </div>
+                                            <div>
+                                              <Label>Contact Person</Label>
+                                              <p className="font-medium">{selectedClient.contactPerson}</p>
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <Label>Email</Label>
+                                            <p className="font-medium">{selectedClient.email}</p>
+                                          </div>
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <Label>Plan</Label>
+                                              <p className="font-medium">{selectedClient.plan}</p>
+                                            </div>
+                                            <div>
+                                              <Label>Status</Label>
+                                              <Badge className={getStatusBadge(selectedClient.status)}>
+                                                {selectedClient.status}
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <Label>Monthly Revenue</Label>
+                                            <p className="font-medium">${selectedClient.monthlyRevenue.toFixed(2)}</p>
+                                          </div>
+                                          <div>
+                                            <Label>Created</Label>
+                                            <p className="font-medium">{new Date(selectedClient.createdAt).toLocaleDateString()}</p>
+                                          </div>
+                                          <div>
+                                            <Label>Last Login</Label>
+                                            <p className="font-medium">
+                                              {selectedClient.lastLogin
+                                                ? new Date(selectedClient.lastLogin).toLocaleDateString()
+                                                : 'Never'
+                                              }
+                                            </p>
+                                          </div>
+
+                                          {/* Stripe Subscription Management */}
+                                          <div className="border-t pt-4 mt-4">
+                                            <h4 className="font-semibold mb-3 flex items-center">
+                                              <CreditCard className="w-4 h-4 mr-2" />
+                                              Billing & Subscription
+                                            </h4>
+                                            <div className="space-y-3">
+                                              <div className="flex justify-between items-center">
+                                                <Label>Subscription Status</Label>
+                                                <Badge className={selectedClient.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                                  {selectedClient.status === 'ACTIVE' ? 'Subscribed' : 'Trial/Inactive'}
+                                                </Badge>
+                                              </div>
+
+                                              <div className="flex justify-between items-center">
+                                                <Label>Current Plan</Label>
+                                                <span className="font-medium">{selectedClient.plan}</span>
+                                              </div>
+
+                                              <div className="flex space-x-2 mt-4">
+                                                <Button
+                                                  size="sm"
+                                                  onClick={() => {
+                                                    const plan = plans.find(p => p.id === selectedClient.planId);
+                                                    if (plan && plan.stripePriceId) {
+                                                      createSubscriptionMutation.mutate({
+                                                        clientId: selectedClient.id,
+                                                        planId: selectedClient.planId!,
+                                                        customerEmail: selectedClient.email
+                                                      });
+                                                    } else {
+                                                      alert('This plan does not have Stripe pricing configured');
+                                                    }
+                                                  }}
+                                                  disabled={createSubscriptionMutation.isPending || selectedClient.status === 'ACTIVE'}
+                                                  data-testid={`button-charge-client-${selectedClient.id}`}
+                                                >
+                                                  {createSubscriptionMutation.isPending ? 'Creating...' : 'Start Subscription'}
+                                                </Button>
+
+                                                {selectedClient.status === 'ACTIVE' && (
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                      if (confirm(`Cancel subscription for ${selectedClient.businessName}?`)) {
+                                                        // TODO: Implement subscription cancellation
+                                                        alert('Subscription cancellation feature coming soon');
+                                                      }
+                                                    }}
+                                                  >
+                                                    Cancel Subscription
+                                                  </Button>
+                                                )}
+                                              </div>
+
+                                              <Alert>
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription className="text-xs">
+                                                  Starting a subscription will send a payment link to the client's email.
+                                                  They must complete payment to activate their subscription.
+                                                </AlertDescription>
+                                              </Alert>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </SheetContent>
+                                  </Sheet>
+
+                                  <Sheet>
+                                    <SheetTrigger asChild>
+                                      <Button variant="ghost" size="sm" onClick={() => {
+                                        setSelectedClient(client);
+                                        setClientForm({
+                                          businessName: client.businessName,
+                                          contactPerson: client.contactPerson,
+                                          email: client.email,
+                                          phone: '',
+                                          businessAddress: '',
+                                          industry: '',
+                                          planId: client.planId || '',
+                                          status: client.status
+                                        });
+                                      }}>
+                                        <Edit className="w-4 h-4" />
+                                      </Button>
+                                    </SheetTrigger>
+                                    <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                                      <SheetHeader>
+                                        <SheetTitle>Edit Client</SheetTitle>
+                                        <SheetDescription>
+                                          Update client information and settings
+                                        </SheetDescription>
+                                      </SheetHeader>
+                                      {selectedClient && (
+                                        <div className="space-y-4 py-4">
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <Label htmlFor="edit-businessName">Business Name *</Label>
+                                              <Input
+                                                id="edit-businessName"
+                                                value={clientForm.businessName}
+                                                onChange={(e) => setClientForm({ ...clientForm, businessName: e.target.value })}
+                                              />
+                                            </div>
+                                            <div>
+                                              <Label htmlFor="edit-contactPerson">Contact Person *</Label>
+                                              <Input
+                                                id="edit-contactPerson"
+                                                value={clientForm.contactPerson}
+                                                onChange={(e) => setClientForm({ ...clientForm, contactPerson: e.target.value })}
+                                              />
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <Label htmlFor="edit-email">Email *</Label>
+                                            <Input
+                                              id="edit-email"
+                                              type="email"
+                                              value={clientForm.email}
+                                              onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                                            />
+                                          </div>
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <Label htmlFor="edit-planId">Plan *</Label>
+                                              <select
+                                                id="edit-planId"
+                                                className="w-full p-2 border rounded-md"
+                                                value={clientForm.planId}
+                                                onChange={(e) => setClientForm({ ...clientForm, planId: e.target.value })}
+                                              >
+                                                {plans.map((plan) => (
+                                                  <option key={plan.id} value={plan.id}>
+                                                    {plan.name} - {formatPlanPrice(plan)}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                            <div>
+                                              <Label htmlFor="edit-status">Status</Label>
+                                              <select
+                                                id="edit-status"
+                                                className="w-full p-2 border rounded-md"
+                                                value={clientForm.status}
+                                                onChange={(e) => setClientForm({ ...clientForm, status: e.target.value })}
+                                              >
+                                                <option value="TRIAL">Trial</option>
+                                                <option value="ACTIVE">Active</option>
+                                                <option value="INACTIVE">Inactive</option>
+                                                <option value="CANCELLED">Cancelled</option>
+                                              </select>
+                                            </div>
+                                          </div>
+                                          <div className="flex gap-2">
+                                            <Button
+                                              onClick={() => updateClientMutation.mutate({
+                                                id: selectedClient.id,
+                                                updates: clientForm
+                                              })}
+                                              disabled={updateClientMutation.isPending}
+                                            >
+                                              {updateClientMutation.isPending ? "Updating..." : "Update Client"}
+                                            </Button>
+                                            <Button variant="outline" onClick={() => setSelectedClient(null)}>
+                                              Cancel
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </SheetContent>
+                                  </Sheet>
+
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm(`Are you sure you want to delete ${client.businessName}?`)) {
+                                        deleteClientMutation.mutate(client.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
             {activeView === "plans" && (
               <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Plan Management</h2>
-              <Sheet open={isAddingPlan} onOpenChange={setIsAddingPlan}>
-                <SheetTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Plan
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                  <SheetHeader>
-                    <SheetTitle>Create New Plan</SheetTitle>
-                    <SheetDescription>
-                      Design a new subscription plan for your platform
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="planName">Plan Name *</Label>
-                        <Input
-                          id="planName"
-                          value={planForm.name}
-                          onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                          placeholder="e.g., Starter, Pro, Enterprise"
-                        />
-                      </div>
-                      <div>
-                        <Label>Pricing Structure</Label>
-                        <p className="text-sm text-gray-500 mb-2">Configure monthly and/or yearly pricing</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="maxUsers">Max Users *</Label>
-                        <Input
-                          id="maxUsers"
-                          type="number"
-                          min="1"
-                          value={planForm.maxUsers}
-                          onChange={(e) => setPlanForm({ ...planForm, maxUsers: parseInt(e.target.value) || 1 })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="storageGB">Storage (GB) *</Label>
-                        <Input
-                          id="storageGB"
-                          type="number"
-                          min="1"
-                          value={planForm.storageGB}
-                          onChange={(e) => setPlanForm({ ...planForm, storageGB: parseInt(e.target.value) || 1 })}
-                        />
-                      </div>
-                    </div>
-                    {/* Monthly Pricing Section */}
-                    <div className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-sm">Monthly Billing</h4>
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={planForm.monthlyEnabled}
-                            onChange={(e) => setPlanForm({ ...planForm, monthlyEnabled: e.target.checked })}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-sm">Enable Monthly</span>
-                        </label>
-                      </div>
-                      {planForm.monthlyEnabled && (
-                        <div className="grid grid-cols-2 gap-3">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Plan Management</h2>
+                  <Sheet open={isAddingPlan} onOpenChange={setIsAddingPlan}>
+                    <SheetTrigger asChild>
+                      <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Plan
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                      <SheetHeader>
+                        <SheetTitle>Create New Plan</SheetTitle>
+                        <SheetDescription>
+                          Design a new subscription plan for your platform
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="monthlyPrice">Monthly Price *</Label>
+                            <Label htmlFor="planName">Plan Name *</Label>
                             <Input
-                              id="monthlyPrice"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={planForm.monthlyPrice}
-                              onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseFloat(e.target.value) || 0 })}
-                              placeholder="29.99"
+                              id="planName"
+                              value={planForm.name}
+                              onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
+                              placeholder="e.g., Starter, Pro, Enterprise"
                             />
                           </div>
                           <div>
-                            <Label htmlFor="monthlyDiscount">Discount %</Label>
+                            <Label>Pricing Structure</Label>
+                            <p className="text-sm text-gray-500 mb-2">Configure monthly and/or yearly pricing</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="maxUsers">Max Users *</Label>
                             <Input
-                              id="monthlyDiscount"
+                              id="maxUsers"
                               type="number"
-                              min="0"
-                              max="100"
-                              step="1"
-                              value={planForm.monthlyDiscount}
-                              onChange={(e) => setPlanForm({ ...planForm, monthlyDiscount: parseFloat(e.target.value) || 0 })}
-                              placeholder="0"
+                              min="1"
+                              value={planForm.maxUsers}
+                              onChange={(e) => setPlanForm({ ...planForm, maxUsers: parseInt(e.target.value) || 1 })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="storageGB">Storage (GB) *</Label>
+                            <Input
+                              id="storageGB"
+                              type="number"
+                              min="1"
+                              value={planForm.storageGB}
+                              onChange={(e) => setPlanForm({ ...planForm, storageGB: parseInt(e.target.value) || 1 })}
                             />
                           </div>
                         </div>
-                      )}
-                    </div>
+                        {/* Monthly Pricing Section */}
+                        <div className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm">Monthly Billing</h4>
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={planForm.monthlyEnabled}
+                                onChange={(e) => setPlanForm({ ...planForm, monthlyEnabled: e.target.checked })}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm">Enable Monthly</span>
+                            </label>
+                          </div>
+                          {planForm.monthlyEnabled && (
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label htmlFor="monthlyPrice">Monthly Price *</Label>
+                                <Input
+                                  id="monthlyPrice"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={planForm.monthlyPrice}
+                                  onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseFloat(e.target.value) || 0 })}
+                                  placeholder="29.99"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="monthlyDiscount">Discount %</Label>
+                                <Input
+                                  id="monthlyDiscount"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="1"
+                                  value={planForm.monthlyDiscount}
+                                  onChange={(e) => setPlanForm({ ...planForm, monthlyDiscount: parseFloat(e.target.value) || 0 })}
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
-                    {/* Yearly Pricing Section */}
-                    <div className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-sm">Yearly Billing</h4>
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={planForm.yearlyEnabled}
-                            onChange={(e) => setPlanForm({ ...planForm, yearlyEnabled: e.target.checked })}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-sm">Enable Yearly</span>
-                        </label>
-                      </div>
-                      {planForm.yearlyEnabled && (
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="yearlyPrice">Yearly Price *</Label>
-                            <Input
-                              id="yearlyPrice"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={planForm.yearlyPrice}
-                              onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseFloat(e.target.value) || 0 })}
-                              placeholder="299.99"
-                            />
+                        {/* Yearly Pricing Section */}
+                        <div className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm">Yearly Billing</h4>
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={planForm.yearlyEnabled}
+                                onChange={(e) => setPlanForm({ ...planForm, yearlyEnabled: e.target.checked })}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm">Enable Yearly</span>
+                            </label>
                           </div>
-                          <div>
-                            <Label htmlFor="yearlyDiscount">Discount %</Label>
-                            <Input
-                              id="yearlyDiscount"
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="1"
-                              value={planForm.yearlyDiscount}
-                              onChange={(e) => setPlanForm({ ...planForm, yearlyDiscount: parseFloat(e.target.value) || 0 })}
-                              placeholder="0"
-                            />
-                          </div>
+                          {planForm.yearlyEnabled && (
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label htmlFor="yearlyPrice">Yearly Price *</Label>
+                                <Input
+                                  id="yearlyPrice"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={planForm.yearlyPrice}
+                                  onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseFloat(e.target.value) || 0 })}
+                                  placeholder="299.99"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="yearlyDiscount">Discount %</Label>
+                                <Input
+                                  id="yearlyDiscount"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="1"
+                                  value={planForm.yearlyDiscount}
+                                  onChange={(e) => setPlanForm({ ...planForm, yearlyDiscount: parseFloat(e.target.value) || 0 })}
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Price Preview */}
-                    {(planForm.monthlyEnabled || planForm.yearlyEnabled) && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <h5 className="font-semibold text-sm mb-2 text-blue-800">Price Preview</h5>
-                        {planForm.monthlyEnabled && (
-                          <p className="text-sm text-blue-700">
-                            Monthly: ${planForm.monthlyPrice} 
-                            {planForm.monthlyDiscount > 0 && (
-                              <span> (${(planForm.monthlyPrice * (1 - planForm.monthlyDiscount / 100)).toFixed(2)} after {planForm.monthlyDiscount}% discount)</span>
+                        {/* Price Preview */}
+                        {(planForm.monthlyEnabled || planForm.yearlyEnabled) && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <h5 className="font-semibold text-sm mb-2 text-blue-800">Price Preview</h5>
+                            {planForm.monthlyEnabled && (
+                              <p className="text-sm text-blue-700">
+                                Monthly: ${planForm.monthlyPrice}
+                                {planForm.monthlyDiscount > 0 && (
+                                  <span> (${(planForm.monthlyPrice * (1 - planForm.monthlyDiscount / 100)).toFixed(2)} after {planForm.monthlyDiscount}% discount)</span>
+                                )}
+                              </p>
                             )}
-                          </p>
-                        )}
-                        {planForm.yearlyEnabled && (
-                          <p className="text-sm text-blue-700">
-                            Yearly: ${planForm.yearlyPrice}
-                            {planForm.yearlyDiscount > 0 && (
-                              <span> (${(planForm.yearlyPrice * (1 - planForm.yearlyDiscount / 100)).toFixed(2)} after {planForm.yearlyDiscount}% discount)</span>
+                            {planForm.yearlyEnabled && (
+                              <p className="text-sm text-blue-700">
+                                Yearly: ${planForm.yearlyPrice}
+                                {planForm.yearlyDiscount > 0 && (
+                                  <span> (${(planForm.yearlyPrice * (1 - planForm.yearlyDiscount / 100)).toFixed(2)} after {planForm.yearlyDiscount}% discount)</span>
+                                )}
+                              </p>
                             )}
-                          </p>
+                          </div>
                         )}
-                      </div>
-                    )}
-                    <div>
-                      <Label>Features</Label>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Input
-                            value={newFeature}
-                            onChange={(e) => setNewFeature(e.target.value)}
-                            placeholder="Add a feature..."
-                            onKeyPress={(e) => e.key === 'Enter' && handleAddFeature()}
-                          />
-                          <Button type="button" onClick={handleAddFeature} size="sm">
-                            Add
-                          </Button>
-                        </div>
-                        <div className="space-y-1">
-                          {planForm.features.map((feature, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <span className="text-sm">{feature}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveFeature(index)}
-                              >
-                                <Trash2 className="w-3 h-3" />
+                        <div>
+                          <Label>Features</Label>
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                value={newFeature}
+                                onChange={(e) => setNewFeature(e.target.value)}
+                                placeholder="Add a feature..."
+                                onKeyPress={(e) => e.key === 'Enter' && handleAddFeature()}
+                              />
+                              <Button type="button" onClick={handleAddFeature} size="sm">
+                                Add
                               </Button>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stripe Integration Section */}
-                    <div className="border-t pt-4">
-                      <Label>Stripe Integration</Label>
-                      <div className="space-y-3 mt-2">
-                        <div className="grid grid-cols-1 gap-2">
-                          <label className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              name="stripeIntegration"
-                              value="none"
-                              checked={planForm.stripeIntegration === 'none'}
-                              onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
-                              className="w-4 h-4"
-                            />
-                            <span className="text-sm">No Stripe Integration</span>
-                          </label>
-                          <label className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              name="stripeIntegration"
-                              value="link_existing"
-                              checked={planForm.stripeIntegration === 'link_existing'}
-                              onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
-                              className="w-4 h-4"
-                            />
-                            <Link className="w-4 h-4" />
-                            <span className="text-sm">Link Existing Stripe Product</span>
-                          </label>
-                          <label className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              name="stripeIntegration"
-                              value="generate_new"
-                              checked={planForm.stripeIntegration === 'generate_new'}
-                              onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
-                              className="w-4 h-4"
-                            />
-                            <Wand2 className="w-4 h-4" />
-                            <span className="text-sm">Generate New Stripe Product</span>
-                          </label>
-                        </div>
-
-                        {planForm.stripeIntegration === 'link_existing' && (
-                          <div className="space-y-3 pl-6 border-l-2 border-blue-200 bg-blue-50/50 p-3 rounded">
-                            <div>
-                              <Label htmlFor="stripePriceId">Stripe Price ID *</Label>
-                              <Input
-                                id="stripePriceId"
-                                value={planForm.monthlyStripePriceId}
-                                onChange={(e) => setPlanForm({ ...planForm, monthlyStripePriceId: e.target.value })}
-                                placeholder="price_1234..."
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="stripeProductId">Stripe Product ID *</Label>
-                              <Input
-                                id="stripeProductId"
-                                value={planForm.stripeProductId}
-                                onChange={(e) => setPlanForm({ ...planForm, stripeProductId: e.target.value })}
-                                placeholder="prod_1234..."
-                                className="mt-1"
-                              />
-                            </div>
-                            <p className="text-xs text-blue-600">
-                              Enter the Stripe Price ID and Product ID from your Stripe dashboard
-                            </p>
-                          </div>
-                        )}
-
-                        {planForm.stripeIntegration === 'generate_new' && (
-                          <div className="pl-6 border-l-2 border-green-200 bg-green-50/50 p-3 rounded">
-                            <div className="flex items-center space-x-2 text-green-700">
-                              <Wand2 className="w-4 h-4" />
-                              <span className="text-sm font-medium">Auto-Generate Stripe Product</span>
-                            </div>
-                            <p className="text-xs text-green-600 mt-1">
-                              A new Stripe product and price will be automatically created based on your plan details
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={async () => {
-                        if (planForm.stripeIntegration === 'generate_new') {
-                          try {
-                            const stripeProduct = await generateStripeProductMutation.mutateAsync(planForm);
-                            const planWithStripe = {
-                              ...planForm,
-                              monthlyStripePriceId: stripeProduct.monthlyPriceId || '',
-                              yearlyStripePriceId: stripeProduct.yearlyPriceId || '',
-                              stripeProductId: stripeProduct.productId
-                            };
-                            createPlanMutation.mutate(planWithStripe);
-                          } catch (error) {
-                            // Error already handled in mutation
-                          }
-                        } else {
-                          createPlanMutation.mutate(planForm);
-                        }
-                      }}
-                      disabled={createPlanMutation.isPending || generateStripeProductMutation.isPending || !planForm.name || (planForm.monthlyPrice <= 0 && planForm.yearlyPrice <= 0)}
-                    >
-                      {generateStripeProductMutation.isPending ? "Generating..." : 
-                       createPlanMutation.isPending ? "Creating..." : "Create Plan"}
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsAddingPlan(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              {plans.map((plan) => (
-                <Card key={plan.id}>
-                  <CardHeader>
-                    <CardTitle className="flex justify-between items-center">
-                      {plan.name}
-                      <Badge className={plan.isFreeTrial ? "bg-green-100 text-green-800" : ""}>{formatPlanPrice(plan)}</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      {plan.maxUsers} users • {plan.storageGB}GB storage
-                      {plan.isFreeTrial && plan.trialDays && (
-                        <span className="text-green-600"> • {plan.trialDays} days trial</span>
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="text-sm">• {feature}</div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                      <span className="text-sm text-gray-600">
-                        {clients.filter(c => c.plan === plan.name).length} clients
-                      </span>
-                      <div className="flex space-x-2">
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={() => {
-                              setSelectedPlan(plan);
-                              setPlanForm({
-                                name: plan.name,
-                                monthlyPrice: plan.monthlyPrice || 0,
-                                monthlyDiscount: plan.monthlyDiscount || 0,
-                                monthlyEnabled: plan.monthlyEnabled !== false,
-                                yearlyPrice: plan.yearlyPrice || 0,
-                                yearlyDiscount: plan.yearlyDiscount || 0,
-                                yearlyEnabled: plan.yearlyEnabled !== false,
-                                features: [...plan.features],
-                                maxUsers: plan.maxUsers,
-                                storageGB: plan.storageGB,
-                                stripeIntegration: (plan.monthlyStripePriceId || plan.yearlyStripePriceId) ? 'link_existing' : 'none',
-                                monthlyStripePriceId: plan.monthlyStripePriceId || '',
-                                yearlyStripePriceId: plan.yearlyStripePriceId || '',
-                                stripeProductId: plan.stripeProductId || ''
-                              });
-                            }}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent side="right" className="w-[400px] sm:w-[540px] max-h-[80vh] overflow-y-auto">
-                            <SheetHeader>
-                              <SheetTitle>Edit Plan</SheetTitle>
-                              <SheetDescription>
-                                Update plan details and features
-                              </SheetDescription>
-                            </SheetHeader>
-                            {selectedPlan && (
-                              <div className="space-y-4 py-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="editPlanName">Plan Name *</Label>
-                                    <Input
-                                      id="editPlanName"
-                                      value={planForm.name}
-                                      onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>Pricing Structure</Label>
-                                    <p className="text-sm text-gray-500">Configure monthly and/or yearly pricing</p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="editMaxUsers">Max Users *</Label>
-                                    <Input
-                                      id="editMaxUsers"
-                                      type="number"
-                                      min="1"
-                                      value={planForm.maxUsers}
-                                      onChange={(e) => setPlanForm({ ...planForm, maxUsers: parseInt(e.target.value) || 1 })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="editStorageGB">Storage (GB) *</Label>
-                                    <Input
-                                      id="editStorageGB"
-                                      type="number"
-                                      min="1"
-                                      value={planForm.storageGB}
-                                      onChange={(e) => setPlanForm({ ...planForm, storageGB: parseInt(e.target.value) || 1 })}
-                                    />
-                                  </div>
-                                </div>
-                                {/* Monthly Pricing Section - Edit */}
-                                <div className="border rounded-lg p-4 space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="font-semibold text-sm">Monthly Billing</h4>
-                                    <label className="flex items-center space-x-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={planForm.monthlyEnabled}
-                                        onChange={(e) => setPlanForm({ ...planForm, monthlyEnabled: e.target.checked })}
-                                        className="w-4 h-4"
-                                      />
-                                      <span className="text-sm">Enable Monthly</span>
-                                    </label>
-                                  </div>
-                                  {planForm.monthlyEnabled && (
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <div>
-                                        <Label htmlFor="editMonthlyPrice">Monthly Price *</Label>
-                                        <Input
-                                          id="editMonthlyPrice"
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          value={planForm.monthlyPrice}
-                                          onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseFloat(e.target.value) || 0 })}
-                                          placeholder="29.99"
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label htmlFor="editMonthlyDiscount">Discount %</Label>
-                                        <Input
-                                          id="editMonthlyDiscount"
-                                          type="number"
-                                          min="0"
-                                          max="100"
-                                          step="1"
-                                          value={planForm.monthlyDiscount}
-                                          onChange={(e) => setPlanForm({ ...planForm, monthlyDiscount: parseFloat(e.target.value) || 0 })}
-                                          placeholder="0"
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Yearly Pricing Section - Edit */}
-                                <div className="border rounded-lg p-4 space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="font-semibold text-sm">Yearly Billing</h4>
-                                    <label className="flex items-center space-x-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={planForm.yearlyEnabled}
-                                        onChange={(e) => setPlanForm({ ...planForm, yearlyEnabled: e.target.checked })}
-                                        className="w-4 h-4"
-                                      />
-                                      <span className="text-sm">Enable Yearly</span>
-                                    </label>
-                                  </div>
-                                  {planForm.yearlyEnabled && (
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <div>
-                                        <Label htmlFor="editYearlyPrice">Yearly Price *</Label>
-                                        <Input
-                                          id="editYearlyPrice"
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          value={planForm.yearlyPrice}
-                                          onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseFloat(e.target.value) || 0 })}
-                                          placeholder="299.99"
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label htmlFor="editYearlyDiscount">Discount %</Label>
-                                        <Input
-                                          id="editYearlyDiscount"
-                                          type="number"
-                                          min="0"
-                                          max="100"
-                                          step="1"
-                                          value={planForm.yearlyDiscount}
-                                          onChange={(e) => setPlanForm({ ...planForm, yearlyDiscount: parseFloat(e.target.value) || 0 })}
-                                          placeholder="0"
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Price Preview - Edit */}
-                                {(planForm.monthlyEnabled || planForm.yearlyEnabled) && (
-                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <h5 className="font-semibold text-sm mb-2 text-blue-800">Price Preview</h5>
-                                    {planForm.monthlyEnabled && (
-                                      <p className="text-sm text-blue-700">
-                                        Monthly: ${planForm.monthlyPrice} 
-                                        {planForm.monthlyDiscount > 0 && (
-                                          <span> (${(planForm.monthlyPrice * (1 - planForm.monthlyDiscount / 100)).toFixed(2)} after {planForm.monthlyDiscount}% discount)</span>
-                                        )}
-                                      </p>
-                                    )}
-                                    {planForm.yearlyEnabled && (
-                                      <p className="text-sm text-blue-700">
-                                        Yearly: ${planForm.yearlyPrice}
-                                        {planForm.yearlyDiscount > 0 && (
-                                          <span> (${(planForm.yearlyPrice * (1 - planForm.yearlyDiscount / 100)).toFixed(2)} after {planForm.yearlyDiscount}% discount)</span>
-                                        )}
-                                      </p>
-                                    )}
-                                  </div>
-                                )}
-                                <div>
-                                  <Label>Features</Label>
-                                  <div className="space-y-2">
-                                    <div className="flex gap-2">
-                                      <Input
-                                        value={newFeature}
-                                        onChange={(e) => setNewFeature(e.target.value)}
-                                        placeholder="Add a feature..."
-                                        onKeyPress={(e) => e.key === 'Enter' && handleAddFeature()}
-                                      />
-                                      <Button type="button" onClick={handleAddFeature} size="sm">
-                                        Add
-                                      </Button>
-                                    </div>
-                                    <div className="space-y-1">
-                                      {planForm.features.map((feature, index) => (
-                                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                          <span className="text-sm">{feature}</span>
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleRemoveFeature(index)}
-                                          >
-                                            <Trash2 className="w-3 h-3" />
-                                          </Button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Stripe Integration Section - Edit */}
-                                <div className="border-t pt-4">
-                                  <Label>Stripe Integration</Label>
-                                  <div className="space-y-3 mt-2">
-                                    <div className="grid grid-cols-1 gap-2">
-                                      <label className="flex items-center space-x-2">
-                                        <input
-                                          type="radio"
-                                          name="editStripeIntegration"
-                                          value="none"
-                                          checked={planForm.stripeIntegration === 'none'}
-                                          onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
-                                          className="w-4 h-4"
-                                        />
-                                        <span className="text-sm">No Stripe Integration</span>
-                                      </label>
-                                      <label className="flex items-center space-x-2">
-                                        <input
-                                          type="radio"
-                                          name="editStripeIntegration"
-                                          value="link_existing"
-                                          checked={planForm.stripeIntegration === 'link_existing'}
-                                          onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
-                                          className="w-4 h-4"
-                                        />
-                                        <Link className="w-4 h-4" />
-                                        <span className="text-sm">Link Existing Stripe Product</span>
-                                      </label>
-                                      <label className="flex items-center space-x-2">
-                                        <input
-                                          type="radio"
-                                          name="editStripeIntegration"
-                                          value="generate_new"
-                                          checked={planForm.stripeIntegration === 'generate_new'}
-                                          onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
-                                          className="w-4 h-4"
-                                        />
-                                        <Wand2 className="w-4 h-4" />
-                                        <span className="text-sm">Generate New Stripe Product</span>
-                                      </label>
-                                    </div>
-
-                                    {planForm.stripeIntegration === 'link_existing' && (
-                                      <div className="space-y-3 pl-6 border-l-2 border-blue-200 bg-blue-50/50 p-3 rounded">
-                                        <div>
-                                          <Label htmlFor="editStripePriceId">Stripe Price ID *</Label>
-                                          <Input
-                                            id="editStripePriceId"
-                                            value={planForm.monthlyStripePriceId}
-                                            onChange={(e) => setPlanForm({ ...planForm, monthlyStripePriceId: e.target.value })}
-                                            placeholder="price_1234..."
-                                            className="mt-1"
-                                          />
-                                        </div>
-                                        <div>
-                                          <Label htmlFor="editStripeProductId">Stripe Product ID *</Label>
-                                          <Input
-                                            id="editStripeProductId"
-                                            value={planForm.stripeProductId}
-                                            onChange={(e) => setPlanForm({ ...planForm, stripeProductId: e.target.value })}
-                                            placeholder="prod_1234..."
-                                            className="mt-1"
-                                          />
-                                        </div>
-                                        <p className="text-xs text-blue-600">
-                                          Enter the Stripe Price ID and Product ID from your Stripe dashboard
-                                        </p>
-                                      </div>
-                                    )}
-
-                                    {planForm.stripeIntegration === 'generate_new' && (
-                                      <div className="pl-6 border-l-2 border-green-200 bg-green-50/50 p-3 rounded">
-                                        <div className="flex items-center space-x-2 text-green-700">
-                                          <Wand2 className="w-4 h-4" />
-                                          <span className="text-sm font-medium">Auto-Generate Stripe Product</span>
-                                        </div>
-                                        <p className="text-xs text-green-600 mt-1">
-                                          A new Stripe product and price will be automatically created based on your plan details
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    onClick={async () => {
-                                      if (planForm.stripeIntegration === 'generate_new') {
-                                        try {
-                                          const stripeProduct = await generateStripeProductMutation.mutateAsync(planForm);
-                                          const planWithStripe = {
-                                            ...planForm,
-                                            monthlyStripePriceId: stripeProduct.monthlyPriceId || '',
-                              yearlyStripePriceId: stripeProduct.yearlyPriceId || '',
-                                            stripeProductId: stripeProduct.productId
-                                          };
-                                          updatePlanMutation.mutate({
-                                            id: selectedPlan.id,
-                                            updates: planWithStripe
-                                          });
-                                        } catch (error) {
-                                          // Error already handled in mutation
-                                        }
-                                      } else {
-                                        updatePlanMutation.mutate({
-                                          id: selectedPlan.id,
-                                          updates: planForm
-                                        });
-                                      }
-                                    }}
-                                    disabled={updatePlanMutation.isPending || generateStripeProductMutation.isPending}
+                            <div className="space-y-1">
+                              {planForm.features.map((feature, index) => (
+                                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                  <span className="text-sm">{feature}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveFeature(index)}
                                   >
-                                    {generateStripeProductMutation.isPending ? "Generating..." : 
-                                     updatePlanMutation.isPending ? "Updating..." : "Update Plan"}
-                                  </Button>
-                                  <Button variant="outline" onClick={() => setSelectedPlan(null)}>
-                                    Cancel
+                                    <Trash2 className="w-3 h-3" />
                                   </Button>
                                 </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stripe Integration Section */}
+                        <div className="border-t pt-4">
+                          <Label>Stripe Integration</Label>
+                          <div className="space-y-3 mt-2">
+                            <div className="grid grid-cols-1 gap-2">
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  name="stripeIntegration"
+                                  value="none"
+                                  checked={planForm.stripeIntegration === 'none'}
+                                  onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
+                                  className="w-4 h-4"
+                                />
+                                <span className="text-sm">No Stripe Integration</span>
+                              </label>
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  name="stripeIntegration"
+                                  value="link_existing"
+                                  checked={planForm.stripeIntegration === 'link_existing'}
+                                  onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
+                                  className="w-4 h-4"
+                                />
+                                <Link className="w-4 h-4" />
+                                <span className="text-sm">Link Existing Stripe Product</span>
+                              </label>
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  name="stripeIntegration"
+                                  value="generate_new"
+                                  checked={planForm.stripeIntegration === 'generate_new'}
+                                  onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
+                                  className="w-4 h-4"
+                                />
+                                <Wand2 className="w-4 h-4" />
+                                <span className="text-sm">Generate New Stripe Product</span>
+                              </label>
+                            </div>
+
+                            {planForm.stripeIntegration === 'link_existing' && (
+                              <div className="space-y-3 pl-6 border-l-2 border-blue-200 bg-blue-50/50 p-3 rounded">
+                                <div>
+                                  <Label htmlFor="stripePriceId">Stripe Price ID *</Label>
+                                  <Input
+                                    id="stripePriceId"
+                                    value={planForm.monthlyStripePriceId}
+                                    onChange={(e) => setPlanForm({ ...planForm, monthlyStripePriceId: e.target.value })}
+                                    placeholder="price_1234..."
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="stripeProductId">Stripe Product ID *</Label>
+                                  <Input
+                                    id="stripeProductId"
+                                    value={planForm.stripeProductId}
+                                    onChange={(e) => setPlanForm({ ...planForm, stripeProductId: e.target.value })}
+                                    placeholder="prod_1234..."
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <p className="text-xs text-blue-600">
+                                  Enter the Stripe Price ID and Product ID from your Stripe dashboard
+                                </p>
                               </div>
                             )}
-                          </SheetContent>
-                        </Sheet>
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete the ${plan.name} plan?`)) {
-                              deletePlanMutation.mutate(plan.id);
+
+                            {planForm.stripeIntegration === 'generate_new' && (
+                              <div className="pl-6 border-l-2 border-green-200 bg-green-50/50 p-3 rounded">
+                                <div className="flex items-center space-x-2 text-green-700">
+                                  <Wand2 className="w-4 h-4" />
+                                  <span className="text-sm font-medium">Auto-Generate Stripe Product</span>
+                                </div>
+                                <p className="text-xs text-green-600 mt-1">
+                                  A new Stripe product and price will be automatically created based on your plan details
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            if (planForm.stripeIntegration === 'generate_new') {
+                              try {
+                                const stripeProduct = await generateStripeProductMutation.mutateAsync(planForm);
+                                const planWithStripe = {
+                                  ...planForm,
+                                  monthlyStripePriceId: stripeProduct.monthlyPriceId || '',
+                                  yearlyStripePriceId: stripeProduct.yearlyPriceId || '',
+                                  stripeProductId: stripeProduct.productId
+                                };
+                                createPlanMutation.mutate(planWithStripe);
+                              } catch (error) {
+                                // Error already handled in mutation
+                              }
+                            } else {
+                              createPlanMutation.mutate(planForm);
                             }
                           }}
+                          disabled={createPlanMutation.isPending || generateStripeProductMutation.isPending || !planForm.name || (planForm.monthlyPrice <= 0 && planForm.yearlyPrice <= 0)}
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          {generateStripeProductMutation.isPending ? "Generating..." :
+                            createPlanMutation.isPending ? "Creating..." : "Create Plan"}
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsAddingPlan(false)}>
+                          Cancel
                         </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-3">
+                  {plans.map((plan) => (
+                    <Card key={plan.id}>
+                      <CardHeader>
+                        <CardTitle className="flex justify-between items-center">
+                          {plan.name}
+                          <Badge className={plan.isFreeTrial ? "bg-green-100 text-green-800" : ""}>{formatPlanPrice(plan)}</Badge>
+                        </CardTitle>
+                        <CardDescription>
+                          {plan.maxUsers} users • {plan.storageGB}GB storage
+                          {plan.isFreeTrial && plan.trialDays && (
+                            <span className="text-green-600"> • {plan.trialDays} days trial</span>
+                          )}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {plan.features.map((feature, index) => (
+                            <div key={index} className="text-sm">• {feature}</div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                          <span className="text-sm text-gray-600">
+                            {clients.filter(c => c.plan === plan.name).length} clients
+                          </span>
+                          <div className="flex space-x-2">
+                            <Sheet>
+                              <SheetTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                  setSelectedPlan(plan);
+                                  setPlanForm({
+                                    name: plan.name,
+                                    monthlyPrice: plan.monthlyPrice || 0,
+                                    monthlyDiscount: plan.monthlyDiscount || 0,
+                                    monthlyEnabled: plan.monthlyEnabled !== false,
+                                    yearlyPrice: plan.yearlyPrice || 0,
+                                    yearlyDiscount: plan.yearlyDiscount || 0,
+                                    yearlyEnabled: plan.yearlyEnabled !== false,
+                                    features: [...plan.features],
+                                    maxUsers: plan.maxUsers,
+                                    storageGB: plan.storageGB,
+                                    stripeIntegration: (plan.monthlyStripePriceId || plan.yearlyStripePriceId) ? 'link_existing' : 'none',
+                                    monthlyStripePriceId: plan.monthlyStripePriceId || '',
+                                    yearlyStripePriceId: plan.yearlyStripePriceId || '',
+                                    stripeProductId: plan.stripeProductId || ''
+                                  });
+                                }}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </SheetTrigger>
+                              <SheetContent side="right" className="w-[400px] sm:w-[540px] max-h-[80vh] overflow-y-auto">
+                                <SheetHeader>
+                                  <SheetTitle>Edit Plan</SheetTitle>
+                                  <SheetDescription>
+                                    Update plan details and features
+                                  </SheetDescription>
+                                </SheetHeader>
+                                {selectedPlan && (
+                                  <div className="space-y-4 py-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <Label htmlFor="editPlanName">Plan Name *</Label>
+                                        <Input
+                                          id="editPlanName"
+                                          value={planForm.name}
+                                          onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label>Pricing Structure</Label>
+                                        <p className="text-sm text-gray-500">Configure monthly and/or yearly pricing</p>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <Label htmlFor="editMaxUsers">Max Users *</Label>
+                                        <Input
+                                          id="editMaxUsers"
+                                          type="number"
+                                          min="1"
+                                          value={planForm.maxUsers}
+                                          onChange={(e) => setPlanForm({ ...planForm, maxUsers: parseInt(e.target.value) || 1 })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="editStorageGB">Storage (GB) *</Label>
+                                        <Input
+                                          id="editStorageGB"
+                                          type="number"
+                                          min="1"
+                                          value={planForm.storageGB}
+                                          onChange={(e) => setPlanForm({ ...planForm, storageGB: parseInt(e.target.value) || 1 })}
+                                        />
+                                      </div>
+                                    </div>
+                                    {/* Monthly Pricing Section - Edit */}
+                                    <div className="border rounded-lg p-4 space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <h4 className="font-semibold text-sm">Monthly Billing</h4>
+                                        <label className="flex items-center space-x-2">
+                                          <input
+                                            type="checkbox"
+                                            checked={planForm.monthlyEnabled}
+                                            onChange={(e) => setPlanForm({ ...planForm, monthlyEnabled: e.target.checked })}
+                                            className="w-4 h-4"
+                                          />
+                                          <span className="text-sm">Enable Monthly</span>
+                                        </label>
+                                      </div>
+                                      {planForm.monthlyEnabled && (
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <Label htmlFor="editMonthlyPrice">Monthly Price *</Label>
+                                            <Input
+                                              id="editMonthlyPrice"
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={planForm.monthlyPrice}
+                                              onChange={(e) => setPlanForm({ ...planForm, monthlyPrice: parseFloat(e.target.value) || 0 })}
+                                              placeholder="29.99"
+                                            />
+                                          </div>
+                                          <div>
+                                            <Label htmlFor="editMonthlyDiscount">Discount %</Label>
+                                            <Input
+                                              id="editMonthlyDiscount"
+                                              type="number"
+                                              min="0"
+                                              max="100"
+                                              step="1"
+                                              value={planForm.monthlyDiscount}
+                                              onChange={(e) => setPlanForm({ ...planForm, monthlyDiscount: parseFloat(e.target.value) || 0 })}
+                                              placeholder="0"
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Yearly Pricing Section - Edit */}
+                                    <div className="border rounded-lg p-4 space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <h4 className="font-semibold text-sm">Yearly Billing</h4>
+                                        <label className="flex items-center space-x-2">
+                                          <input
+                                            type="checkbox"
+                                            checked={planForm.yearlyEnabled}
+                                            onChange={(e) => setPlanForm({ ...planForm, yearlyEnabled: e.target.checked })}
+                                            className="w-4 h-4"
+                                          />
+                                          <span className="text-sm">Enable Yearly</span>
+                                        </label>
+                                      </div>
+                                      {planForm.yearlyEnabled && (
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <Label htmlFor="editYearlyPrice">Yearly Price *</Label>
+                                            <Input
+                                              id="editYearlyPrice"
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={planForm.yearlyPrice}
+                                              onChange={(e) => setPlanForm({ ...planForm, yearlyPrice: parseFloat(e.target.value) || 0 })}
+                                              placeholder="299.99"
+                                            />
+                                          </div>
+                                          <div>
+                                            <Label htmlFor="editYearlyDiscount">Discount %</Label>
+                                            <Input
+                                              id="editYearlyDiscount"
+                                              type="number"
+                                              min="0"
+                                              max="100"
+                                              step="1"
+                                              value={planForm.yearlyDiscount}
+                                              onChange={(e) => setPlanForm({ ...planForm, yearlyDiscount: parseFloat(e.target.value) || 0 })}
+                                              placeholder="0"
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Price Preview - Edit */}
+                                    {(planForm.monthlyEnabled || planForm.yearlyEnabled) && (
+                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <h5 className="font-semibold text-sm mb-2 text-blue-800">Price Preview</h5>
+                                        {planForm.monthlyEnabled && (
+                                          <p className="text-sm text-blue-700">
+                                            Monthly: ${planForm.monthlyPrice}
+                                            {planForm.monthlyDiscount > 0 && (
+                                              <span> (${(planForm.monthlyPrice * (1 - planForm.monthlyDiscount / 100)).toFixed(2)} after {planForm.monthlyDiscount}% discount)</span>
+                                            )}
+                                          </p>
+                                        )}
+                                        {planForm.yearlyEnabled && (
+                                          <p className="text-sm text-blue-700">
+                                            Yearly: ${planForm.yearlyPrice}
+                                            {planForm.yearlyDiscount > 0 && (
+                                              <span> (${(planForm.yearlyPrice * (1 - planForm.yearlyDiscount / 100)).toFixed(2)} after {planForm.yearlyDiscount}% discount)</span>
+                                            )}
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
+                                    <div>
+                                      <Label>Features</Label>
+                                      <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                          <Input
+                                            value={newFeature}
+                                            onChange={(e) => setNewFeature(e.target.value)}
+                                            placeholder="Add a feature..."
+                                            onKeyPress={(e) => e.key === 'Enter' && handleAddFeature()}
+                                          />
+                                          <Button type="button" onClick={handleAddFeature} size="sm">
+                                            Add
+                                          </Button>
+                                        </div>
+                                        <div className="space-y-1">
+                                          {planForm.features.map((feature, index) => (
+                                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                              <span className="text-sm">{feature}</span>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleRemoveFeature(index)}
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </Button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Stripe Integration Section - Edit */}
+                                    <div className="border-t pt-4">
+                                      <Label>Stripe Integration</Label>
+                                      <div className="space-y-3 mt-2">
+                                        <div className="grid grid-cols-1 gap-2">
+                                          <label className="flex items-center space-x-2">
+                                            <input
+                                              type="radio"
+                                              name="editStripeIntegration"
+                                              value="none"
+                                              checked={planForm.stripeIntegration === 'none'}
+                                              onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
+                                              className="w-4 h-4"
+                                            />
+                                            <span className="text-sm">No Stripe Integration</span>
+                                          </label>
+                                          <label className="flex items-center space-x-2">
+                                            <input
+                                              type="radio"
+                                              name="editStripeIntegration"
+                                              value="link_existing"
+                                              checked={planForm.stripeIntegration === 'link_existing'}
+                                              onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
+                                              className="w-4 h-4"
+                                            />
+                                            <Link className="w-4 h-4" />
+                                            <span className="text-sm">Link Existing Stripe Product</span>
+                                          </label>
+                                          <label className="flex items-center space-x-2">
+                                            <input
+                                              type="radio"
+                                              name="editStripeIntegration"
+                                              value="generate_new"
+                                              checked={planForm.stripeIntegration === 'generate_new'}
+                                              onChange={(e) => setPlanForm({ ...planForm, stripeIntegration: e.target.value as any })}
+                                              className="w-4 h-4"
+                                            />
+                                            <Wand2 className="w-4 h-4" />
+                                            <span className="text-sm">Generate New Stripe Product</span>
+                                          </label>
+                                        </div>
+
+                                        {planForm.stripeIntegration === 'link_existing' && (
+                                          <div className="space-y-3 pl-6 border-l-2 border-blue-200 bg-blue-50/50 p-3 rounded">
+                                            <div>
+                                              <Label htmlFor="editStripePriceId">Stripe Price ID *</Label>
+                                              <Input
+                                                id="editStripePriceId"
+                                                value={planForm.monthlyStripePriceId}
+                                                onChange={(e) => setPlanForm({ ...planForm, monthlyStripePriceId: e.target.value })}
+                                                placeholder="price_1234..."
+                                                className="mt-1"
+                                              />
+                                            </div>
+                                            <div>
+                                              <Label htmlFor="editStripeProductId">Stripe Product ID *</Label>
+                                              <Input
+                                                id="editStripeProductId"
+                                                value={planForm.stripeProductId}
+                                                onChange={(e) => setPlanForm({ ...planForm, stripeProductId: e.target.value })}
+                                                placeholder="prod_1234..."
+                                                className="mt-1"
+                                              />
+                                            </div>
+                                            <p className="text-xs text-blue-600">
+                                              Enter the Stripe Price ID and Product ID from your Stripe dashboard
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {planForm.stripeIntegration === 'generate_new' && (
+                                          <div className="pl-6 border-l-2 border-green-200 bg-green-50/50 p-3 rounded">
+                                            <div className="flex items-center space-x-2 text-green-700">
+                                              <Wand2 className="w-4 h-4" />
+                                              <span className="text-sm font-medium">Auto-Generate Stripe Product</span>
+                                            </div>
+                                            <p className="text-xs text-green-600 mt-1">
+                                              A new Stripe product and price will be automatically created based on your plan details
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        onClick={async () => {
+                                          if (planForm.stripeIntegration === 'generate_new') {
+                                            try {
+                                              const stripeProduct = await generateStripeProductMutation.mutateAsync(planForm);
+                                              const planWithStripe = {
+                                                ...planForm,
+                                                monthlyStripePriceId: stripeProduct.monthlyPriceId || '',
+                                                yearlyStripePriceId: stripeProduct.yearlyPriceId || '',
+                                                stripeProductId: stripeProduct.productId
+                                              };
+                                              updatePlanMutation.mutate({
+                                                id: selectedPlan.id,
+                                                updates: planWithStripe
+                                              });
+                                            } catch (error) {
+                                              // Error already handled in mutation
+                                            }
+                                          } else {
+                                            updatePlanMutation.mutate({
+                                              id: selectedPlan.id,
+                                              updates: planForm
+                                            });
+                                          }
+                                        }}
+                                        disabled={updatePlanMutation.isPending || generateStripeProductMutation.isPending}
+                                      >
+                                        {generateStripeProductMutation.isPending ? "Generating..." :
+                                          updatePlanMutation.isPending ? "Updating..." : "Update Plan"}
+                                      </Button>
+                                      <Button variant="outline" onClick={() => setSelectedPlan(null)}>
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </SheetContent>
+                            </Sheet>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete the ${plan.name} plan?`)) {
+                                  deletePlanMutation.mutate(plan.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
 
             {activeView === "onboarding" && (
               <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Onboarding Analytics</h2>
-            
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Total Sessions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{Array.isArray(onboardingSessions) ? onboardingSessions.length : 0}</div>
-                </CardContent>
-              </Card>
+                <h2 className="text-2xl font-bold">Onboarding Analytics</h2>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Completed</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {Array.isArray(onboardingSessions) ? onboardingSessions.filter((s: any) => s.isCompleted).length : 0}
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Sessions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{Array.isArray(onboardingSessions) ? onboardingSessions.length : 0}</div>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Completion Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {Array.isArray(onboardingSessions) && onboardingSessions.length > 0 
-                      ? Math.round((onboardingSessions.filter((s: any) => s.isCompleted).length / onboardingSessions.length) * 100)
-                      : 0
-                    }%
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Onboarding Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Array.isArray(onboardingSessions) ? onboardingSessions.slice(0, 10).map((session: any) => (
-                    <div key={session.id} className="flex items-center justify-between p-4 border rounded">
-                      <div>
-                        <p className="font-medium">{session.planName}</p>
-                        <p className="text-sm text-gray-600">Step {session.currentStep || 1} of 6</p>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Completed</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {Array.isArray(onboardingSessions) ? onboardingSessions.filter((s: any) => s.isCompleted).length : 0}
                       </div>
-                      <div className="text-right">
-                        <Badge className={session.isCompleted ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                          {session.isCompleted ? "Completed" : "In Progress"}
-                        </Badge>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {new Date(session.createdAt).toLocaleDateString()}
-                        </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Completion Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {Array.isArray(onboardingSessions) && onboardingSessions.length > 0
+                          ? Math.round((onboardingSessions.filter((s: any) => s.isCompleted).length / onboardingSessions.length) * 100)
+                          : 0
+                        }%
                       </div>
-                    </div>
-                  )) : []}
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Onboarding Sessions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {Array.isArray(onboardingSessions) ? onboardingSessions.slice(0, 10).map((session: any) => (
+                        <div key={session.id} className="flex items-center justify-between p-4 border rounded">
+                          <div>
+                            <p className="font-medium">{session.planName}</p>
+                            <p className="text-sm text-gray-600">Step {session.currentStep || 1} of 6</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge className={session.isCompleted ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                              {session.isCompleted ? "Completed" : "In Progress"}
+                            </Badge>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {new Date(session.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      )) : []}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
@@ -1990,7 +2072,7 @@ export default function SuperAdminDashboard() {
             {activeView === "client-login" && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold">Client Portal Access</h2>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Client Login Portal</CardTitle>
@@ -2007,9 +2089,9 @@ export default function SuperAdminDashboard() {
                       <code className="text-sm bg-white px-2 py-1 rounded border">
                         {window.location.origin}/client-login
                       </code>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="ml-2"
                         onClick={() => {
                           navigator.clipboard.writeText(`${window.location.origin}/client-login`);
@@ -2018,7 +2100,7 @@ export default function SuperAdminDashboard() {
                         Copy URL
                       </Button>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <h4 className="font-medium">Demo Client Accounts:</h4>
                       <div className="space-y-3">
@@ -2028,23 +2110,23 @@ export default function SuperAdminDashboard() {
                             Email: john@abcconsulting.com<br />
                             Password: demo123
                           </div>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="mt-2"
                             onClick={() => window.open('/client-login', '_blank')}
                           >
                             Test Login
                           </Button>
                         </div>
-                        
+
                         <div className="p-3 bg-gray-50 rounded-lg">
                           <div className="font-medium">Tech Startup Inc</div>
                           <div className="text-sm text-gray-600">
                             Email: jane@techstartup.com<br />
                             Password: demo123
                           </div>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="mt-2"
                             onClick={() => window.open('/client-login', '_blank')}
                           >
@@ -2072,9 +2154,9 @@ export default function SuperAdminDashboard() {
                       <code className="text-sm bg-white px-2 py-1 rounded border">
                         {window.location.origin}/onboarding
                       </code>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="ml-2"
                         onClick={() => {
                           navigator.clipboard.writeText(`${window.location.origin}/onboarding`);
@@ -2082,8 +2164,8 @@ export default function SuperAdminDashboard() {
                       >
                         Copy URL
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="ml-2"
                         onClick={() => window.open('/onboarding', '_blank')}
                       >
@@ -2128,7 +2210,7 @@ export default function SuperAdminDashboard() {
                                 <h3 className="font-semibold text-gray-900" data-testid={`lead-name-${message.id}`}>
                                   {message.name}
                                 </h3>
-                                <Badge 
+                                <Badge
                                   variant={message.status === 'NEW' ? 'default' : message.status === 'CONTACTED' ? 'secondary' : 'outline'}
                                   data-testid={`lead-status-${message.id}`}
                                 >
@@ -2138,7 +2220,7 @@ export default function SuperAdminDashboard() {
                                   {new Date(message.createdAt).toLocaleDateString()}
                                 </span>
                               </div>
-                              
+
                               <div className="space-y-1 mb-3">
                                 <p className="text-sm text-gray-600" data-testid={`lead-email-${message.id}`}>
                                   <strong>Email:</strong> {message.email}
@@ -2150,13 +2232,13 @@ export default function SuperAdminDashboard() {
                                   <strong>Source:</strong> {message.source || 'Website'}
                                 </p>
                               </div>
-                              
+
                               <div className="bg-gray-50 p-3 rounded-md mb-3">
                                 <p className="text-sm text-gray-700" data-testid={`lead-message-${message.id}`}>
                                   {message.message}
                                 </p>
                               </div>
-                              
+
                               {message.notes && (
                                 <div className="bg-blue-50 p-3 rounded-md">
                                   <p className="text-sm text-blue-700">
@@ -2165,10 +2247,10 @@ export default function SuperAdminDashboard() {
                                 </div>
                               )}
                             </div>
-                            
+
                             <div className="flex gap-2 ml-4">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => window.open(`mailto:${message.email}?subject=Re: ${message.subject}`, '_blank')}
                                 data-testid={`lead-email-button-${message.id}`}
@@ -2193,8 +2275,8 @@ export default function SuperAdminDashboard() {
                     <h2 className="text-2xl font-bold text-gray-900">Review Platforms Management</h2>
                     <p className="text-gray-600">Manage Google Reviews, Yelp, Trust Pilot and other review platforms for the landing page</p>
                   </div>
-                  <Button 
-                    onClick={() => setShowAddPlatformForm(true)} 
+                  <Button
+                    onClick={() => setShowAddPlatformForm(true)}
                     className="flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
@@ -2309,9 +2391,9 @@ export default function SuperAdminDashboard() {
                           <Button type="submit" disabled={createPlatformMutation.isPending || updatePlatformMutation.isPending}>
                             {editingPlatform ? 'Update' : 'Create'} Platform
                           </Button>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
+                          <Button
+                            type="button"
+                            variant="outline"
                             onClick={() => {
                               setShowAddPlatformForm(false);
                               setEditingPlatform(null);
@@ -2415,6 +2497,203 @@ export default function SuperAdminDashboard() {
                           Trustpilot Business
                         </a>
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeView === "email" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">System Email / SMTP Configuration</h2>
+                  <p className="text-gray-600">Configure the system-wide SMTP settings used for sending password reset emails to clients</p>
+                </div>
+
+                {smtpSaved && (
+                  <Alert className="border-green-200 bg-green-50">
+                    <AlertDescription className="text-green-800">
+                      SMTP settings saved successfully!
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="w-5 h-5" />
+                      SMTP Server Settings
+                    </CardTitle>
+                    <CardDescription>
+                      These settings are used to send forgot-password emails to business owners (clients).
+                      Team member forgot-password emails use each client's own SMTP settings with this as fallback.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-3 pb-2">
+                      <Label htmlFor="smtpEnabled" className="font-medium">Enable System SMTP</Label>
+                      <input
+                        type="checkbox"
+                        id="smtpEnabled"
+                        checked={smtpForm.smtpEnabled}
+                        onChange={(e) => setSmtpForm({ ...smtpForm, smtpEnabled: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtpHost">SMTP Host</Label>
+                        <Input
+                          id="smtpHost"
+                          value={smtpForm.smtpHost}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpHost: e.target.value })}
+                          placeholder="smtp.gmail.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtpPort">SMTP Port</Label>
+                        <Input
+                          id="smtpPort"
+                          type="number"
+                          value={smtpForm.smtpPort}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpPort: parseInt(e.target.value) || 587 })}
+                          placeholder="587"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtpUsername">SMTP Username</Label>
+                        <Input
+                          id="smtpUsername"
+                          value={smtpForm.smtpUsername}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpUsername: e.target.value })}
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtpPassword">SMTP Password</Label>
+                        <Input
+                          id="smtpPassword"
+                          type="password"
+                          value={smtpForm.smtpPassword}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpPassword: e.target.value })}
+                          placeholder="Leave blank to keep existing password"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtpFromEmail">From Email</Label>
+                        <Input
+                          id="smtpFromEmail"
+                          value={smtpForm.smtpFromEmail}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpFromEmail: e.target.value })}
+                          placeholder="noreply@scheduledpros.com"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtpFromName">From Name</Label>
+                        <Input
+                          id="smtpFromName"
+                          value={smtpForm.smtpFromName}
+                          onChange={(e) => setSmtpForm({ ...smtpForm, smtpFromName: e.target.value })}
+                          placeholder="Scheduled Pros"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Label htmlFor="smtpSecure" className="font-medium">Use SSL/TLS (Port 465)</Label>
+                      <input
+                        type="checkbox"
+                        id="smtpSecure"
+                        checked={smtpForm.smtpSecure}
+                        onChange={(e) => setSmtpForm({ ...smtpForm, smtpSecure: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => updateSystemSmtpMutation.mutate(smtpForm)}
+                      disabled={updateSystemSmtpMutation.isPending}
+                      className="w-full md:w-auto"
+                    >
+                      {updateSystemSmtpMutation.isPending ? 'Saving...' : 'Save SMTP Settings'}
+                    </Button>
+
+                    {updateSystemSmtpMutation.isError && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertDescription className="text-red-800">
+                          Failed to save SMTP settings. Please try again.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Test Email Connection</CardTitle>
+                    <CardDescription>Send a test email to verify your SMTP settings are working correctly</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-3">
+                      <Input
+                        value={smtpTestEmail}
+                        onChange={(e) => setSmtpTestEmail(e.target.value)}
+                        placeholder="Enter test email address"
+                        type="email"
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => testSystemSmtpMutation.mutate(smtpTestEmail)}
+                        disabled={testSystemSmtpMutation.isPending || !smtpTestEmail}
+                        variant="outline"
+                      >
+                        {testSystemSmtpMutation.isPending ? 'Sending...' : 'Send Test Email'}
+                      </Button>
+                    </div>
+                    {testSystemSmtpMutation.isSuccess && (
+                      <Alert className="border-green-200 bg-green-50">
+                        <AlertDescription className="text-green-800">
+                          Test email sent successfully!
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {testSystemSmtpMutation.isError && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertDescription className="text-red-800">
+                          Failed to send test email. Please check your SMTP settings.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>How SMTP is Used</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm text-gray-700">
+                      <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                        <Mail className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-blue-900">Client Forgot Password</p>
+                          <p className="text-blue-700">Uses this system SMTP to send reset emails to business owners.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                        <Mail className="w-5 h-5 text-purple-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-purple-900">Team Member Forgot Password</p>
+                          <p className="text-purple-700">Uses the client's (business owner's) configured SMTP first. Falls back to this system SMTP if none is configured.</p>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

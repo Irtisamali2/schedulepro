@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, AlertCircle } from "lucide-react";
 
 export default function SuperAdminLogin() {
-  const [email, setEmail] = useState("admin@saas.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,7 +36,7 @@ export default function SuperAdminLogin() {
 
       // Store user info (in production, use proper JWT handling)
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
       // Redirect to admin dashboard
       window.location.href = '/admin/dashboard';
     } catch (error) {
@@ -92,17 +92,13 @@ export default function SuperAdminLogin() {
               />
             </div>
 
-            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
-              <strong>Demo Credentials:</strong><br />
-              Email: admin@saas.com<br />
-              Password: admin123
-            </div>
+
           </CardContent>
 
           <CardFooter>
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign In"}

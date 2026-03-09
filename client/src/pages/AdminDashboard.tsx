@@ -9,10 +9,10 @@ import ReferralTracking from '@/components/analytics/ReferralTracking';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useState } from 'react';
-import { 
-  Shield, 
-  Users, 
-  TrendingUp, 
+import {
+  Shield,
+  Users,
+  TrendingUp,
   Settings,
   Database,
   BarChart3,
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
 
   // Update platform mutation
   const updatePlatformMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => 
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
       apiRequest('PUT', `/api/review-platforms/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/review-platforms'] });
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 w-full max-w-[100vw] overflow-x-hidden">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -130,26 +130,31 @@ export default function AdminDashboard() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="partnerships" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full h-auto grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
             <TabsTrigger value="partnerships" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Partnership Analytics
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">Stats</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              User Analytics
+              <span className="hidden sm:inline">User Analytics</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
             <TabsTrigger value="business" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              Business Metrics
+              <span className="hidden sm:inline">Business Metrics</span>
+              <span className="sm:hidden">Business</span>
             </TabsTrigger>
             <TabsTrigger value="reviews" className="flex items-center gap-2">
               <Star className="w-4 h-4" />
-              Review Platforms
+              <span className="hidden sm:inline">Reviews</span>
+              <span className="sm:hidden">Reviews</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Admin Settings
+              <span className="hidden sm:inline">Settings</span>
+              <span className="sm:hidden">Config</span>
             </TabsTrigger>
           </TabsList>
 
@@ -170,7 +175,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-600">Waiting for first users</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Active Businesses</CardTitle>
@@ -180,7 +185,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-600">Ready for launch</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Monthly Growth</CardTitle>
@@ -207,7 +212,7 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Industry Distribution</CardTitle>
@@ -230,8 +235,8 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-bold text-gray-900">Review Platforms Management</h2>
                   <p className="text-gray-600">Manage Google Reviews, Yelp, Trust Pilot and other review platforms for the landing page</p>
                 </div>
-                <Button 
-                  onClick={() => setShowAddForm(true)} 
+                <Button
+                  onClick={() => setShowAddForm(true)}
                   className="flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
@@ -342,9 +347,9 @@ export default function AdminDashboard() {
                         <Button type="submit" disabled={createPlatformMutation.isPending || updatePlatformMutation.isPending}>
                           {editingPlatform ? 'Update' : 'Create'} Platform
                         </Button>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
+                        <Button
+                          type="button"
+                          variant="outline"
                           onClick={() => {
                             setShowAddForm(false);
                             setEditingPlatform(null);
@@ -375,7 +380,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {reviewPlatforms.map((platform: any) => (
-                        <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div key={platform.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
                           <div className="flex items-center space-x-4">
                             {platform.logoUrl && (
                               <img src={platform.logoUrl} alt={platform.displayName} className="w-8 h-8 rounded" />
@@ -469,7 +474,7 @@ export default function AdminDashboard() {
                     </div>
                     <Badge className="bg-green-100 text-green-800">Active</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 border rounded">
                     <div>
                       <h3 className="font-medium">User Analytics</h3>
@@ -477,7 +482,7 @@ export default function AdminDashboard() {
                     </div>
                     <Badge className="bg-green-100 text-green-800">Active</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 border rounded">
                     <div>
                       <h3 className="font-medium">Partnership Reminders</h3>

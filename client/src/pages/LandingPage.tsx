@@ -7,7 +7,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Users, BarChart3, Settings, Shield, Zap, Calendar, MessageCircle, FileText, Globe, Star, ArrowRight, Play, Menu, X } from "lucide-react";
+import { CheckCircle, Users, BarChart3, Settings, Shield, Zap, Calendar, MessageCircle, FileText, Globe, Star, ArrowRight, Play, Menu, X, LogIn } from "lucide-react";
 import { insertContactMessageSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -71,21 +71,21 @@ export default function LandingPage() {
       const price = billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
       const discount = billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0);
       const enabled = billingPeriod === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
-      
+
       if (!enabled || price === null || price === undefined) return null;
-      
+
       if (discount > 0) {
         return price * (1 - discount / 100);
       }
       return price;
     }
-    
+
     // Handle old schema format (backwards compatibility)
     if (plan.price !== undefined) {
       // For old format, show the same price for both billing periods
       return plan.price;
     }
-    
+
     return null;
   };
 
@@ -95,7 +95,7 @@ export default function LandingPage() {
     if (plan.monthlyEnabled !== undefined || plan.yearlyEnabled !== undefined) {
       return billingPeriod === 'monthly' ? (plan.monthlyEnabled !== false) : (plan.yearlyEnabled !== false);
     }
-    
+
     // Handle old schema format - always enabled
     return plan.price !== undefined;
   };
@@ -156,9 +156,9 @@ export default function LandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId })
       });
-      
+
       if (!response.ok) throw new Error('Failed to start onboarding');
-      
+
       const { sessionId } = await response.json();
       window.location.href = `/onboarding/${sessionId}`;
     } catch (error) {
@@ -176,7 +176,7 @@ export default function LandingPage() {
             <div className="flex items-center">
               <img src="/scheduled-pro-logo.png" alt="Logo" className="h-8 w-auto" />
             </div>
-            
+
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
@@ -184,11 +184,12 @@ export default function LandingPage() {
               <a href="#footer" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
               <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
             </nav>
-            
+
             <div className="flex items-center space-x-2 md:space-x-4">
               <Link href="/client-login">
-                <Button variant="ghost" className="hidden md:inline-flex text-gray-600 hover:text-gray-900 text-sm md:text-base">
-                  Log In
+                <Button variant="outline" size="sm">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Client Login
                 </Button>
               </Link>
               <Button
@@ -212,7 +213,7 @@ export default function LandingPage() {
               >
                 Sign Up
               </Button>
-              
+
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -223,27 +224,27 @@ export default function LandingPage() {
               </button>
             </div>
           </div>
-          
+
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="md:hidden border-t border-gray-200 py-4">
               <nav className="flex flex-col space-y-4">
-                <a 
-                  href="#features" 
+                <a
+                  href="#features"
                   className="text-gray-600 hover:text-gray-900 transition-colors px-2 py-1"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Features
                 </a>
-                <a 
-                  href="#pricing" 
+                <a
+                  href="#pricing"
                   className="text-gray-600 hover:text-gray-900 transition-colors px-2 py-1"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Pricing
                 </a>
-                <a 
-                  href="#footer" 
+                <a
+                  href="#footer"
                   className="text-gray-600 hover:text-gray-900 transition-colors px-2 py-1"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -256,19 +257,12 @@ export default function LandingPage() {
                 >
                   Contact
                 </a>
-                <div className="border-t border-gray-200 pt-4 flex flex-col space-y-3">
-                  <Link href="/client-login" onClick={() => setMobileMenuOpen(false)}>
-                    <span className="text-gray-600 hover:text-gray-900 transition-colors px-2 py-1 block">Log In</span>
-                  </Link>
-                  <a
-                    href="#pricing"
-                    className="block text-center text-white px-4 py-2 rounded-md mx-2"
-                    style={{ background: 'linear-gradient(135deg, #EEAF7C, #E0647D)' }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sign Up
-                  </a>
-                </div>
+                <Link href="/client-login">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 mx-2">
+                    <LogIn className="w-4 h-4" />
+                    Client Login
+                  </Button>
+                </Link>
               </nav>
             </div>
           )}
@@ -286,37 +280,37 @@ export default function LandingPage() {
                 <span className="block">Business Visibility</span>
                 <span className="block">with Scheduled Pro</span>
               </h1>
-              
+
               {/* Decorative Wave Line */}
               <div className="flex justify-start mt-2 mb-6">
-                <img 
-                  src={decorativeWave} 
-                  alt="Decorative wave line" 
+                <img
+                  src={decorativeWave}
+                  alt="Decorative wave line"
                   className="w-[320px] h-auto"
                   style={{ maxWidth: '100%' }}
                 />
               </div>
-              
+
               <p className="text-base sm:text-lg text-black mb-8 max-w-md" style={{ lineHeight: '1.5' }}>
                 Register your business today and get your own dedicated landing page in minutes.
               </p>
-              <Button 
-                className="text-white px-8 py-3 text-base font-normal rounded-md" 
-                style={{backgroundColor: '#7CB8EA'}} 
-                onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6BA6E0'} 
+              <Button
+                className="text-white px-8 py-3 text-base font-normal rounded-md"
+                style={{ backgroundColor: '#7CB8EA' }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6BA6E0'}
                 onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#7CB8EA'}
                 onClick={() => handleGetStarted('plan_1')}
               >
                 Register Your Business
               </Button>
             </div>
-            
+
             {/* Right Column - Hero Image */}
             <div className="relative order-first lg:order-last">
               <div className="relative">
-                <img 
-                  src={figmaHeroImage} 
-                  alt="Professional with business dashboard and analytics" 
+                <img
+                  src={figmaHeroImage}
+                  alt="Professional with business dashboard and analytics"
                   className="w-full h-auto max-w-lg mx-auto lg:max-w-full"
                 />
               </div>
@@ -364,12 +358,12 @@ export default function LandingPage() {
             <div className="text-center md:text-left">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 md:mb-6">How It Works</h2>
               <p className="text-gray-600 mb-6 md:mb-8 leading-relaxed text-sm sm:text-base">
-                Lorem Ipsum is simply dummy text of the printing and typesetting industry. 
-                Lorem Ipsum has been the industry's standard dummy text ever since the 
-                1500s, when an unknown printer took a galley of type and scrambled it to 
+                Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+                Lorem Ipsum has been the industry's standard dummy text ever since the
+                1500s, when an unknown printer took a galley of type and scrambled it to
                 make a type specimen book.
               </p>
-              
+
               {/* Ratings */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
                 {reviewPlatforms.map((platform: any) => (
@@ -398,9 +392,9 @@ export default function LandingPage() {
             <div className="space-y-6 md:space-y-8 mt-8 md:mt-0">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mr-4 md:mr-6">
-                  <img 
-                    src={step1Frame} 
-                    alt="Step 1" 
+                  <img
+                    src={step1Frame}
+                    alt="Step 1"
                     className="w-10 h-10 md:w-12 md:h-12"
                   />
                 </div>
@@ -412,9 +406,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mr-4 md:mr-6">
-                  <img 
-                    src={step2Frame} 
-                    alt="Step 2" 
+                  <img
+                    src={step2Frame}
+                    alt="Step 2"
                     className="w-10 h-10 md:w-12 md:h-12"
                   />
                 </div>
@@ -426,9 +420,9 @@ export default function LandingPage() {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 mr-4 md:mr-6">
-                  <img 
-                    src={step3Frame} 
-                    alt="Step 3" 
+                  <img
+                    src={step3Frame}
+                    alt="Step 3"
                     className="w-10 h-10 md:w-12 md:h-12"
                   />
                 </div>
@@ -448,10 +442,10 @@ export default function LandingPage() {
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Our Features you can get</h2>
             <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-3xl mx-auto mb-4 sm:mb-6">We offer a variety of interesting features that you can help increase your productivity at work and manage your project easily</p>
-            <Button 
-              className="mt-2 sm:mt-4 text-white px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base w-full sm:w-auto" 
-              style={{backgroundColor: '#7CB8EA'}} 
-              onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6BA6E0'} 
+            <Button
+              className="mt-2 sm:mt-4 text-white px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base w-full sm:w-auto"
+              style={{ backgroundColor: '#7CB8EA' }}
+              onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6BA6E0'}
               onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#7CB8EA'}
               onClick={() => handleGetStarted('plan_1')}
             >
@@ -463,9 +457,9 @@ export default function LandingPage() {
             {/* Feature Cards */}
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-                <img 
-                  src="/appointment-management-image.png" 
-                  alt="Appointment Management" 
+                <img
+                  src="/appointment-management-image.png"
+                  alt="Appointment Management"
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
@@ -475,9 +469,9 @@ export default function LandingPage() {
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-                <img 
-                  src="/services-management-image.png" 
-                  alt="Services Management" 
+                <img
+                  src="/services-management-image.png"
+                  alt="Services Management"
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
@@ -487,9 +481,9 @@ export default function LandingPage() {
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-                <img 
-                  src="/leads-management-image.png" 
-                  alt="Leads Management" 
+                <img
+                  src="/leads-management-image.png"
+                  alt="Leads Management"
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
@@ -499,9 +493,9 @@ export default function LandingPage() {
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-                <img 
-                  src="/web-page-design-image.png" 
-                  alt="Web page design" 
+                <img
+                  src="/web-page-design-image.png"
+                  alt="Web page design"
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
@@ -511,9 +505,9 @@ export default function LandingPage() {
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-                <img 
-                  src="/team-collaboration-image.png" 
-                  alt="Team and Collaboration" 
+                <img
+                  src="/team-collaboration-image.png"
+                  alt="Team and Collaboration"
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
@@ -523,9 +517,9 @@ export default function LandingPage() {
 
             <Card className="p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-full h-24 sm:h-32 rounded-lg mb-3 sm:mb-4 overflow-hidden">
-                <img 
-                  src="/ai-voice-agent-image.png" 
-                  alt="AI voice agent" 
+                <img
+                  src="/ai-voice-agent-image.png"
+                  alt="AI voice agent"
                   className="w-full h-full object-cover rounded-lg"
                 />
               </div>
@@ -543,27 +537,25 @@ export default function LandingPage() {
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Choose Plan</h2>
             <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">That's Right For You</h3>
             <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">Choose plan that works best for you, feel free to contact us</p>
-            
+
             {/* Toggle Buttons */}
             <div className="inline-flex bg-gray-100 rounded-lg p-1 mb-6 sm:mb-8">
-              <button 
-                className={`px-4 sm:px-6 py-2 rounded-md text-sm sm:text-base transition-all ${
-                  billingPeriod === 'monthly' 
-                    ? 'text-white' 
+              <button
+                className={`px-4 sm:px-6 py-2 rounded-md text-sm sm:text-base transition-all ${billingPeriod === 'monthly'
+                    ? 'text-white'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
-                style={billingPeriod === 'monthly' ? {backgroundColor: '#7CB8EA'} : {}}
+                  }`}
+                style={billingPeriod === 'monthly' ? { backgroundColor: '#7CB8EA' } : {}}
                 onClick={() => setBillingPeriod('monthly')}
               >
                 Bill Monthly
               </button>
-              <button 
-                className={`px-4 sm:px-6 py-2 rounded-md text-sm sm:text-base transition-all ${
-                  billingPeriod === 'yearly' 
-                    ? 'text-white' 
+              <button
+                className={`px-4 sm:px-6 py-2 rounded-md text-sm sm:text-base transition-all ${billingPeriod === 'yearly'
+                    ? 'text-white'
                     : 'text-gray-600 hover:text-gray-900'
-                }`}
-                style={billingPeriod === 'yearly' ? {backgroundColor: '#7CB8EA'} : {}}
+                  }`}
+                style={billingPeriod === 'yearly' ? { backgroundColor: '#7CB8EA' } : {}}
                 onClick={() => setBillingPeriod('yearly')}
               >
                 Bill Yearly
@@ -574,34 +566,33 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 lg:gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
             {/* Dynamic Plans */}
             {plans.map((plan, index) => {
               const displayPrice = getDisplayPrice(plan);
               const isEnabled = isPlanEnabled(plan);
               const isMiddlePlan = index === 1; // Highlight the middle plan
-              
+
               // Handle both old and new schema formats
-              const originalPrice = plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined 
+              const originalPrice = plan.monthlyPrice !== undefined || plan.yearlyPrice !== undefined
                 ? (billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice)
                 : (plan as any).price;
               const discount = plan.monthlyDiscount !== undefined || plan.yearlyDiscount !== undefined
                 ? (billingPeriod === 'monthly' ? (plan.monthlyDiscount || 0) : (plan.yearlyDiscount || 0))
                 : 0;
-              
+
               if (!isEnabled || displayPrice === null) {
                 return null; // Skip disabled plans
               }
 
               return (
-                <Card 
-                  key={plan.id} 
-                  className={`p-0 border-none relative text-center w-full md:w-80 lg:w-96 ${
-                    isMiddlePlan ? 'md:transform md:scale-105 overflow-hidden rounded-xl' : 'p-4 sm:p-6 lg:p-8 border border-gray-200'
-                  }`}
+                <Card
+                  key={plan.id}
+                  className={`p-0 border-none relative text-center w-full ${isMiddlePlan ? 'md:transform md:scale-105 overflow-hidden rounded-xl' : 'p-4 sm:p-6 lg:p-8 border border-gray-200'
+                    }`}
                 >
                   {isMiddlePlan && (
-                    <div 
+                    <div
                       className="absolute inset-0 w-full h-full rounded-xl"
                       style={{
                         backgroundImage: `url(${gradientBg})`,
@@ -610,7 +601,7 @@ export default function LandingPage() {
                       }}
                     ></div>
                   )}
-                  
+
                   <div className={`${isMiddlePlan ? 'relative z-10 p-4 sm:p-6 lg:p-8' : ''}`}>
                     <h3 className={`text-xl sm:text-2xl font-bold mb-2 ${isMiddlePlan ? 'text-white' : 'text-gray-900'}`}>
                       {plan.name}
@@ -620,7 +611,7 @@ export default function LandingPage() {
                       {plan.name === 'Basic' && 'Perfect for solo professionals and small businesses'}
                       {plan.name === 'Team' && 'Scale your business with team collaboration'}
                     </p>
-                    
+
                     <div className={`mb-${isMiddlePlan ? '3 sm:mb-4' : '6 sm:mb-8'}`}>
                       <div className="relative inline-block">
                         <span className={`text-3xl sm:text-4xl lg:text-5xl font-bold ${isMiddlePlan ? 'text-white' : 'text-gray-900'}`}>
@@ -664,10 +655,10 @@ export default function LandingPage() {
                         ))}
                       </ul>
                     )}
-                    
-                    <Button 
+
+                    <Button
                       className={
-                        isMiddlePlan 
+                        isMiddlePlan
                           ? "w-full bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white rounded-xl text-sm sm:text-base py-2 sm:py-3"
                           : "w-full text-sm sm:text-base py-2 sm:py-3"
                       }
@@ -686,7 +677,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer id="footer" className="text-white py-12 sm:py-16 lg:py-20" style={{backgroundColor: '#7CB8EA'}}>
+      <footer id="footer" className="text-white py-12 sm:py-16 lg:py-20" style={{ backgroundColor: '#7CB8EA' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start mb-8 sm:mb-12 lg:mb-16">
             {/* Left Column - Testimonials */}
@@ -695,15 +686,15 @@ export default function LandingPage() {
               <p className="text-white/90 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base">
                 Lorem Ipsum is simply dummy text of the printing and typesetting industry.
               </p>
-              
+
               <div className="mb-6 sm:mb-8">
                 <div className="text-4xl sm:text-5xl lg:text-6xl text-white/30 mb-3 sm:mb-4">"</div>
                 <p className="text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Lorem Ipsum is simply dummy text of the printing and typesetting industry. 
+                  Lorem Ipsum is simply dummy text of the printing and typesetting industry.
                   Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.
                 </p>
                 <p className="text-white/80 mb-4 sm:mb-6 text-sm sm:text-base">— Ana Zaharija</p>
-                
+
                 <div className="flex items-center justify-center lg:justify-start space-x-3 sm:space-x-4">
                   <div className="flex -space-x-1 sm:-space-x-2">
                     <img src={profile1} alt="Profile 1" className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-white" />
@@ -724,13 +715,13 @@ export default function LandingPage() {
                 </div>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8">Get Started</h3>
-              
+
               <form onSubmit={getStartedForm.handleSubmit(onGetStartedSubmit)} className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2">Email</label>
-                  <input 
-                    type="email" 
-                    placeholder="Enter your email" 
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
                     className="w-full p-2 sm:p-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                     data-testid="input-get-started-email"
                     {...getStartedForm.register("email")}
@@ -741,9 +732,9 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2">Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter your name" 
+                  <input
+                    type="text"
+                    placeholder="Enter your name"
                     className="w-full p-2 sm:p-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                     data-testid="input-get-started-name"
                     {...getStartedForm.register("name")}
@@ -754,8 +745,8 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2">Message</label>
-                  <textarea 
-                    placeholder="What can we help you with?" 
+                  <textarea
+                    placeholder="What can we help you with?"
                     rows={3}
                     className="w-full p-2 sm:p-3 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                     data-testid="textarea-get-started-message"
@@ -765,8 +756,8 @@ export default function LandingPage() {
                     <p className="text-red-200 text-xs mt-1">{getStartedForm.formState.errors.message.message}</p>
                   )}
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={contactMutation.isPending}
                   className="w-full text-white py-2 sm:py-3 text-sm sm:text-lg rounded-lg disabled:opacity-50 transition-all duration-200"
                   style={{
@@ -804,12 +795,12 @@ export default function LandingPage() {
                   Get started now try our product
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <input 
-                    type="email" 
-                    placeholder="Enter your email here" 
+                  <input
+                    type="email"
+                    placeholder="Enter your email here"
                     className="flex-1 p-2 rounded-lg sm:rounded-l-lg sm:rounded-r-none bg-white/20 text-white placeholder-white/70 focus:outline-none text-xs sm:text-sm"
                   />
-                  <Button 
+                  <Button
                     className="text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-l-none sm:rounded-r-lg transition-all duration-200"
                     style={{
                       background: 'linear-gradient(135deg, #EEAF7C, #E0647D)',
@@ -827,6 +818,31 @@ export default function LandingPage() {
                   >
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="flex flex-col items-center py-6 sm:py-8 border-t border-white/20">
+              <p className="text-white/80 text-sm font-medium mb-4">We Accept</p>
+              <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+                <div className="bg-white rounded px-3 py-2 flex items-center justify-center h-10 w-16">
+                  <span className="text-blue-600 font-bold text-xs">VISA</span>
+                </div>
+                <div className="bg-white rounded px-3 py-2 flex items-center justify-center h-10 w-16">
+                  <span className="text-orange-500 font-bold text-xs">MC</span>
+                </div>
+                <div className="bg-white rounded px-3 py-2 flex items-center justify-center h-10 w-16">
+                  <span className="text-blue-600 font-bold text-xs">AMEX</span>
+                </div>
+                <div className="bg-white rounded px-3 py-2 flex items-center justify-center h-10 w-20">
+                  <span className="text-purple-600 font-bold text-xs">Stripe</span>
+                </div>
+                <div className="bg-white rounded px-3 py-2 flex items-center justify-center h-10 w-20">
+                  <span className="text-blue-700 font-bold text-xs">PayPal</span>
+                </div>
+                <div className="bg-white rounded px-3 py-2 flex items-center justify-center h-10 w-20">
+                  <span className="text-gray-800 font-bold text-xs">Square</span>
                 </div>
               </div>
             </div>

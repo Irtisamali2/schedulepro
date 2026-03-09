@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  ExternalLink, 
-  TrendingUp, 
-  Users, 
+import {
+  ExternalLink,
+  TrendingUp,
+  Users,
   DollarSign,
   Calendar,
   Target,
@@ -49,11 +49,11 @@ export default function ReferralTracking() {
     const converted = referralData.filter(r => r.status === 'converted' || r.status === 'active').length;
     const rate = total > 0 ? (converted / total) * 100 : 0;
     const revenue = referralData.reduce((sum, r) => sum + (r.estimatedRevenue || 0), 0);
-    
+
     // Calculate last month growth (simulated for demo)
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const recentReferrals = referralData.filter(r => 
+    const recentReferrals = referralData.filter(r =>
       new Date(r.referralDate) > lastMonth
     ).length;
     const growth = total > 0 ? (recentReferrals / total) * 100 : 0;
@@ -86,7 +86,7 @@ export default function ReferralTracking() {
   const exportReferralData = () => {
     const csvContent = [
       'Business Name,Email,Referral Date,Action,Status,Revenue',
-      ...referrals.map(r => 
+      ...referrals.map(r =>
         `${r.businessName},${r.email},${r.referralDate},${r.stripeAction},${r.status},${r.estimatedRevenue || 0}`
       )
     ].join('\n');
@@ -105,8 +105,8 @@ export default function ReferralTracking() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Stripe Partnership Tracking</h2>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => setShowReminders(!showReminders)} 
+          <Button
+            onClick={() => setShowReminders(!showReminders)}
             variant="outline"
             className="flex items-center gap-2"
           >
@@ -192,7 +192,7 @@ export default function ReferralTracking() {
           ) : (
             <div className="space-y-3">
               {referrals.slice(-10).reverse().map((referral) => (
-                <div key={referral.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={referral.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg gap-4">
                   <div className="flex items-center gap-3">
                     <div>
                       <p className="font-medium">{referral.businessName}</p>
@@ -200,7 +200,7 @@ export default function ReferralTracking() {
                     </div>
                     <Badge variant={
                       referral.status === 'active' ? 'default' :
-                      referral.status === 'converted' ? 'secondary' : 'outline'
+                        referral.status === 'converted' ? 'secondary' : 'outline'
                     }>
                       {referral.stripeAction.replace('_', ' ')}
                     </Badge>
@@ -245,9 +245,9 @@ export default function ReferralTracking() {
               <span>Revenue Sharing Agreement</span>
               <Badge variant="outline">Future</Badge>
             </div>
-            
+
             <div className="pt-4 border-t">
-              <Button 
+              <Button
                 onClick={() => window.open('https://stripe.com/partners/become-a-partner', '_blank')}
                 className="w-full"
               >
@@ -265,10 +265,10 @@ export default function ReferralTracking() {
           <CardTitle>Test Referral Tracking</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button 
+          <Button
             onClick={() => trackReferral(
-              'Demo Business ' + Math.floor(Math.random() * 1000), 
-              'demo@example.com', 
+              'Demo Business ' + Math.floor(Math.random() * 1000),
+              'demo@example.com',
               'account_created'
             )}
             variant="outline"

@@ -4,12 +4,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -240,8 +240,8 @@ export default function ClientManagement() {
                         <FormItem>
                           <FormLabel>Notes</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Preferences, allergies, special instructions..." 
+                            <Textarea
+                              placeholder="Preferences, allergies, special instructions..."
                               {...field}
                               value={field.value || ""}
                             />
@@ -273,7 +273,7 @@ export default function ClientManagement() {
               className="max-w-sm"
             />
           </div>
-          
+
           {filteredClients.length === 0 ? (
             <div className="text-center py-8">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -281,8 +281,8 @@ export default function ClientManagement() {
                 {clients.length === 0 ? `No ${terms.client}s added yet` : "No matching clients found"}
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                {clients.length === 0 
-                  ? `Start building your ${terms.client} database by adding your first ${terms.client}` 
+                {clients.length === 0
+                  ? `Start building your ${terms.client} database by adding your first ${terms.client}`
                   : "Try adjusting your search terms"
                 }
               </p>
@@ -294,8 +294,8 @@ export default function ClientManagement() {
               )}
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
+            <div className="rounded-md border w-full overflow-x-auto">
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>

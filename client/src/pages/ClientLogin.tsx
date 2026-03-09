@@ -110,6 +110,15 @@ export default function ClientLogin() {
                 <LogIn className="h-4 w-4 mr-2" />
                 {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
               </Button>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setLocation('/forgot-password')}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
             </form>
             
             <div className="mt-6 text-center space-y-3">
@@ -139,16 +148,7 @@ export default function ClientLogin() {
           </CardContent>
         </Card>
 
-        {/* Demo Credentials */}
-        <Card className="mt-4 bg-blue-50 border-blue-200">
-          <CardContent className="pt-4">
-            <p className="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</p>
-            <div className="text-sm text-blue-700 space-y-1">
-              <p>Email: john@abcconsulting.com</p>
-              <p>Password: demo123</p>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );

@@ -45,7 +45,7 @@ export default function DirectBooking() {
   const queryClient = useQueryClient();
 
   // Get URL parameters for pre-selection
-  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const urlParams = new URLSearchParams(location?.split('?')[1] || '');
   const preSelectedServiceId = urlParams.get('service');
 
   const form = useForm<BookingFormValues>({
