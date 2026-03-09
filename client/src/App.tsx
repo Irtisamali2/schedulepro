@@ -6,19 +6,10 @@ import ClientForgotPassword from "@/pages/ClientForgotPassword";
 import TeamLogin from "@/pages/TeamLogin";
 import TeamForgotPassword from "@/pages/TeamForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
-import TeamDashboard from "@/pages/TeamDashboard";
-import AdvancedWebsiteBuilder from "@/pages/AdvancedWebsiteBuilder";
-import WYSIWYGWebsiteBuilder from "@/pages/WYSIWYGWebsiteBuilder";
-import ElementorStyleBuilder from "@/pages/ElementorStyleBuilder";
-import CheckoutPage from "@/pages/CheckoutPage";
-import ClientWebsite from "@/pages/ClientWebsite";
-import ReviewPlatformConnections from "@/pages/ReviewPlatformConnections";
-import MultiStepBooking from "@/pages/MultiStepBooking";
-import TermsAndConditions from "@/pages/TermsAndConditions";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import NotFound from "@/pages/not-found";
 
 // Lazy-load heavy pages to reduce initial bundle size and improve iOS app startup
+const SuperAdminLogin = lazy(() => import("@/pages/SuperAdminLogin"));
 const SuperAdminDashboard = lazy(() => import("@/pages/SuperAdminDashboard"));
 const OnboardingFlow = lazy(() => import("@/pages/OnboardingFlow"));
 const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
@@ -52,6 +43,7 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 safe-top safe-bottom">
       <main className="flex-grow">
+        <Suspense fallback={<LoadingFallback />}>
         <Switch>
           {/* Public Landing Page */}
           <Route path="/" component={LandingPage} />
@@ -110,6 +102,7 @@ function App() {
           {/* Fallback */}
           <Route component={NotFound} />
         </Switch>
+        </Suspense>
       </main>
     </div>
   );
