@@ -2,7 +2,7 @@
 // This module intercepts fetch calls to rewrite relative /api/ URLs
 // so they point to the production server when running inside Capacitor.
 
-const isCapacitor = (): boolean => {
+export const isCapacitor = (): boolean => {
   return !!(
     import.meta.env.VITE_CAPACITOR === 'true' ||
     (window as any).Capacitor?.isNativePlatform?.()

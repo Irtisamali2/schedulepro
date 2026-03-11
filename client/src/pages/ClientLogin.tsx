@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, LogIn } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
+import { isCapacitor } from '@/lib/capacitor-init';
 
 export default function ClientLogin() {
   const [, setLocation] = useLocation();
@@ -54,16 +55,18 @@ export default function ClientLogin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="w-full max-w-md px-4">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => setLocation('/')}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
-        </div>
+        {!isCapacitor() && (
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation('/')}
+              className="mb-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </div>
+        )}
 
         <Card>
           <CardHeader className="text-center">
@@ -122,17 +125,21 @@ export default function ClientLogin() {
             </form>
             
             <div className="mt-6 text-center space-y-3">
-              <p className="text-sm text-gray-600 mb-2">
-                Don't have an account yet?
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation('/onboarding')}
-              >
-                Start Free Trial
-              </Button>
-              
-              <div className="pt-3 border-t">
+              {!isCapacitor() && (
+                <>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Don't have an account yet?
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setLocation('/onboarding')}
+                  >
+                    Start Free Trial
+                  </Button>
+                </>
+              )}
+
+              <div className={isCapacitor() ? "" : "pt-3 border-t"}>
                 <p className="text-sm text-gray-600 mb-2">
                   Team member?
                 </p>

@@ -1,6 +1,7 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { lazy, Suspense } from "react";
 import LandingPage from "@/pages/LandingPage";
+import { isCapacitor } from "@/lib/capacitor-init";
 import ClientLogin from "@/pages/ClientLogin";
 import ClientForgotPassword from "@/pages/ClientForgotPassword";
 import TeamLogin from "@/pages/TeamLogin";
@@ -45,8 +46,10 @@ function App() {
       <main className="flex-grow">
         <Suspense fallback={<LoadingFallback />}>
         <Switch>
-          {/* Public Landing Page */}
-          <Route path="/" component={LandingPage} />
+          {/* Public Landing Page - redirect to client login on mobile app */}
+          <Route path="/">
+            {isCapacitor() ? <Redirect to="/client-login" /> : <LandingPage />}
+          </Route>
           
           {/* Super Admin Routes */}
           <Route path="/admin" component={SuperAdminLogin} />
