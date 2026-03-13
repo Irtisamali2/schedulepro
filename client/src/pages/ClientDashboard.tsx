@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isCapacitor } from '@/lib/capacitor-init';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -884,7 +885,7 @@ export default function ClientDashboard() {
     { id: "services", label: "Services", icon: Package },
     { id: "leads", label: "Leads", icon: UserPlus },
     { id: "team", label: "Team", icon: Users },
-    { id: "payments", label: "Payments", icon: CreditCard },
+    ...(!isCapacitor() ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
     { id: "email", label: "Email", icon: Mail },
     { id: "ai", label: "AI Features", icon: Bot },
     { id: "google", label: "Google Business", icon: MapPin },
