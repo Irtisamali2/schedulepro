@@ -2147,6 +2147,7 @@ export default function ClientDashboard() {
                         </div>
                         <Badge variant="outline">{clientData?.status === 'TRIAL' ? 'TRIAL' : 'ACTIVE'}</Badge>
                       </div>
+                      {!isCapacitor() && (
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">Subscription</p>
@@ -2161,6 +2162,7 @@ export default function ClientDashboard() {
                           Manage Plan
                         </Button>
                       </div>
+                      )}
                       <div className="pt-4 border-t">
                         <Button variant="outline" className="w-full" onClick={handleLogout}>
                           <LogOut className="h-4 w-4 mr-2" />
