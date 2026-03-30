@@ -2163,6 +2163,25 @@ export default function ClientDashboard() {
                         </Button>
                       </div>
                       )}
+                      {isCapacitor() && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Subscription</p>
+                          <p className="text-sm text-gray-600">Manage via App Store</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            const { manageSubscriptions } = await import('@/lib/iap');
+                            await manageSubscriptions();
+                          }}
+                          data-testid="button-manage-subscription-iap"
+                        >
+                          Manage Subscription
+                        </Button>
+                      </div>
+                      )}
                       <div className="pt-4 border-t">
                         <Button variant="outline" className="w-full" onClick={handleLogout}>
                           <LogOut className="h-4 w-4 mr-2" />

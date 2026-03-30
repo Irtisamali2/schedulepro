@@ -12,6 +12,8 @@ import { ArrowLeft, ArrowRight, CheckCircle, Clock, Star, Sparkles, Home, Lock, 
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation, Link } from 'wouter';
 import StripePaymentWrapper from '@/components/payment/StripePaymentWrapper';
+import IAPPaymentWrapper from '@/components/payment/IAPPaymentWrapper';
+import { isCapacitor } from '@/lib/capacitor-init';
 
 interface Plan {
   id: string;
@@ -759,7 +761,16 @@ export default function OnboardingFlow() {
               </CardContent>
             </Card>
 
-            {import.meta.env.VITE_STRIPE_PUBLIC_KEY ? (
+            {isCapacitor() ? (
+              <div className="max-w-md mx-auto">
+                <IAPPaymentWrapper
+                  plan={selectedPlan}
+                  billingPeriod={billingPeriod}
+                  customerEmail={onboardingData.adminEmail || onboardingData.businessEmail || ''}
+                  onSuccess={() => setCurrentStep(5)}
+                />
+              </div>
+            ) : import.meta.env.VITE_STRIPE_PUBLIC_KEY ? (
               <div className="max-w-md mx-auto">
                 <StripePaymentWrapper
                   plan={selectedPlan}

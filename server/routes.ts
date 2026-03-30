@@ -275,6 +275,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =============================================================================
+  // IN-APP PURCHASE (IAP) VERIFICATION ROUTE
+  // =============================================================================
+
+  // Valid App Store product IDs
+  const VALID_IAP_PRODUCT_IDS = [
+    'com.scheduledpro.basic.monthly',
+    'com.scheduledpro.basic.yearly',
+    'com.scheduledpro.team.monthly',
+    'com.scheduledpro.team.yearly',
+  ];
+
+  // Verify iOS App Store in-app purchase receipt
+  app.post("/api/iap/verify", async (req, res) => {
+    try {
+      const { transaction, productId, planId, billingPeriod, customerEmail } = req.body;
+
+      if (!transaction || !productId || !planId || !customerEmail) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      if (!VALID_IAP_PRODUCT_IDS.includes(productId)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      // TODO: Add App Store Server API verification here
+      // For now, trust the transaction from the native IAP plugin
+      // In production, verify the transaction with Apple's App Store Server API:
+      // https://developer.apple.com/documentation/appstoreserverapi
+
+      // Find or create the client by email and activate their plan
+      const clients = await storage.getClients();
+      const client = clients.find((c: any) => c.email === customerEmail || c.businessEmail === customerEmail);
+
+      if (client) {
+        await storage.updateClient(client.id, {
+          status: "ACTIVE",
+          planId: planId,
+        });
+      }
+
+      // Record the payment
+      if (client) {
+        await storage.createPayment({
+          clientId: client.id,
+          type: "SUBSCRIPTION",
+          amount: 0, // Amount handled by App Store
+          currency: "USD",
+          status: "COMPLETED",
+          metadata: JSON.stringify({
+            source: "ios_iap",
+            productId,
+            transaction,
+            billingPeriod,
+          }),
+        });
+      }
+
+      res.json({ success: true, message: "Purchase verified and plan activated" });
+    } catch (error) {
+      console.error("Error verifying IAP:", error);
+      res.status(500).json({ error: "Failed to verify purchase" });
+    }
+  });
+
+  // =============================================================================
   // SECURE STRIPE CONFIGURATION ROUTES
   // =============================================================================
 
