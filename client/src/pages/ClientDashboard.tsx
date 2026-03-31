@@ -51,6 +51,7 @@ import ServicesManagement from '../components/dashboard/ServicesManagement';
 import DomainConfig from '../components/dashboard/DomainConfig';
 import StripeConfiguration from '../components/dashboard/StripeConfiguration';
 import SubscriptionManagement from '../components/dashboard/SubscriptionManagement';
+import IAPSubscriptionManagement from '../components/dashboard/IAPSubscriptionManagement';
 import SMTPConfiguration from '../components/dashboard/SMTPConfiguration';
 import SendCalendarInviteDialog from '../components/dashboard/SendCalendarInviteDialog';
 import GlossGeniusExport from '../components/dashboard/GlossGeniusExport';
@@ -885,7 +886,7 @@ export default function ClientDashboard() {
     { id: "services", label: "Services", icon: Package },
     { id: "leads", label: "Leads", icon: UserPlus },
     { id: "team", label: "Team", icon: Users },
-    ...(!isCapacitor() ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
+    { id: "payments", label: isCapacitor() ? "Subscription" : "Payments", icon: CreditCard },
     { id: "email", label: "Email", icon: Mail },
     { id: "ai", label: "AI Features", icon: Bot },
     { id: "google", label: "Google Business", icon: MapPin },
@@ -2230,10 +2231,16 @@ export default function ClientDashboard() {
             {activeView === "google" && <GoogleBusinessSetup />}
 
             {activeView === "payments" && (
-              <StripeConfiguration
-                clientId={clientData?.id || "client_1"}
-                hasPermission={hasPermission}
-              />
+              isCapacitor() ? (
+                <IAPSubscriptionManagement
+                  clientId={clientData?.id || "client_1"}
+                />
+              ) : (
+                <StripeConfiguration
+                  clientId={clientData?.id || "client_1"}
+                  hasPermission={hasPermission}
+                />
+              )
             )}
 
           </div>

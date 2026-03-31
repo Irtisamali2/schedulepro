@@ -125,21 +125,17 @@ export default function ClientLogin() {
             </form>
             
             <div className="mt-6 text-center space-y-3">
-              {!isCapacitor() && (
-                <>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Don't have an account yet?
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setLocation('/onboarding')}
-                  >
-                    Start Free Trial
-                  </Button>
-                </>
-              )}
+              <p className="text-sm text-gray-600 mb-2">
+                Don't have an account yet?
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/onboarding')}
+              >
+                Start Free Trial
+              </Button>
 
-              <div className={isCapacitor() ? "" : "pt-3 border-t"}>
+              <div className="pt-3 border-t">
                 <p className="text-sm text-gray-600 mb-2">
                   Team member?
                 </p>
