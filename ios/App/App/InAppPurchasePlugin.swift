@@ -1,9 +1,9 @@
 import Capacitor
 import StoreKit
 
-@objc(InAppPurchasePlugin)
+@objc(InAppPurchase)
 public class InAppPurchasePlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "InAppPurchasePlugin"
+    public let identifier = "InAppPurchase"
     public let jsName = "InAppPurchase"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "getProducts", returnType: CAPPluginReturnPromise),
