@@ -7,8 +7,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Register the custom StoreKit plugin on app startup so Capacitor can find it from JS.
-        CAPBridge.registerPlugin(InAppPurchasePlugin.self)
         // Override point for customization after application launch.
         return true
     }
