@@ -280,10 +280,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Valid App Store product IDs
   const VALID_IAP_PRODUCT_IDS = [
-    'com.scheduledpro.basic.monthly',
-    'com.scheduledpro.basic.yearly',
-    'com.scheduledpro.team.monthly',
-    'com.scheduledpro.team.yearly',
+    'com.scheduledpro.basic.month',
+    'com.scheduledpro.basic.year',
+    'com.scheduledpro.team.month',
+    'com.scheduledpro.team.year',
   ];
 
   // Verify iOS App Store in-app purchase receipt

@@ -51,7 +51,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../App/Products.storekit">
+         identifier = "../App/Scheduled Pros.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
