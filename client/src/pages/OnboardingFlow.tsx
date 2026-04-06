@@ -257,9 +257,14 @@ export default function OnboardingFlow() {
     }
   }, []);
 
-  const { data: plans = [] } = useQuery<Plan[]>({
+  const { data: allPlans = [] } = useQuery<Plan[]>({
     queryKey: ['/api/public/plans']
   });
+
+  // On iOS (Capacitor), hide the Free Demo plan — trials must go through Apple's
+  // introductory offer system (already configured in Products.storekit), not a
+  // separate free plan that bypasses IAP (Apple Guideline 3.1.1).
+  const plans = isCapacitor() ? allPlans.filter(p => !p.isFreeTrial) : allPlans;
 
   const { data: sessionData } = useQuery({
     queryKey: [`/api/onboarding/${sessionId}`],
@@ -459,6 +464,16 @@ export default function OnboardingFlow() {
                 </button>
               </div>
             </div>
+
+            {isCapacitor() && (
+              <div className="max-w-md mx-auto bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <p className="text-sm font-semibold text-green-800">7-day free trial included</p>
+                <p className="text-xs text-green-700 mt-1">
+                  Start with a free trial on any paid plan — no charge until your trial ends.
+                  Managed securely through Apple.
+                </p>
+              </div>
+            )}
 
             <div className="flex justify-center">
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl w-full">

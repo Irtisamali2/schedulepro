@@ -14,18 +14,19 @@ interface IAPPaymentWrapperProps {
 // Map plan names to App Store Connect product IDs
 const IAP_PRODUCT_IDS: Record<string, Record<string, string>> = {
   basic: {
-    monthly: 'com.scheduledpro.basic.monthly',
-    yearly: 'com.scheduledpro.basic.yearly',
+    monthly: 'com.scheduledpro.basic.month',
+    yearly: 'com.scheduledpro.basic.year',
   },
   team: {
-    monthly: 'com.scheduledpro.team.monthly',
-    yearly: 'com.scheduledpro.team.yearly',
+    monthly: 'com.scheduledpro.team.month',
+    yearly: 'com.scheduledpro.team.year',
   },
 };
 
 function getProductId(plan: any, billingPeriod: 'monthly' | 'yearly'): string {
   const planName = (plan.name || '').toLowerCase().trim();
-  return IAP_PRODUCT_IDS[planName]?.[billingPeriod] || `com.scheduledpro.${planName}.${billingPeriod}`;
+  const suffix = billingPeriod === 'monthly' ? 'month' : 'year';
+  return IAP_PRODUCT_IDS[planName]?.[billingPeriod] || `com.scheduledpro.${planName}.${suffix}`;
 }
 
 export default function IAPPaymentWrapper({

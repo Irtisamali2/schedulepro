@@ -62,18 +62,19 @@ interface PlanFromAPI {
 // Map plan names to App Store Connect product IDs
 const IAP_PRODUCT_IDS: Record<string, Record<string, string>> = {
   basic: {
-    monthly: 'com.scheduledpro.basic.monthly',
-    yearly: 'com.scheduledpro.basic.yearly',
+    monthly: 'com.scheduledpro.basic.month',
+    yearly: 'com.scheduledpro.basic.year',
   },
   team: {
-    monthly: 'com.scheduledpro.team.monthly',
-    yearly: 'com.scheduledpro.team.yearly',
+    monthly: 'com.scheduledpro.team.month',
+    yearly: 'com.scheduledpro.team.year',
   },
 };
 
 function getProductId(planName: string, billingPeriod: 'monthly' | 'yearly'): string {
   const key = planName.toLowerCase().trim();
-  return IAP_PRODUCT_IDS[key]?.[billingPeriod] || `com.scheduledpro.${key}.${billingPeriod}`;
+  const suffix = billingPeriod === 'monthly' ? 'month' : 'year';
+  return IAP_PRODUCT_IDS[key]?.[billingPeriod] || `com.scheduledpro.${key}.${suffix}`;
 }
 
 interface IAPSubscriptionManagementProps {

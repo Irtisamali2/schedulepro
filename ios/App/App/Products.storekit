@@ -9,7 +9,7 @@
       }
     ]
   },
-  "identifier" : "1267D704",
+  "identifier" : "B3C5785A",
   "nonRenewingSubscriptions" : [
 
   ],
@@ -17,11 +17,14 @@
 
   ],
   "settings" : {
+    "_applicationInternalID" : "6748840245",
     "_askToBuyEnabled" : false,
     "_billingGracePeriodEnabled" : false,
     "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "YL73UM5N9L",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 796858351.296615,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "USA",
@@ -32,7 +35,7 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "75634993",
+      "id" : "22010288",
       "localizations" : [
 
       ],
@@ -45,26 +48,27 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "15",
+          "displayPrice" : "15.0",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "5FCD1013",
+          "internalID" : "6761543819",
           "introductoryOffer" : {
-            "internalID" : "F4213402",
+            "internalID" : "5B60AB8B",
+            "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P1W"
           },
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "1 User, 10GB Storage, Basic Support, Booking, Clients",
+              "displayName" : "Basic Monthly Plan",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.scheduledpro.basic.monthly",
+          "productID" : "com.scheduledpro.basic.month",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Basic Monthly",
-          "subscriptionGroupID" : "75634993",
+          "subscriptionGroupID" : "22010288",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 
@@ -77,22 +81,27 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "99.99",
+          "displayPrice" : "150.0",
           "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "30619418",
-          "introductoryOffer" : null,
+          "groupNumber" : 2,
+          "internalID" : "6761544178",
+          "introductoryOffer" : {
+            "internalID" : "FCA2E295",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "com.scheduledpro.basic.year",
+              "displayName" : "Basic Yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.scheduledpro.basic.yearly",
-          "recurringSubscriptionPeriod" : "P1M",
+          "productID" : "com.scheduledpro.basic.year",
+          "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Basic Yearly",
-          "subscriptionGroupID" : "75634993",
+          "subscriptionGroupID" : "22010288",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 
@@ -101,7 +110,7 @@
       ]
     },
     {
-      "id" : "8E47D71A",
+      "id" : "22010333",
       "localizations" : [
 
       ],
@@ -114,22 +123,22 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "150",
+          "displayPrice" : "99.99",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "D207316C",
+          "internalID" : "6761544407",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "5 Users, 100GB, Priority Support, Advanced Analytics",
+              "displayName" : "Team Monthly Plan",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.scheduledpro.team.monthly",
+          "productID" : "com.scheduledpro.team.month",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Team Monthly",
-          "subscriptionGroupID" : "8E47D71A",
+          "subscriptionGroupID" : "22010333",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 
@@ -144,20 +153,20 @@
           ],
           "displayPrice" : "999.99",
           "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "AB125599",
+          "groupNumber" : 2,
+          "internalID" : "6761575490",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "5 Users, 100GB, Priority Support, Advanced Analytics",
+              "displayName" : "Team Yearly Plan",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.scheduledpro.team.yearly",
-          "recurringSubscriptionPeriod" : "P1M",
+          "productID" : "com.scheduledpro.team.year",
+          "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Team Yearly",
-          "subscriptionGroupID" : "8E47D71A",
+          "subscriptionGroupID" : "22010333",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 

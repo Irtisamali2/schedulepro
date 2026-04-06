@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isCapacitor } from "@/lib/capacitor-init";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,9 +61,12 @@ export default function LandingPage() {
   const { toast } = useToast();
 
   // Fetch plans from API
-  const { data: plans = [] } = useQuery<Plan[]>({
+  const { data: allPlans = [] } = useQuery<Plan[]>({
     queryKey: ['/api/public/plans'],
   });
+
+  // On iOS hide the Free Demo plan — Apple requires trials go through IAP introductory offers
+  const plans = isCapacitor() ? allPlans.filter((p: any) => !p.isFreeTrial) : allPlans;
 
   // Calculate display price based on billing period and discounts (with backwards compatibility)
   const getDisplayPrice = (plan: Plan | any) => {
