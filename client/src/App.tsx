@@ -24,6 +24,7 @@ const ReviewPlatformConnections = lazy(() => import("@/pages/ReviewPlatformConne
 const MultiStepBooking = lazy(() => import("@/pages/MultiStepBooking"));
 const TermsAndConditions = lazy(() => import("@/pages/TermsAndConditions"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const EULA = lazy(() => import("@/pages/EULA"));
 
 function LoadingFallback() {
   return (
@@ -96,6 +97,7 @@ function App() {
           {/* Legal Pages */}
           <Route path="/terms-and-conditions" component={TermsAndConditions} />
           <Route path="/privacy-policy" component={PrivacyPolicy} />
+          <Route path="/eula" component={EULA} />
           
           {/* Public Client Websites - using subdomain for security */}
           <Route path="/site/:subdomain" component={ClientWebsite} />

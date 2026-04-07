@@ -30,135 +30,196 @@ export default function PrivacyPolicy() {
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-center">Privacy Policy</CardTitle>
-            <p className="text-center text-gray-600 mt-2">Last updated: September 29, 2025</p>
+            <p className="text-center text-gray-600 mt-2">Last updated: April 7, 2026</p>
           </CardHeader>
           <CardContent className="prose prose-gray max-w-none">
             <div className="space-y-6">
               <section>
-                <h2 className="text-2xl font-semibold mb-3">1. Information We Collect</h2>
                 <p>
-                  We collect information you provide directly to us, such as when you create an account, 
-                  use our services, or contact us for support.
+                  Scheduled Pro, LLC ("Scheduled Pro," "we," "us," or "our") respects your privacy and is committed to
+                  protecting the personal information you share with us. This Privacy Policy describes how we collect,
+                  use, disclose, and safeguard your information when you use our mobile application (the "App"),
+                  website, and related services (collectively, the "Service"). By using the Service, you agree to the
+                  collection and use of information in accordance with this policy.
                 </p>
-                <h3 className="text-lg font-semibold mt-4 mb-2">Information you provide to us:</h3>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold mb-3">1. Information We Collect</h2>
+                <h3 className="text-lg font-semibold mt-4 mb-2">1.1 Information You Provide</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Account information (name, email address, phone number)</li>
-                  <li>Business information (business name, address, industry type)</li>
-                  <li>Client and appointment data</li>
-                  <li>Payment information (processed securely by third-party providers)</li>
-                  <li>Communications with us (support requests, feedback)</li>
+                  <li><strong>Account information:</strong> Name, email address, phone number, and password when you create an account.</li>
+                  <li><strong>Business information:</strong> Business name, address, industry type, operating hours, and logo.</li>
+                  <li><strong>Client and appointment data:</strong> Names, contact details, appointment schedules, and service preferences of your clients.</li>
+                  <li><strong>Payment information:</strong> When you subscribe to a paid plan, payment is processed by Apple (via In-App Purchase) or Stripe. We do not directly collect or store your credit card number. We may receive transaction confirmations, receipt data, and subscription status from these processors.</li>
+                  <li><strong>Communications:</strong> Messages, feedback, and support requests you send to us.</li>
                 </ul>
+
+                <h3 className="text-lg font-semibold mt-4 mb-2">1.2 Information Collected Automatically</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Device information:</strong> Device type, operating system, unique device identifiers, and mobile network information.</li>
+                  <li><strong>Usage data:</strong> Pages visited, features used, time spent on the Service, and interaction data.</li>
+                  <li><strong>Log data:</strong> IP address, browser type, access times, and referring URLs.</li>
+                </ul>
+
+                <h3 className="text-lg font-semibold mt-4 mb-2">1.3 Information from Third Parties</h3>
+                <p>
+                  We may receive transaction and subscription status information from Apple (App Store) and Stripe
+                  to verify your subscription and process payments.
+                </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-semibold mb-3">2. How We Use Your Information</h2>
                 <p>We use the information we collect to:</p>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>Provide, maintain, and improve our services</li>
-                  <li>Process transactions and send related information</li>
-                  <li>Send technical notices, updates, and support messages</li>
-                  <li>Respond to your comments, questions, and requests</li>
-                  <li>Communicate with you about products, services, and events</li>
-                  <li>Monitor and analyze trends, usage, and activities</li>
-                  <li>Detect, investigate, and prevent fraudulent transactions</li>
+                  <li>Provide, operate, maintain, and improve the Service.</li>
+                  <li>Process subscriptions and payments, including In-App Purchases via Apple and payments via Stripe, PayPal, Zelle, or Venmo.</li>
+                  <li>Verify subscription status and manage your account.</li>
+                  <li>Send transactional communications such as receipts, subscription confirmations, renewal reminders, and support messages.</li>
+                  <li>Respond to your comments, questions, and support requests.</li>
+                  <li>Monitor and analyze usage trends and activities to improve user experience.</li>
+                  <li>Detect, investigate, and prevent fraudulent or unauthorized transactions.</li>
+                  <li>Comply with legal obligations and enforce our terms.</li>
                 </ul>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-3">3. Information Sharing and Disclosure</h2>
+                <h2 className="text-2xl font-semibold mb-3">3. Subscriptions, Payments & Auto-Renewal</h2>
                 <p>
-                  We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, 
-                  except as described in this policy:
+                  Scheduled Pro offers subscription plans that may be purchased through the Apple App Store
+                  (In-App Purchase) or via Stripe on the web.
                 </p>
-                <h3 className="text-lg font-semibold mt-4 mb-2">We may share your information:</h3>
+                <h3 className="text-lg font-semibold mt-4 mb-2">3.1 Apple In-App Purchases</h3>
                 <ul className="list-disc list-inside space-y-2">
-                  <li>With service providers who assist us in operating our platform</li>
-                  <li>With payment processors to handle transactions securely</li>
-                  <li>When required by law or to respond to legal process</li>
-                  <li>To protect our rights, property, or safety</li>
-                  <li>In connection with a merger, acquisition, or sale of assets</li>
+                  <li>Payment is charged to your Apple ID account at confirmation of purchase.</li>
+                  <li>Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current billing period.</li>
+                  <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the same rate.</li>
+                  <li>You can manage and cancel subscriptions by going to your Account Settings in the App Store after purchase.</li>
+                  <li>Any unused portion of a free trial period, if offered, will be forfeited when you purchase a subscription.</li>
+                  <li>Apple processes all In-App Purchase payments. We do not have access to your Apple payment credentials.</li>
+                </ul>
+                <h3 className="text-lg font-semibold mt-4 mb-2">3.2 Stripe & Other Payment Processors</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>When subscribing via the web, payments are processed securely through Stripe. We do not store your full credit card details.</li>
+                  <li>Additional payment options (PayPal, Zelle, Venmo) may be available for service-related transactions within the platform.</li>
+                  <li>Each payment processor has its own privacy policy governing the handling of your payment information.</li>
                 </ul>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-3">4. Data Security</h2>
+                <h2 className="text-2xl font-semibold mb-3">4. Information Sharing and Disclosure</h2>
                 <p>
-                  We implement appropriate security measures to protect your personal information against unauthorized access, 
-                  alteration, disclosure, or destruction. These measures include:
-                </p>
-                <ul className="list-disc list-inside space-y-2">
-                  <li>Encryption of sensitive data in transit and at rest</li>
-                  <li>Regular security assessments and updates</li>
-                  <li>Access controls and authentication requirements</li>
-                  <li>Secure data centers and infrastructure</li>
-                  <li>Employee training on data protection practices</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-semibold mb-3">5. Data Retention</h2>
-                <p>
-                  We retain your personal information for as long as necessary to provide our services, 
-                  comply with legal obligations, resolve disputes, and enforce our agreements. 
-                  When we no longer need your information, we securely delete or anonymize it.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-semibold mb-3">6. Your Rights and Choices</h2>
-                <p>You have the following rights regarding your personal information:</p>
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Access:</strong> Request a copy of the personal information we hold about you</li>
-                  <li><strong>Correction:</strong> Request correction of inaccurate or incomplete information</li>
-                  <li><strong>Deletion:</strong> Request deletion of your personal information</li>
-                  <li><strong>Portability:</strong> Request transfer of your data to another service</li>
-                  <li><strong>Objection:</strong> Object to processing of your personal information</li>
-                  <li><strong>Restriction:</strong> Request restriction of processing</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-semibold mb-3">7. Third-Party Services</h2>
-                <p>
-                  Our service integrates with third-party services for payment processing, email delivery, 
-                  and other functionality. These services have their own privacy policies:
+                  We do not sell, trade, or rent your personal information to third parties. We may share your
+                  information only in the following circumstances:
                 </p>
                 <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Stripe:</strong> Payment processing (stripe.com/privacy)</li>
-                  <li><strong>PayPal:</strong> Payment processing (paypal.com/privacy)</li>
-                  <li><strong>Resend:</strong> Email delivery (resend.com/privacy)</li>
+                  <li><strong>Service providers:</strong> With trusted third-party vendors who assist in operating our platform (e.g., hosting, analytics, email delivery via Resend).</li>
+                  <li><strong>Payment processors:</strong> With Apple, Stripe, PayPal, and other processors to handle transactions securely.</li>
+                  <li><strong>Legal requirements:</strong> When required by law, subpoena, or legal process, or to protect our rights, property, or safety.</li>
+                  <li><strong>Business transfers:</strong> In connection with a merger, acquisition, or sale of assets, your information may be transferred as part of that transaction.</li>
                 </ul>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-3">8. International Data Transfers</h2>
+                <h2 className="text-2xl font-semibold mb-3">5. Data Security</h2>
                 <p>
-                  Your information may be transferred to and processed in countries other than your own. 
-                  We ensure appropriate safeguards are in place to protect your information when it is transferred internationally.
+                  We implement industry-standard security measures to protect your personal information, including:
+                </p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Encryption of sensitive data in transit (TLS/SSL) and at rest.</li>
+                  <li>Regular security assessments and updates.</li>
+                  <li>Access controls and authentication requirements for all personnel.</li>
+                  <li>Secure cloud infrastructure and data storage.</li>
+                </ul>
+                <p className="mt-2">
+                  While we strive to protect your information, no method of electronic transmission or storage is
+                  100% secure. We cannot guarantee absolute security.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-3">9. Children's Privacy</h2>
+                <h2 className="text-2xl font-semibold mb-3">6. Data Retention</h2>
                 <p>
-                  Our service is not intended for children under 13 years of age. 
-                  We do not knowingly collect personal information from children under 13. 
-                  If we become aware that we have collected personal information from a child under 13, 
-                  we will take steps to delete such information.
+                  We retain your personal information for as long as your account is active or as needed to provide
+                  the Service, comply with legal obligations, resolve disputes, and enforce our agreements. When your
+                  information is no longer needed, we securely delete or anonymize it.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-3">10. Updates to This Policy</h2>
-                <p>
-                  We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new 
-                  Privacy Policy on this page and updating the "Last updated" date. 
-                  We encourage you to review this Privacy Policy periodically.
+                <h2 className="text-2xl font-semibold mb-3">7. Your Rights and Choices</h2>
+                <p>Depending on your jurisdiction, you may have the following rights:</p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Access:</strong> Request a copy of the personal information we hold about you.</li>
+                  <li><strong>Correction:</strong> Request correction of inaccurate or incomplete information.</li>
+                  <li><strong>Deletion:</strong> Request deletion of your personal information.</li>
+                  <li><strong>Portability:</strong> Request transfer of your data to another service in a machine-readable format.</li>
+                  <li><strong>Objection:</strong> Object to the processing of your personal information.</li>
+                  <li><strong>Restriction:</strong> Request restriction of processing in certain circumstances.</li>
+                  <li><strong>Opt-out:</strong> Unsubscribe from marketing communications at any time using the link in our emails.</li>
+                </ul>
+                <p className="mt-2">
+                  To exercise any of these rights, contact us at <strong>privacy@scheduledpro.com</strong>. We will
+                  respond within 30 days.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold mb-3">11. Contact Us</h2>
+                <h2 className="text-2xl font-semibold mb-3">8. Third-Party Services</h2>
+                <p>
+                  Our Service integrates with third-party services. Each has its own privacy policy:
+                </p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Apple:</strong> In-App Purchase processing &mdash; <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">apple.com/legal/privacy</a></li>
+                  <li><strong>Stripe:</strong> Payment processing &mdash; <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">stripe.com/privacy</a></li>
+                  <li><strong>PayPal:</strong> Payment processing &mdash; <a href="https://www.paypal.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">paypal.com/privacy</a></li>
+                  <li><strong>Resend:</strong> Email delivery &mdash; <a href="https://resend.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">resend.com/privacy</a></li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold mb-3">9. International Data Transfers</h2>
+                <p>
+                  Your information may be transferred to and processed in countries other than your own. We ensure
+                  appropriate safeguards (such as standard contractual clauses) are in place to protect your
+                  information during international transfers.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold mb-3">10. Children's Privacy</h2>
+                <p>
+                  The Service is not intended for use by anyone under the age of 13 (or the applicable age of
+                  digital consent in your jurisdiction). We do not knowingly collect personal information from
+                  children. If we learn that we have collected information from a child, we will promptly delete it.
+                  If you believe a child has provided us with personal data, please contact us immediately.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold mb-3">11. California Privacy Rights (CCPA)</h2>
+                <p>
+                  If you are a California resident, you have additional rights under the California Consumer Privacy
+                  Act (CCPA), including the right to know what personal information we collect, the right to request
+                  deletion, and the right to opt out of the sale of personal information. We do not sell personal
+                  information. To exercise your rights, contact us at <strong>privacy@scheduledpro.com</strong>.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold mb-3">12. Changes to This Privacy Policy</h2>
+                <p>
+                  We may update this Privacy Policy from time to time. We will notify you of material changes by
+                  posting the updated policy on this page and updating the "Last updated" date. For significant
+                  changes, we may also notify you via email or in-app notification. Your continued use of the
+                  Service after changes constitutes acceptance of the updated policy. We encourage you to review
+                  this Privacy Policy periodically.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold mb-3">13. Contact Us</h2>
                 <p>
                   If you have any questions about this Privacy Policy or our privacy practices, please contact us:
                 </p>
@@ -178,7 +239,7 @@ export default function PrivacyPolicy() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-600 text-sm">
-              © 2025 Scheduled Pro. All rights reserved.
+              &copy; {new Date().getFullYear()} Scheduled Pro. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-3 md:mt-0">
               <Link href="/">
@@ -186,6 +247,9 @@ export default function PrivacyPolicy() {
               </Link>
               <Link href="/terms-and-conditions">
                 <span className="text-gray-600 hover:text-primary text-sm cursor-pointer">Terms and Conditions</span>
+              </Link>
+              <Link href="/eula">
+                <span className="text-gray-600 hover:text-primary text-sm cursor-pointer">EULA</span>
               </Link>
             </div>
           </div>

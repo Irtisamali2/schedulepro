@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, LogIn } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { isCapacitor } from '@/lib/capacitor-init';
 
@@ -151,6 +151,20 @@ export default function ClientLogin() {
           </CardContent>
         </Card>
 
+        <div className="mt-4 text-center text-xs text-gray-500 space-x-1">
+          <span>By signing in, you agree to our</span>
+          <Link href="/terms-and-conditions">
+            <span className="text-blue-600 hover:underline cursor-pointer">Terms</span>
+          </Link>
+          <span>,</span>
+          <Link href="/privacy-policy">
+            <span className="text-blue-600 hover:underline cursor-pointer">Privacy Policy</span>
+          </Link>
+          <span>&</span>
+          <Link href="/eula">
+            <span className="text-blue-600 hover:underline cursor-pointer">EULA</span>
+          </Link>
+        </div>
 
       </div>
     </div>

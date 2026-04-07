@@ -1022,6 +1022,21 @@ export default function OnboardingFlow() {
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-4 text-center text-xs text-gray-500 space-x-1 max-w-4xl mx-auto">
+          <span>By creating an account, you agree to our</span>
+          <Link href="/terms-and-conditions">
+            <span className="text-blue-600 hover:underline cursor-pointer">Terms</span>
+          </Link>
+          <span>,</span>
+          <Link href="/privacy-policy">
+            <span className="text-blue-600 hover:underline cursor-pointer">Privacy Policy</span>
+          </Link>
+          <span>&</span>
+          <Link href="/eula">
+            <span className="text-blue-600 hover:underline cursor-pointer">EULA</span>
+          </Link>
+        </div>
       </div>
     </div>
   );
