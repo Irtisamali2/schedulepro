@@ -302,12 +302,7 @@ export default function ClientDashboard() {
   // Mutations for Services
   const createServiceMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/client/${clientData?.id}/services`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to create service');
+      const response = await apiRequest(`/api/client/${clientData?.id}/services`, 'POST', data);
       return response.json();
     },
     onSuccess: () => {
@@ -323,12 +318,7 @@ export default function ClientDashboard() {
 
   const updateServiceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await fetch(`/api/client/${clientData?.id}/services/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, price: parseFloat(data.price), durationMinutes: parseInt(data.durationMinutes) })
-      });
-      if (!response.ok) throw new Error('Failed to update service');
+      const response = await apiRequest(`/api/client/${clientData?.id}/services/${id}`, 'PUT', { ...data, price: parseFloat(data.price), durationMinutes: parseInt(data.durationMinutes) });
       return response.json();
     },
     onSuccess: () => {
@@ -344,10 +334,7 @@ export default function ClientDashboard() {
 
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/client/${clientData?.id}/services/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete service');
+      const response = await apiRequest(`/api/client/${clientData?.id}/services/${id}`, 'DELETE');
       return response.json();
     },
     onSuccess: () => {
@@ -522,12 +509,7 @@ export default function ClientDashboard() {
   // Website update mutation
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/client/${clientData?.id}/website`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to update website');
+      const response = await apiRequest(`/api/client/${clientData?.id}/website`, 'PUT', data);
       return response.json();
     },
     onSuccess: () => {
@@ -542,12 +524,7 @@ export default function ClientDashboard() {
   // Slot management mutations
   const createSlotMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/client/${clientData?.id}/appointment-slots`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to create slot');
+      const response = await apiRequest(`/api/client/${clientData?.id}/appointment-slots`, 'POST', data);
       return response.json();
     },
     onSuccess: () => {
@@ -559,10 +536,7 @@ export default function ClientDashboard() {
 
   const deleteSlotMutation = useMutation({
     mutationFn: async (slotId: string) => {
-      const response = await fetch(`/api/client/${clientData?.id}/appointment-slots/${slotId}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete slot');
+      const response = await apiRequest(`/api/client/${clientData?.id}/appointment-slots/${slotId}`, 'DELETE');
       return response.json();
     },
     onSuccess: () => {

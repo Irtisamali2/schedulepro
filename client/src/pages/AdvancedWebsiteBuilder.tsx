@@ -11,6 +11,7 @@ import LeadForm from "@/components/LeadForm";
 import FigmaDesignedWebsite from "@/components/FigmaDesignedWebsite";
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface WebsiteElement {
   id: string;
@@ -1019,25 +1020,20 @@ export default function AdvancedWebsiteBuilder() {
   const saveWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteData) => {
       const method = existingWebsite ? 'PUT' : 'POST';
-      const response = await fetch(`/api/client/${clientId}/website`, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          primaryColor: data.primaryColor,
-          secondaryColor: data.secondaryColor,
-          heroImage: '',
-          contactInfo: JSON.stringify({ phone: clientData?.client?.phone || '', email: clientData?.client?.email || '' }),
-          socialLinks: JSON.stringify({}),
-          sections: JSON.stringify(data.sections), // Save sections as JSON
-          showPrices: true,
-          allowOnlineBooking: true,
-          isPublished: true,
-          subdomain: clientData?.client?.businessName?.toLowerCase().replace(/\s+/g, '-') || 'business'
-        })
+      const response = await apiRequest(`/api/client/${clientId}/website`, method, {
+        title: data.title,
+        description: data.description,
+        primaryColor: data.primaryColor,
+        secondaryColor: data.secondaryColor,
+        heroImage: '',
+        contactInfo: JSON.stringify({ phone: clientData?.client?.phone || '', email: clientData?.client?.email || '' }),
+        socialLinks: JSON.stringify({}),
+        sections: JSON.stringify(data.sections), // Save sections as JSON
+        showPrices: true,
+        allowOnlineBooking: true,
+        isPublished: true,
+        subdomain: clientData?.client?.businessName?.toLowerCase().replace(/\s+/g, '-') || 'business'
       });
-      if (!response.ok) throw new Error('Failed to save website');
       return response.json();
     },
     onSuccess: () => {
