@@ -642,6 +642,7 @@ export default function AdvancedWebsiteBuilder() {
     }));
     setSelectedSection(newSection.id);
     setEditMode('section');
+    if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
   const addColumn = (sectionId: string) => {
@@ -2114,8 +2115,8 @@ export default function AdvancedWebsiteBuilder() {
           </div>
         )}
 
-        {/* Sections List */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Sections List + Section Editor (scrollable together) */}
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="p-4">
             <h3 className="text-sm font-medium text-gray-900 mb-3">Website Sections</h3>
             <div className="space-y-2">
@@ -2134,7 +2135,6 @@ export default function AdvancedWebsiteBuilder() {
                     setEditMode('section');
                     setSelectedColumn(null);
                     setSelectedElement(null);
-                    if (window.innerWidth < 1024) setSidebarOpen(false);
                   }}
                 >
                   <CardContent className="p-3">
@@ -2159,7 +2159,6 @@ export default function AdvancedWebsiteBuilder() {
               ))}
             </div>
           </div>
-        </div>
 
         {/* Section Editor */}
         {selectedSectionData && (
@@ -2471,6 +2470,7 @@ export default function AdvancedWebsiteBuilder() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Main Preview Area */}
@@ -2538,7 +2538,10 @@ export default function AdvancedWebsiteBuilder() {
                   selectedSection === section.id ? 'border-blue-500' : ''
                 }`}
                 style={getBackgroundStyle(section.settings)}
-                onClick={() => setSelectedSection(section.id)}
+                onClick={() => {
+                  setSelectedSection(section.id);
+                  if (window.innerWidth < 1024) setSidebarOpen(true);
+                }}
               >
                 {/* Add Elements to Section */}
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1 sm:gap-2 mb-4 p-2 bg-gray-50 rounded border-2 border-dashed border-gray-300">
@@ -2890,6 +2893,7 @@ export default function AdvancedWebsiteBuilder() {
                             setSelectedColumn(column.id);
                             setSelectedSection(section.id);
                             setEditMode('column');
+                            if (window.innerWidth < 1024) setSidebarOpen(true);
                           }}
                           style={{ 
                             backgroundColor: column.settings?.backgroundColor,
@@ -2953,6 +2957,7 @@ export default function AdvancedWebsiteBuilder() {
                                   setSelectedColumn(column.id);
                                   setSelectedSection(section.id);
                                   setEditMode('element');
+                                  if (window.innerWidth < 1024) setSidebarOpen(true);
                                 }}
                               >
                                 <div className="flex items-center gap-2">
@@ -3098,6 +3103,7 @@ export default function AdvancedWebsiteBuilder() {
                                   setSelectedColumn(column.id);
                                   setSelectedSection(section.id);
                                   setEditMode('element');
+                                  if (window.innerWidth < 1024) setSidebarOpen(true);
                                 }}
                               >
                                 {renderElement(element)}
