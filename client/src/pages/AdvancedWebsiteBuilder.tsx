@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Eye, Plus, Trash2, ArrowLeft, ArrowUp, ArrowDown, Smartphone, Monitor, Tablet, Type, Layout, Palette, Settings, Phone, Mail, Star, GripVertical, Image, Columns, Square, MousePointer, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { Save, Eye, Plus, Trash2, ArrowLeft, ArrowUp, ArrowDown, Smartphone, Monitor, Tablet, Type, Layout, Palette, Settings, Phone, Mail, Star, GripVertical, Image, Columns, Square, MousePointer, ChevronLeft, ChevronRight, CheckCircle, Menu, X, PanelLeftClose, PanelLeft } from "lucide-react";
 import LeadForm from "@/components/LeadForm";
 import FigmaDesignedWebsite from "@/components/FigmaDesignedWebsite";
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { isCapacitor } from '@/lib/capacitor-init';
+import { Browser } from '@capacitor/browser';
 
 interface WebsiteElement {
   id: string;
@@ -336,6 +338,20 @@ export default function AdvancedWebsiteBuilder() {
   const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [draggedSection, setDraggedSection] = useState<number | null>(null);
   const [draggedElement, setDraggedElement] = useState<{ sectionId: string; columnId: string; elementId: string; index: number } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handlePreview = async () => {
+    const previewPath = `/client-website/${clientId}`;
+    if (isCapacitor()) {
+      try {
+        await Browser.open({ url: `https://scheduledpros.com${previewPath}` });
+      } catch {
+        window.open(`https://scheduledpros.com${previewPath}`, '_blank');
+      }
+    } else {
+      window.open(previewPath, '_blank');
+    }
+  };
 
   // Initialize with existing website data or create full default structure
   useEffect(() => {
@@ -1347,15 +1363,31 @@ export default function AdvancedWebsiteBuilder() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex relative">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Section List & Editor */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-200 ease-in-out
+        lg:relative lg:translate-x-0 lg:z-auto
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center gap-2 mb-2">
             <Button variant="ghost" size="sm" onClick={() => setLocation(`/client-dashboard?clientId=${clientId}`)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h2 className="text-lg font-semibold text-gray-900">Website Builder</h2>
+            <Button variant="ghost" size="sm" className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
           <p className="text-sm text-gray-600">Build your professional website</p>
         </div>
@@ -2102,6 +2134,7 @@ export default function AdvancedWebsiteBuilder() {
                     setEditMode('section');
                     setSelectedColumn(null);
                     setSelectedElement(null);
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
                   }}
                 >
                   <CardContent className="p-3">
@@ -2441,18 +2474,21 @@ export default function AdvancedWebsiteBuilder() {
       </div>
 
       {/* Main Preview Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Toolbar */}
-        <div className="bg-white border-b border-gray-200 p-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold">
+        <div className="bg-white border-b border-gray-200 p-2 sm:p-4">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Button variant="ghost" size="sm" className="lg:hidden shrink-0" onClick={() => setSidebarOpen(true)}>
+                <PanelLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-sm sm:text-xl font-semibold truncate">
                 {clientData?.client?.businessName} Website Builder
               </h1>
             </div>
-            
-            {/* Device Preview Toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+
+            {/* Device Preview Toggle - hidden on small screens */}
+            <div className="hidden sm:flex items-center gap-2 bg-gray-100 p-1 rounded-lg shrink-0">
               {(['desktop', 'tablet', 'mobile'] as const).map((mode) => (
                 <Button
                   key={mode}
@@ -2465,14 +2501,14 @@ export default function AdvancedWebsiteBuilder() {
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => window.open(`/client-website/${clientId}`, '_blank')}>
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
+            <div className="flex gap-1 sm:gap-2 shrink-0">
+              <Button variant="outline" size="sm" onClick={handlePreview}>
+                <Eye className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Preview</span>
               </Button>
-              <Button onClick={handleSave} disabled={saveWebsiteMutation.isPending}>
-                <Save className="h-4 w-4 mr-2" />
-                {saveWebsiteMutation.isPending ? 'Saving...' : 'Save & Publish'}
+              <Button size="sm" onClick={handleSave} disabled={saveWebsiteMutation.isPending}>
+                <Save className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{saveWebsiteMutation.isPending ? 'Saving...' : 'Save & Publish'}</span>
               </Button>
             </div>
           </div>
@@ -2490,7 +2526,7 @@ export default function AdvancedWebsiteBuilder() {
         </div>
 
         {/* Section Editor Panel - Full editing capabilities enabled */}
-        <div className="flex-1 p-6 overflow-auto bg-gray-50">
+        <div className="flex-1 p-2 sm:p-4 lg:p-6 overflow-auto bg-gray-50">
           <div 
             className="mx-auto bg-white rounded-lg shadow-lg overflow-hidden"
             style={{ width: getPreviewWidth(), maxWidth: '100%' }}
@@ -2505,7 +2541,7 @@ export default function AdvancedWebsiteBuilder() {
                 onClick={() => setSelectedSection(section.id)}
               >
                 {/* Add Elements to Section */}
-                <div className="flex flex-wrap gap-2 mb-4 p-2 bg-gray-50 rounded border-2 border-dashed border-gray-300">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1 sm:gap-2 mb-4 p-2 bg-gray-50 rounded border-2 border-dashed border-gray-300">
                   <Button size="sm" variant="outline" onClick={() => addElementToSection(section.id, 'text')} className="text-xs">
                     <Type className="h-3 w-3 mr-1" />
                     Text
@@ -2764,7 +2800,7 @@ export default function AdvancedWebsiteBuilder() {
                     </div>
                     <div className="relative">
                       <div 
-                        className="rounded-full w-96 h-96 mx-auto overflow-hidden"
+                        className="rounded-full w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 mx-auto overflow-hidden"
                         style={{
                           background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)'
                         }}
