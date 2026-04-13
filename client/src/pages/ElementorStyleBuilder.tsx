@@ -24,7 +24,8 @@ import {
   AlignRight,
   Trash2,
   GripVertical,
-  X
+  X,
+  PanelLeft
 } from 'lucide-react';
 import FigmaDesignedWebsite from '@/components/FigmaDesignedWebsite';
 import { EditableWebsiteProvider } from '@/contexts/EditableWebsiteContext';
@@ -35,7 +36,7 @@ export default function ElementorStyleBuilder() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [clientId, setClientId] = useState('');
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(() => window.innerWidth >= 1024);
   const [editingElement, setEditingElement] = useState<any>(null);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editText, setEditText] = useState('');
@@ -204,184 +205,208 @@ export default function ElementorStyleBuilder() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-screen flex flex-col bg-gray-100 relative">
+      {/* Mobile Sidebar Overlay */}
+      {showSidebar && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
+
       {/* Top Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-gray-900" data-testid="builder-title">
+      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <Button variant="ghost" size="sm" className="lg:hidden shrink-0" onClick={() => setShowSidebar(true)}>
+            <PanelLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate" data-testid="builder-title">
             Website Builder
           </h1>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 hidden sm:inline">
             {client?.businessName || 'Loading...'}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           <Button
             variant="outline"
+            size="sm"
             onClick={handlePreview}
             data-testid="preview-button"
           >
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
+            <Eye className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Preview</span>
           </Button>
           <Button
+            size="sm"
             onClick={() => websiteData && saveWebsiteMutation.mutate(websiteData)}
             disabled={saveWebsiteMutation.isPending}
             data-testid="save-button"
           >
-            <Save className="h-4 w-4 mr-2" />
-            {saveWebsiteMutation.isPending ? 'Saving...' : 'Save'}
+            <Save className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{saveWebsiteMutation.isPending ? 'Saving...' : 'Save'}</span>
           </Button>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Settings Panel */}
-        {showSidebar && (
-          <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-            <div className="p-6 space-y-6">
-              {/* Template Selection */}
-              <div className="pb-6 border-b border-gray-200">
-                <TemplateSelector
-                  clientId={clientId}
-                  currentTemplateId={websiteData?.templateId || 'default'}
-                />
-              </div>
+        <div className={`
+          fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 overflow-y-auto
+          transform transition-transform duration-200 ease-in-out
+          lg:relative lg:translate-x-0 lg:z-auto
+          ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <div className="p-4 sm:p-6 space-y-6">
+            {/* Close button for mobile */}
+            <div className="flex items-center justify-between lg:hidden">
+              <h2 className="text-lg font-semibold">Settings</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowSidebar(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
-              <div>
-                <h2 className="text-lg font-semibold mb-4">Website Settings</h2>
+            {/* Template Selection */}
+            <div className="pb-6 border-b border-gray-200">
+              <TemplateSelector
+                clientId={clientId}
+                currentTemplateId={websiteData?.templateId || 'default'}
+              />
+            </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label>Website Title</Label>
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Website Settings</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <Label>Website Title</Label>
+                  <Input
+                    value={websiteData?.title || ''}
+                    onChange={(e) => {
+                      if (websiteData) {
+                        saveWebsiteMutation.mutate({
+                          ...websiteData,
+                          title: e.target.value
+                        });
+                      }
+                    }}
+                    placeholder="Enter website title"
+                    data-testid="title-input"
+                  />
+                </div>
+
+                <div>
+                  <Label>Primary Color</Label>
+                  <div className="flex gap-2">
                     <Input
-                      value={websiteData?.title || ''}
+                      type="color"
+                      value={websiteData?.primaryColor || '#9333ea'}
                       onChange={(e) => {
                         if (websiteData) {
                           saveWebsiteMutation.mutate({
                             ...websiteData,
-                            title: e.target.value
+                            primaryColor: e.target.value
                           });
                         }
                       }}
-                      placeholder="Enter website title"
-                      data-testid="title-input"
+                      className="w-20 h-10"
+                      data-testid="primary-color-picker"
+                    />
+                    <Input
+                      value={websiteData?.primaryColor || '#9333ea'}
+                      onChange={(e) => {
+                        if (websiteData) {
+                          saveWebsiteMutation.mutate({
+                            ...websiteData,
+                            primaryColor: e.target.value
+                          });
+                        }
+                      }}
+                      placeholder="#9333ea"
+                      data-testid="primary-color-input"
                     />
                   </div>
-
-                  <div>
-                    <Label>Primary Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={websiteData?.primaryColor || '#9333ea'}
-                        onChange={(e) => {
-                          if (websiteData) {
-                            saveWebsiteMutation.mutate({
-                              ...websiteData,
-                              primaryColor: e.target.value
-                            });
-                          }
-                        }}
-                        className="w-20 h-10"
-                        data-testid="primary-color-picker"
-                      />
-                      <Input
-                        value={websiteData?.primaryColor || '#9333ea'}
-                        onChange={(e) => {
-                          if (websiteData) {
-                            saveWebsiteMutation.mutate({
-                              ...websiteData,
-                              primaryColor: e.target.value
-                            });
-                          }
-                        }}
-                        placeholder="#9333ea"
-                        data-testid="primary-color-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Secondary Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={websiteData?.secondaryColor || '#ec4899'}
-                        onChange={(e) => {
-                          if (websiteData) {
-                            saveWebsiteMutation.mutate({
-                              ...websiteData,
-                              secondaryColor: e.target.value
-                            });
-                          }
-                        }}
-                        className="w-20 h-10"
-                        data-testid="secondary-color-picker"
-                      />
-                      <Input
-                        value={websiteData?.secondaryColor || '#ec4899'}
-                        onChange={(e) => {
-                          if (websiteData) {
-                            saveWebsiteMutation.mutate({
-                              ...websiteData,
-                              secondaryColor: e.target.value
-                            });
-                          }
-                        }}
-                        placeholder="#ec4899"
-                        data-testid="secondary-color-input"
-                      />
-                    </div>
-                  </div>
                 </div>
-              </div>
 
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="font-semibold mb-3">Add Sections</h3>
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleAddSection('hero')}
-                    data-testid="add-hero-section"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Hero Section
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleAddSection('about')}
-                    data-testid="add-about-section"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    About Section
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleAddSection('services')}
-                    data-testid="add-services-section"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Services Section
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleAddSection('contact')}
-                    data-testid="add-contact-section"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Lead Contact Section
-                  </Button>
+                <div>
+                  <Label>Secondary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={websiteData?.secondaryColor || '#ec4899'}
+                      onChange={(e) => {
+                        if (websiteData) {
+                          saveWebsiteMutation.mutate({
+                            ...websiteData,
+                            secondaryColor: e.target.value
+                          });
+                        }
+                      }}
+                      className="w-20 h-10"
+                      data-testid="secondary-color-picker"
+                    />
+                    <Input
+                      value={websiteData?.secondaryColor || '#ec4899'}
+                      onChange={(e) => {
+                        if (websiteData) {
+                          saveWebsiteMutation.mutate({
+                            ...websiteData,
+                            secondaryColor: e.target.value
+                          });
+                        }
+                      }}
+                      placeholder="#ec4899"
+                      data-testid="secondary-color-input"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="pt-6 border-t border-gray-200">
+              <h3 className="font-semibold mb-3">Add Sections</h3>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleAddSection('hero')}
+                  data-testid="add-hero-section"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Hero Section
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleAddSection('about')}
+                  data-testid="add-about-section"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  About Section
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleAddSection('services')}
+                  data-testid="add-services-section"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Services Section
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleAddSection('contact')}
+                  data-testid="add-contact-section"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Lead Contact Section
+                </Button>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Main Editor Area - Embedded Client Website */}
         <div className="flex-1 overflow-auto bg-gray-50">
@@ -413,8 +438,8 @@ export default function ElementorStyleBuilder() {
                   />
 
                   {/* Editing overlay hints */}
-                  <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm z-50">
-                    Click on any element to edit • Drag sections to reorder
+                  <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm z-30 max-w-[90vw] text-center">
+                    Tap any element to edit • Drag sections to reorder
                   </div>
                 </div>
               </EditableWebsiteProvider>
