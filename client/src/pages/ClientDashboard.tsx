@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { isCapacitor } from '@/lib/capacitor-init';
+import { Browser } from '@capacitor/browser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -812,8 +813,17 @@ export default function ClientDashboard() {
     }
   };
 
-  const openWebsitePreview = () => {
-    window.open(`/client-website/${clientData?.id}`, '_blank');
+  const openWebsitePreview = async () => {
+    const previewPath = `/client-website/${clientData?.id}`;
+    if (isCapacitor()) {
+      try {
+        await Browser.open({ url: `https://scheduledpros.com${previewPath}` });
+      } catch {
+        window.open(`https://scheduledpros.com${previewPath}`, '_blank');
+      }
+    } else {
+      window.open(previewPath, '_blank');
+    }
   };
 
   const handleCreateSlot = () => {

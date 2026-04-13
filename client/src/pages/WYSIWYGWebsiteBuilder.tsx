@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from "@/lib/queryClient";
+import { isCapacitor } from '@/lib/capacitor-init';
+import { Browser } from '@capacitor/browser';
 import { useLocation } from 'wouter';
 import { 
   Save, Eye, ArrowLeft, Plus, Trash2, GripVertical, 
@@ -386,7 +388,18 @@ export default function WYSIWYGWebsiteBuilder() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.open(`/client-website/${clientId}`, '_blank')}
+            onClick={async () => {
+              const previewPath = `/client-website/${clientId}`;
+              if (isCapacitor()) {
+                try {
+                  await Browser.open({ url: `https://scheduledpros.com${previewPath}` });
+                } catch {
+                  window.open(`https://scheduledpros.com${previewPath}`, '_blank');
+                }
+              } else {
+                window.open(previewPath, '_blank');
+              }
+            }}
             data-testid="preview-button"
           >
             <Eye className="h-4 w-4 mr-2" />

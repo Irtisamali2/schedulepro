@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { isCapacitor } from '@/lib/capacitor-init';
+import { Browser } from '@capacitor/browser';
 import {
   Save,
   Eye,
@@ -94,8 +96,17 @@ export default function ElementorStyleBuilder() {
     }
   });
 
-  const handlePreview = () => {
-    window.open(`/client-website/${clientId}`, '_blank');
+  const handlePreview = async () => {
+    const previewPath = `/client-website/${clientId}`;
+    if (isCapacitor()) {
+      try {
+        await Browser.open({ url: `https://scheduledpros.com${previewPath}` });
+      } catch {
+        window.open(`https://scheduledpros.com${previewPath}`, '_blank');
+      }
+    } else {
+      window.open(previewPath, '_blank');
+    }
   };
 
   const handleTextEdit = (element: any, currentText: string) => {
