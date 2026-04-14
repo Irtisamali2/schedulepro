@@ -109,6 +109,10 @@ export default function FigmaDesignedWebsite({
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const { isEditable, setSelectedElement, setToolbarPosition } = useEditableWebsite();
 
+  // Wrapper that disables booking navigation in builder preview
+  const BookingLink = ({ children }: { children: React.ReactNode }) =>
+    isBuilderPreview ? <>{children}</> : <Link href={`/booking/${clientId}`}>{children}</Link>;
+
   // Determine which identifier to use (prefer subdomain for security)
   const identifier = subdomain || clientId;
   const isSubdomainRoute = !!subdomain;
@@ -478,7 +482,7 @@ export default function FigmaDesignedWebsite({
               >
                 {heroContent}
               </EditableText>
-              <Link href={`/booking/${clientId}`}>
+              <BookingLink>
                 <Button
                   className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold"
                   data-testid="hero-cta-button"
@@ -486,7 +490,7 @@ export default function FigmaDesignedWebsite({
                   Book Appointment
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </Link>
+              </BookingLink>
             </div>
             <div className="relative" data-testid="hero-image">
               <EditableImage
@@ -690,7 +694,7 @@ export default function FigmaDesignedWebsite({
                           </li>
                         ))}
                       </ul>
-                      <Link href={`/booking/${clientId}`}>
+                      <BookingLink>
                         <Button
                           className={`w-full ${tier.isPopular
                             ? 'bg-pink-500 hover:bg-pink-600 text-white'
@@ -700,7 +704,7 @@ export default function FigmaDesignedWebsite({
                         >
                           {tier.buttonText || 'Book Now'}
                         </Button>
-                      </Link>
+                      </BookingLink>
                     </CardContent>
                   </Card>
                 ))}
