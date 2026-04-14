@@ -107,6 +107,10 @@ export default function HomeServicesTemplate({
     const [newsletterEmail, setNewsletterEmail] = useState('');
     const { isEditable, setSelectedElement, setToolbarPosition } = useEditableWebsite();
 
+    // Wrapper that disables booking navigation in builder preview
+    const BookingLink = ({ children }: { children: React.ReactNode }) =>
+        isBuilderPreview ? <>{children}</> : <Link href={`/booking/${clientId}`}>{children}</Link>;
+
     // Determine which identifier to use
     const identifier = subdomain || clientId;
     const isSubdomainRoute = !!subdomain;
@@ -390,7 +394,7 @@ export default function HomeServicesTemplate({
                                     {websiteSections.find(s => s.type === 'hero')?.content || 'Professional services for your home, delivered by trained experts you can trust.'}
                                 </EditableText>
                                 <div className="flex flex-col sm:flex-row gap-4">
-                                    <Link href={`/booking/${clientId}`}>
+                                    <BookingLink>
                                         <Button
                                             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md flex items-center justify-center"
                                             style={{ backgroundColor: primaryColor }}
@@ -398,7 +402,7 @@ export default function HomeServicesTemplate({
                                             Book Service Now
                                             <ArrowRight className="ml-2 h-5 w-5" />
                                         </Button>
-                                    </Link>
+                                    </BookingLink>
                                     <Button variant="outline" className="px-8 py-3 rounded-md">
                                         Learn More
                                     </Button>
@@ -531,7 +535,7 @@ export default function HomeServicesTemplate({
                                     >
                                         Professional cleaning services to keep your home spotless and fresh.
                                     </EditableText>
-                                    <Link href={`/booking/${clientId}`}>
+                                    <BookingLink>
                                         <Button
                                             variant="outline"
                                             className="w-full"
@@ -539,7 +543,7 @@ export default function HomeServicesTemplate({
                                         >
                                             Book Now
                                         </Button>
-                                    </Link>
+                                    </BookingLink>
                                 </CardContent>
                             </Card>
 
@@ -584,7 +588,7 @@ export default function HomeServicesTemplate({
                                     >
                                         Expert plumbing repairs and installations for your peace of mind.
                                     </EditableText>
-                                    <Link href={`/booking/${clientId}`}>
+                                    <BookingLink>
                                         <Button
                                             variant="outline"
                                             className="w-full"
@@ -592,7 +596,7 @@ export default function HomeServicesTemplate({
                                         >
                                             Book Now
                                         </Button>
-                                    </Link>
+                                    </BookingLink>
                                 </CardContent>
                             </Card>
 
@@ -637,7 +641,7 @@ export default function HomeServicesTemplate({
                                     >
                                         Transform your space with our professional remodeling services.
                                     </EditableText>
-                                    <Link href={`/booking/${clientId}`}>
+                                    <BookingLink>
                                         <Button
                                             variant="outline"
                                             className="w-full"
@@ -645,7 +649,7 @@ export default function HomeServicesTemplate({
                                         >
                                             Book Now
                                         </Button>
-                                    </Link>
+                                    </BookingLink>
                                 </CardContent>
                             </Card>
                         </div>
@@ -724,14 +728,14 @@ export default function HomeServicesTemplate({
                                         <span className="text-gray-700">Available 7 days a week</span>
                                     </li>
                                 </ul>
-                                <Link href={`/booking/${clientId}`}>
+                                <BookingLink>
                                     <Button
                                         className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Get Started Today
                                     </Button>
-                                </Link>
+                                </BookingLink>
                             </div>
                         </div>
                     </div>
@@ -987,14 +991,14 @@ export default function HomeServicesTemplate({
                                         <p className="text-gray-600 text-sm">Satisfaction Rate</p>
                                     </div>
                                 </div>
-                                <Link href={`/booking/${clientId}`}>
+                                <BookingLink>
                                     <Button
                                         className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Book Your Service
                                     </Button>
-                                </Link>
+                                </BookingLink>
                             </div>
                             <div>
                                 <EditableImage
@@ -1082,7 +1086,7 @@ export default function HomeServicesTemplate({
                                                     </li>
                                                 ))}
                                             </ul>
-                                            <Link href={`/booking/${clientId}`}>
+                                            <BookingLink>
                                                 <Button
                                                     className={`w-full ${tier.isPopular ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-white hover:bg-gray-50'}`}
                                                     variant={tier.isPopular ? 'default' : 'outline'}
@@ -1090,7 +1094,7 @@ export default function HomeServicesTemplate({
                                                 >
                                                     {tier.buttonText || 'Book Now'}
                                                 </Button>
-                                            </Link>
+                                            </BookingLink>
                                         </CardContent>
                                     </Card>
                                 ))}

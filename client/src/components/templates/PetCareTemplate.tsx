@@ -51,6 +51,10 @@ export default function PetCareTemplate({
 }: PetCareTemplateProps) {
     const queryClient = useQueryClient();
 
+    // Wrapper that disables booking navigation in builder preview
+    const BookingLink = ({ children }: { children: React.ReactNode }) =>
+        isBuilderPreview ? <>{children}</> : <Link href={`/booking/${clientId}`}>{children}</Link>;
+
     // Mutation to update website content
     const updateContentMutation = useMutation({
         mutationFn: async ({ sectionId, field, value }: { sectionId: string; field: string; value: string }) => {
@@ -104,14 +108,14 @@ export default function PetCareTemplate({
                                 <a href="#gallery" className="text-gray-600 hover:text-gray-900 transition-colors">Gallery</a>
                                 <a href="#team" className="text-gray-600 hover:text-gray-900 transition-colors">Team</a>
                                 <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
-                                <Link href={`/booking/${clientId}`}>
+                                <BookingLink>
                                     <Button
                                         className="text-white"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Book Now
                                     </Button>
-                                </Link>
+                                </BookingLink>
                             </nav>
                         </div>
                     </div>
@@ -192,7 +196,7 @@ export default function PetCareTemplate({
                                 Professional grooming and care services for your beloved pets
                             </EditableText>
 
-                            <Link href={`/booking/${clientId}`}>
+                            <BookingLink>
                                 <Button
                                     size="lg"
                                     className="text-white px-8 py-6 text-lg"
@@ -200,7 +204,7 @@ export default function PetCareTemplate({
                                 >
                                     Book Appointment
                                 </Button>
-                            </Link>
+                            </BookingLink>
                         </div>
                     </div>
                 </section>
@@ -245,7 +249,7 @@ export default function PetCareTemplate({
                                     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
                                 </EditableText>
 
-                                <Link href={`/booking/${clientId}`}>
+                                <BookingLink>
                                     <Button
                                         size="lg"
                                         className="text-white"
@@ -253,7 +257,7 @@ export default function PetCareTemplate({
                                     >
                                         Learn More
                                     </Button>
-                                </Link>
+                                </BookingLink>
                             </div>
 
                             <div className="order-1 md:order-2">
@@ -651,7 +655,7 @@ export default function PetCareTemplate({
                                     Every pet deserves to shine and feel special. We provide premium services that make your pet the star of the show with personalized attention and care.
                                 </EditableText>
 
-                                <Link href={`/booking/${clientId}`}>
+                                <BookingLink>
                                     <Button
                                         size="lg"
                                         className="text-white"
@@ -659,7 +663,7 @@ export default function PetCareTemplate({
                                     >
                                         Make Your Pet a Star
                                     </Button>
-                                </Link>
+                                </BookingLink>
                             </div>
                         </div>
                     </div>
