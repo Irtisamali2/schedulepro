@@ -117,11 +117,11 @@ export default function TemplateSelector({ clientId, currentTemplateId = 'defaul
                                     </div>
                                 )}
 
-                                <div className="flex items-start gap-4 p-4">
+                                <div className="p-4 space-y-3">
                                     {/* Template Preview Image */}
-                                    <div className="flex-shrink-0 relative">
+                                    <div className="relative w-fit mx-auto">
                                         <div
-                                            className={`w-24 h-24 rounded-lg overflow-hidden border-2 transition-all duration-300 ${isActive
+                                            className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${isActive
                                                     ? 'border-blue-400 shadow-md'
                                                     : 'border-slate-200 group-hover:border-slate-300 group-hover:shadow-sm'
                                                 }`}
@@ -129,10 +129,9 @@ export default function TemplateSelector({ clientId, currentTemplateId = 'defaul
                                                 background: `linear-gradient(135deg, ${template.primaryColor}15 0%, ${template.secondaryColor}15 100%)`
                                             }}
                                         >
-                                            {/* Icon/Preview */}
                                             <div className="w-full h-full flex items-center justify-center">
                                                 <div
-                                                    className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold shadow-sm"
+                                                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold shadow-sm"
                                                     style={{
                                                         backgroundColor: `${template.primaryColor}20`,
                                                         color: template.primaryColor
@@ -143,15 +142,15 @@ export default function TemplateSelector({ clientId, currentTemplateId = 'defaul
                                             </div>
                                         </div>
 
-                                        {/* Color Indicators - Small Dots */}
+                                        {/* Color Indicators */}
                                         <div className="absolute -bottom-1 -right-1 flex gap-1">
                                             <div
-                                                className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
+                                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                                                 style={{ backgroundColor: template.primaryColor }}
                                                 title="Primary color"
                                             />
                                             <div
-                                                className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
+                                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                                                 style={{ backgroundColor: template.secondaryColor }}
                                                 title="Secondary color"
                                             />
@@ -159,63 +158,58 @@ export default function TemplateSelector({ clientId, currentTemplateId = 'defaul
                                     </div>
 
                                     {/* Template Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-2 mb-2">
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-base text-slate-900 mb-1 flex items-center gap-2">
-                                                    {template.name}
-                                                    {isActive && (
-                                                        <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                                    )}
-                                                </h3>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 border-0 font-medium"
-                                                >
-                                                    {template.category}
-                                                </Badge>
-                                            </div>
-                                        </div>
-
-                                        <p className="text-sm text-slate-600 leading-relaxed mb-3 line-clamp-2">
+                                    <div className="text-center">
+                                        <h3 className="font-bold text-sm text-slate-900 mb-1 flex items-center justify-center gap-2">
+                                            {template.name}
+                                            {isActive && (
+                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                            )}
+                                        </h3>
+                                        <Badge
+                                            variant="secondary"
+                                            className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 border-0 font-medium"
+                                        >
+                                            {template.category}
+                                        </Badge>
+                                        <p className="text-xs text-slate-600 leading-relaxed mt-2 line-clamp-2">
                                             {template.description}
                                         </p>
-
-                                        {/* Action Button */}
-                                        <Button
-                                            size="sm"
-                                            variant={isActive ? "default" : "outline"}
-                                            className={`w-full transition-all duration-300 ${isActive
-                                                    ? 'shadow-md'
-                                                    : 'group-hover:bg-slate-50'
-                                                }`}
-                                            style={
-                                                isActive
-                                                    ? {
-                                                        backgroundColor: template.primaryColor,
-                                                        borderColor: template.primaryColor,
-                                                        color: "white"
-                                                    }
-                                                    : {}
-                                            }
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleSelectTemplate(template.id);
-                                            }}
-                                        >
-                                            {isActive ? (
-                                                <>
-                                                    <Check className="mr-1.5 h-3.5 w-3.5" />
-                                                    <span className="text-xs font-semibold">Currently Active</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className="text-xs font-medium">Use This Template</span>
-                                                    <ChevronRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                                                </>
-                                            )}
-                                        </Button>
                                     </div>
+
+                                    {/* Action Button */}
+                                    <Button
+                                        size="sm"
+                                        variant={isActive ? "default" : "outline"}
+                                        className={`w-full transition-all duration-300 ${isActive
+                                                ? 'shadow-md'
+                                                : 'group-hover:bg-slate-50'
+                                            }`}
+                                        style={
+                                            isActive
+                                                ? {
+                                                    backgroundColor: template.primaryColor,
+                                                    borderColor: template.primaryColor,
+                                                    color: "white"
+                                                }
+                                                : {}
+                                        }
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSelectTemplate(template.id);
+                                        }}
+                                    >
+                                        {isActive ? (
+                                            <>
+                                                <Check className="mr-1.5 h-3.5 w-3.5" />
+                                                <span className="text-xs font-semibold">Currently Active</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="text-xs font-medium">Use This Template</span>
+                                                <ChevronRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                            </>
+                                        )}
+                                    </Button>
                                 </div>
 
                                 {/* Subtle gradient accent on hover for inactive templates */}
