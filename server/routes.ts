@@ -289,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Verify iOS App Store in-app purchase receipt
   app.post("/api/iap/verify", async (req, res) => {
     try {
-      const { transaction, productId, planId, billingPeriod, customerEmail, customerName } = req.body;
+      const { transaction, productId, planId, billingPeriod, customerEmail } = req.body;
 
       if (!transaction || !productId || !planId || !customerEmail) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -304,52 +304,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify the transaction with Apple's App Store Server API:
       // https://developer.apple.com/documentation/appstoreserverapi
 
-      // Find client directly by email (avoids full table scan)
-      const client = await storage.getClientByEmail(customerEmail);
+      // Find or create the client by email and activate their plan
+      const clients = await storage.getClients();
+      const client = clients.find((c: any) => c.email === customerEmail || c.businessEmail === customerEmail);
 
-      if (!client) {
-        // Client not found — this is normal during onboarding (account not created yet)
-        console.log(`IAP verify: no client found for ${customerEmail} (may be onboarding)`);
-        return res.status(404).json({ error: "Account not found for this email" });
-      }
-
-      // Verify the plan exists
-      const planRecord = await storage.getPlan(planId);
-      if (!planRecord) {
-        return res.status(400).json({ error: "Invalid plan ID" });
-      }
-
-      // Activate the plan — critical operation
-      try {
+      if (client) {
         await storage.updateClient(client.id, {
           status: "ACTIVE",
           planId: planId,
-          stripeSubscriptionId: productId, // encodes billing period (e.g. .year / .month)
         });
-      } catch (updateErr: any) {
-        console.error("IAP updateClient failed:", updateErr);
-        return res.status(500).json({ error: "Failed to activate plan" });
       }
 
-      // Record the payment — non-critical, never fails the response
-      try {
+      // Record the payment
+      if (client) {
         await storage.createPayment({
           clientId: client.id,
-          paymentMethod: "APP_STORE",
-          customerName: customerName || client.contactPerson || client.businessName,
-          customerEmail: customerEmail,
-          amount: 0,
+          type: "SUBSCRIPTION",
+          amount: 0, // Amount handled by App Store
           currency: "USD",
           status: "COMPLETED",
-          metadata: JSON.stringify({ source: "ios_iap", productId, transaction, billingPeriod }),
+          metadata: JSON.stringify({
+            source: "ios_iap",
+            productId,
+            transaction,
+            billingPeriod,
+          }),
         });
-      } catch (paymentErr) {
-        console.error("IAP payment record failed (plan was still activated):", paymentErr);
       }
 
       res.json({ success: true, message: "Purchase verified and plan activated" });
-    } catch (error: any) {
-      console.error("Error verifying IAP purchase:", error?.message || error);
+    } catch (error) {
+      console.error("Error verifying IAP:", error);
       res.status(500).json({ error: "Failed to verify purchase" });
     }
   });
@@ -735,35 +720,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Plan not found" });
       }
 
-      // Calculate trial end date from when the account was created + plan's trial days
-      const trialDays = plan.trialDays || 14;
-      const accountCreatedAt = client.createdAt ? new Date(client.createdAt) : new Date();
-      const trialEndsAt = client.status === 'TRIAL'
-        ? new Date(accountCreatedAt.getTime() + trialDays * 24 * 60 * 60 * 1000).toISOString()
-        : null;
-
-      // Derive actual billing period from the stored IAP product ID (e.g. com.scheduledpro.basic.year)
-      const billing = client.stripeSubscriptionId?.endsWith('.year') ? 'YEARLY' : 'MONTHLY';
-
-      // Calculate billing period end from trial end (or now for active plans)
-      const periodStart = trialEndsAt ? new Date(trialEndsAt) : new Date();
-      const billingDays = billing === 'YEARLY' ? 365 : 30;
-      const periodEnd = new Date(periodStart.getTime() + billingDays * 24 * 60 * 60 * 1000);
-
+      // Mock subscription details (in production, fetch from Stripe)
       const subscription = {
         id: `sub_${clientId}`,
         planId: plan.id,
         planName: plan.name,
-        planPrice: billing === 'YEARLY' ? (plan.yearlyPrice || plan.monthlyPrice || 0) : (plan.monthlyPrice || 0),
-        billing,
+        planPrice: plan.monthlyPrice || 0,
+        billing: "monthly", // Default billing period
         status: client.status,
-        currentPeriodEnd: periodEnd.toISOString(),
-        nextPaymentDate: periodEnd.toISOString(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         features: plan.features,
         maxUsers: plan.maxUsers,
         storageGB: plan.storageGB,
         stripeSubscriptionId: client.stripeSubscriptionId,
-        trialEndsAt,
+        trialEndsAt: client.status === 'TRIAL' ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() : null,
         cancelAtPeriodEnd: false
       };
 
@@ -1239,72 +1210,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/client-login", async (req, res) => {
     try {
       const { email, password } = req.body;
-      const normalizedEmail = (email || '').toLowerCase().trim();
-
-      // --- Business owner path (bcrypt hashed password) ---
-      const user = await storage.getUserByEmail(normalizedEmail);
-      if (user && user.role === "CLIENT") {
-        let passwordMatch = false;
-        try {
-          passwordMatch = await bcrypt.compare(password, user.password);
-        } catch {
-          passwordMatch = user.password === password; // fallback for plain-text stored passwords
-        }
-
-        if (passwordMatch) {
-          const client = await storage.getClientByEmail(normalizedEmail);
-          if (!client) {
-            return res.status(404).json({ error: "Client profile not found" });
-          }
-          return res.json({
-            user: { id: user.id, email: user.email, role: user.role },
-            client,
-            message: "Client login successful"
-          });
-        }
-        // password didn't match — fall through to team member check
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user || user.role !== "CLIENT") {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
+        return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // --- Team member path (plain-text password) ---
-      const clients = await storage.getClients();
-      for (const c of clients) {
-        let members: any[] = [];
-        try { members = await storage.getTeamMembers(c.id); } catch { continue; }
-
-        const member = members.find(
-          m => m.email?.toLowerCase() === normalizedEmail && m.isActive !== false
-        );
-        if (!member) continue;
-
-        let pwMatch = member.password === password;
-        if (!pwMatch) {
-          try { pwMatch = await bcrypt.compare(password, member.password); } catch {}
-        }
-        if (!pwMatch) continue;
-
-        return res.json({
-          user: {
-            id: member.id,
-            email: member.email,
-            role: "TEAM_MEMBER",
-            clientId: member.clientId,
-            permissions: member.permissions,
-            name: member.name,
-          },
-          client: c,
-          userType: "TEAM_MEMBER",
-          teamMember: {
-            id: member.id,
-            name: member.name,
-            email: member.email,
-            role: member.role,
-            permissions: member.permissions,
-            clientId: member.clientId,
-          },
-        });
+      const client = await storage.getClientByEmail(email);
+      if (!client) {
+        return res.status(404).json({ error: "Client profile not found" });
       }
 
-      return res.status(401).json({ error: "Invalid credentials" });
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role
+        },
+        client: client,
+        message: "Client login successful"
+      });
     } catch (error) {
       console.error("Client login error:", error);
       res.status(500).json({ error: "Client login failed" });
@@ -1897,13 +1827,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Email is required' });
       }
 
-      // Check both users and clients tables
-      const [existingUser, existingClient] = await Promise.all([
-        storage.getUserByEmail(email),
-        storage.getClientByEmail(email)
-      ]);
+      // Check if email exists in clients table
+      const existingClient = await storage.getClientByEmail(email);
 
-      return res.json({ exists: !!(existingUser || existingClient) });
+      return res.json({ exists: !!existingClient });
     } catch (error) {
       console.error('Error checking email:', error);
       return res.status(500).json({ error: 'Failed to check email' });
@@ -2059,49 +1986,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/onboarding/:sessionId/complete", async (req, res) => {
     try {
       const { sessionId } = req.params;
-      const { billingPeriod = 'monthly' } = req.body;
-
+      
       const session = await storage.getOnboardingSession(sessionId);
       if (!session) {
         return res.status(404).json({ error: "Onboarding session not found" });
       }
-
+      
       const businessData = session.businessData ? JSON.parse(session.businessData) : {};
-
+      
       // Create or get existing user account
       const userEmail = businessData.step3?.adminEmail || businessData.step2?.businessEmail;
-
-      if (!userEmail) {
-        return res.status(400).json({ error: "Email is required to complete onboarding" });
-      }
-
-      // Block duplicate account creation
-      const existingClient = await storage.getClientByEmail(userEmail);
-      if (existingClient) {
-        return res.status(409).json({ error: "An account with this email already exists. Please log in instead." });
-      }
-
       let user = await storage.getUserByEmail(userEmail);
-
+      
       if (!user) {
+        // Create new user if doesn't exist
         user = await storage.createUser({
           email: userEmail,
           password: businessData.step3?.password,
           role: "CLIENT"
         });
       }
-
-      // Look up the plan to know if it's a paid plan and get its name
-      const plan = await storage.getPlan(session.planId);
-      const isPaidPlan = plan && !plan.isFreeTrial;
-
-      // For paid plans, generate the IAP product ID from plan name + billing period
-      // This encodes the billing period so the subscription API can derive it later
-      const iapProductId = isPaidPlan && plan
-        ? `com.scheduledpro.${plan.name.toLowerCase()}.${billingPeriod === 'yearly' ? 'year' : 'month'}`
-        : null;
-
-      // Create client — paid plans go ACTIVE immediately (user already purchased via App Store)
+      
+      // Create client
       const client = await storage.createClient({
         businessName: businessData.step2?.businessName,
         contactPerson: businessData.step2?.contactPerson,
@@ -2113,8 +2019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         operatingHours: businessData.step5?.operatingHours ? JSON.stringify(businessData.step5.operatingHours) : null,
         timeZone: businessData.step5?.timeZone,
         planId: session.planId,
-        status: isPaidPlan ? "ACTIVE" : "TRIAL",
-        stripeSubscriptionId: iapProductId ?? undefined,
+        status: "TRIAL",
         userId: user.id,
         onboardingSessionId: session.id
       });
@@ -3638,11 +3543,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId } = req.params;
       const parsed = insertTeamMemberSchema.parse(req.body);
-      const memberData = {
-        ...parsed,
-        clientId,
-        password: parsed.password ? await bcrypt.hash(parsed.password, 10) : parsed.password,
-      };
+      const hashedPassword = await bcrypt.hash(parsed.password, 10);
+      const memberData = { ...parsed, clientId, password: hashedPassword };
       const member = await storage.createTeamMember(memberData);
       res.json(member);
     } catch (error) {
@@ -3653,10 +3555,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/client/:clientId/team/:memberId", async (req, res) => {
     try {
       const { memberId } = req.params;
-      const updates = { ...req.body };
-      if (!updates.password) {
-        delete updates.password;
-      } else {
+      const updates = req.body;
+      if (updates.password) {
         updates.password = await bcrypt.hash(updates.password, 10);
       }
       const member = await storage.updateTeamMember(memberId, updates);
@@ -3828,83 +3728,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/team-login", async (req, res) => {
     try {
       const { email, password } = req.body;
-
+      
       if (!email || !password) {
         return res.status(400).json({ error: "Email and password are required" });
       }
-
-      const normalizedEmail = email.toLowerCase().trim();
-
+      
+      // Get team members from all clients
       const clients = await storage.getClients();
-
+      const allTeamMembers = [];
+      
       for (const client of clients) {
-        let members: any[] = [];
         try {
-          members = await storage.getTeamMembers(client.id);
-        } catch {
-          continue;
+          const clientTeamMembers = await storage.getTeamMembers(client.id);
+          allTeamMembers.push(...clientTeamMembers);
+        } catch (error) {
+          console.error(`Error fetching team members for client ${client.id}:`, error);
         }
-
-        const member = members.find(
-          m => m.email?.toLowerCase() === normalizedEmail && m.isActive !== false
-        );
-        if (!member) continue;
-
-        // Support both plain-text and bcrypt-hashed passwords
-        let pwMatch = member.password === password;
-        if (!pwMatch) {
-          try { pwMatch = await bcrypt.compare(password, member.password); } catch {}
-        }
-        if (!pwMatch) {
-          return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        return res.json({
-          teamMember: {
-            id: member.id,
-            name: member.name,
-            email: member.email,
-            role: member.role,
-            permissions: member.permissions,
-            clientId: member.clientId,
-          },
-          client,
-        });
+      }
+      
+      console.log(`Found ${allTeamMembers.length} total team members`);
+      console.log(`Looking for team member with email: ${email}`);
+      
+      const teamMember = allTeamMembers.find(member => 
+        member.email === email && member.isActive !== false
+      );
+      
+      if (!teamMember) {
+        console.log("Team member not found or inactive");
+        return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      return res.status(401).json({ error: "Invalid credentials" });
+      console.log(`Found team member: ${teamMember.name} (${teamMember.email})`);
+      console.log(`Stored password: "${teamMember.password}" | Submitted: "${password}" | Match: ${teamMember.password === password}`);
+
+      // Verify password using bcrypt compare (passwords are stored hashed)
+      const passwordMatch = await bcrypt.compare(password, teamMember.password);
+      if (!passwordMatch) {
+        console.log("Password mismatch");
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Get the client info for the team member
+      const client = await storage.getClient(teamMember.clientId);
+      if (!client) {
+        console.log(`Client ${teamMember.clientId} not found`);
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      console.log("Team login successful");
+      res.json({
+        teamMember: {
+          id: teamMember.id,
+          name: teamMember.name,
+          email: teamMember.email,
+          role: teamMember.role,
+          permissions: teamMember.permissions,
+          clientId: teamMember.clientId
+        },
+        client
+      });
     } catch (error) {
       console.error("Team member login error:", error);
       res.status(500).json({ error: "Login failed" });
-    }
-  });
-
-  // =============================================================================
-  // TEMPORARY ADMIN: direct team member password reset (remove after use)
-  // POST /api/admin/fix-team-password  { email, newPassword, secret }
-  // secret must match ADMIN_RESET_SECRET env var (default: "fix-it-now")
-  // =============================================================================
-  app.post("/api/admin/fix-team-password", async (req, res) => {
-    const { email, newPassword, secret } = req.body || {};
-    const expected = process.env.ADMIN_RESET_SECRET || "fix-it-now";
-    if (secret !== expected) return res.status(403).json({ error: "Forbidden" });
-    if (!email || !newPassword) return res.status(400).json({ error: "email and newPassword required" });
-
-    try {
-      const clients = await storage.getClients();
-      for (const client of clients) {
-        let members: any[] = [];
-        try { members = await storage.getTeamMembers(client.id); } catch { continue; }
-        const member = members.find(m => m.email?.toLowerCase() === email.toLowerCase());
-        if (!member) continue;
-        const hashed = await bcrypt.hash(newPassword, 10);
-        await storage.updateTeamMember(member.id, { password: hashed });
-        return res.json({ ok: true, message: `Password updated for ${member.name} (${member.email})` });
-      }
-      return res.status(404).json({ error: "Team member not found" });
-    } catch (err) {
-      console.error("fix-team-password error:", err);
-      return res.status(500).json({ error: "Failed" });
     }
   });
 
