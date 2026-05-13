@@ -97,7 +97,7 @@ export default function TeamDashboard() {
     try {
       const parsedSession = JSON.parse(sessionData);
       setSession(parsedSession);
-      
+
       // Create team member context immediately for API calls
       if (parsedSession.teamMember && parsedSession.client) {
         const teamContext = {
@@ -112,7 +112,7 @@ export default function TeamDashboard() {
       console.error("Error parsing session data:", error);
       setLocation("/team-login");
     }
-  }, [setLocation]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("teamMemberSession");
@@ -135,11 +135,19 @@ export default function TeamDashboard() {
       clientId: session?.client.id,
       activeSection: section
     }));
-    
-    // Also store client data for dashboard access
+
+    // Store client data and a clientUser entry so ClientDashboard's auth check passes
     localStorage.setItem('clientData', JSON.stringify(session?.client));
-    localStorage.setItem('currentClientId', session?.client.id);
-    
+    localStorage.setItem('currentClientId', session?.client.id ?? '');
+    localStorage.setItem('clientUser', JSON.stringify({
+      id: session?.teamMember.id,
+      email: session?.teamMember.email,
+      name: session?.teamMember.name,
+      role: 'TEAM_MEMBER',
+      userType: 'TEAM_MEMBER',
+      clientId: session?.client.id,
+    }));
+
     setLocation("/client-dashboard");
   };
 

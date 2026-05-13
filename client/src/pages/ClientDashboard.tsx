@@ -260,7 +260,7 @@ export default function ClientDashboard() {
     }
 
     setClientData(clientData);
-  }, [setLocation]);
+  }, []);
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: [`/api/client/${clientData?.id}/dashboard`],
