@@ -294,21 +294,14 @@ export default function SMTPConfiguration({ clientId, hasPermission }: SMTPConfi
 
   return (
     <div className="space-y-6" data-testid="smtp-configuration-section">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">SMTP Email Configuration</h2>
+          <p className="text-sm text-gray-600">Configure your email server to send notifications and confirmations</p>
+        </div>
+        {getConnectionStatusBadge()}
+      </div>
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Mail className="h-5 w-5 text-blue-600" />
-              <div>
-                <CardTitle>SMTP Email Configuration</CardTitle>
-                <CardDescription>
-                  Configure your email server to send notifications and confirmations
-                </CardDescription>
-              </div>
-            </div>
-            {getConnectionStatusBadge()}
-          </div>
-        </CardHeader>
         <CardContent className="space-y-6">
           {/* Current Configuration Status */}
           <div className="grid gap-4 md:grid-cols-2">

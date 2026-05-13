@@ -312,16 +312,13 @@ body {
   }
 }
 
-/* iOS rubber-band scrolling fix */
-html {
+/* Lock the root viewport — all scrolling happens inside explicit scroll containers */
+html,
+body {
   overflow: hidden;
   height: 100%;
-}
-
-body {
-  overflow: auto;
-  height: 100%;
-  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  position: fixed;
 }
 
 /* Prevent iOS callout on long press */
@@ -356,4 +353,12 @@ a:active,
 [role="button"]:active {
   opacity: 0.7;
   transition: opacity 0.1s;
+}
+
+/* Prevent Radix/Shadcn Dialog scroll-lock from shifting content horizontally.
+   In a Capacitor WebView with position:fixed body there is no scrollbar,
+   but the library still injects padding-right which appears as a left-shift. */
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }

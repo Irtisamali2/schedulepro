@@ -1364,7 +1364,7 @@ export default function AdvancedWebsiteBuilder() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex relative">
+    <div className="bg-gray-50 flex relative" style={{ position: 'fixed', inset: 0 }}>
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -2476,14 +2476,17 @@ export default function AdvancedWebsiteBuilder() {
       {/* Main Preview Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Toolbar */}
-        <div className="bg-white border-b border-gray-200 p-2 sm:p-4">
+        <div className="bg-white border-b border-gray-200 px-2 sm:px-4 pb-2 sm:pb-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="flex justify-between items-center gap-2">
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+              <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setLocation(`/client-dashboard?clientId=${clientId}`)} title="Back to Dashboard">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
               <Button variant="ghost" size="sm" className="lg:hidden shrink-0" onClick={() => setSidebarOpen(true)}>
                 <PanelLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-sm sm:text-xl font-semibold truncate">
-                {clientData?.client?.businessName} Website Builder
+                Website Builder
               </h1>
             </div>
 

@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Star, Sparkles, Home, Lock, Eye, EyeOff } from 'lucide-react';
@@ -94,6 +93,8 @@ export default function OnboardingFlow() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   // Validation functions
   const validateEmail = (email: string): boolean => {
@@ -134,6 +135,29 @@ export default function OnboardingFlow() {
     }
   };
 
+  // Proactively check for duplicate email as soon as Step 3 is shown
+  useEffect(() => {
+    if (currentStep !== 3) return;
+    const email = onboardingData.adminEmail || onboardingData.businessEmail;
+    if (!email) return;
+
+    let cancelled = false;
+    setIsCheckingEmail(true);
+    checkEmailExists(email).then((exists) => {
+      if (cancelled) return;
+      setIsCheckingEmail(false);
+      if (exists) {
+        setValidationErrors(prev => ({
+          ...prev,
+          adminEmail: 'An account with this email already exists. Please log in instead.'
+        }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, adminEmail: '' }));
+      }
+    });
+    return () => { cancelled = true; };
+  }, [currentStep, onboardingData.adminEmail, onboardingData.businessEmail]);
+
   const validateBusinessInfo = (): boolean => {
     const errors: Record<string, string> = {};
 
@@ -170,15 +194,17 @@ export default function OnboardingFlow() {
   const validateAccountInfo = async (): Promise<boolean> => {
     const errors: Record<string, string> = {};
 
-    if (!onboardingData.adminEmail) {
+    // Admin email is locked to business email; use whichever is populated
+    const emailToCheck = onboardingData.adminEmail || onboardingData.businessEmail;
+    if (!emailToCheck) {
       errors.adminEmail = 'Admin email is required';
-    } else if (!validateEmail(onboardingData.adminEmail)) {
+    } else if (!validateEmail(emailToCheck)) {
       errors.adminEmail = 'Please enter a valid email address';
     } else {
       // Check if email already exists
-      const emailExists = await checkEmailExists(onboardingData.adminEmail);
+      const emailExists = await checkEmailExists(emailToCheck);
       if (emailExists) {
-        errors.adminEmail = 'This email is already registered. Please use a different email or login.';
+        errors.adminEmail = 'An account with this email already exists. Please log in instead.';
       }
     }
 
@@ -266,7 +292,7 @@ export default function OnboardingFlow() {
   // separate free plan that bypasses IAP (Apple Guideline 3.1.1).
   const plans = isCapacitor() ? allPlans.filter(p => !p.isFreeTrial) : allPlans;
 
-  const { data: sessionData } = useQuery({
+  useQuery({
     queryKey: [`/api/onboarding/${sessionId}`],
     enabled: !!sessionId
   });
@@ -303,9 +329,13 @@ export default function OnboardingFlow() {
     mutationFn: async () => {
       const response = await fetch(`/api/onboarding/${sessionId}/complete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ billingPeriod })
       });
-      if (!response.ok) throw new Error('Failed to complete onboarding');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to complete onboarding');
+      }
       return response.json();
     },
     onSuccess: (data) => {
@@ -313,6 +343,13 @@ export default function OnboardingFlow() {
       localStorage.setItem('clientUser', JSON.stringify(data.user));
       localStorage.setItem('clientData', JSON.stringify(data.client));
       setLocation('/client-dashboard');
+    },
+    onError: (error: Error) => {
+      // If account already exists, send user back to Step 3 to see the error
+      if (error.message.toLowerCase().includes('already') || error.message.toLowerCase().includes('duplicate') || error.message.toLowerCase().includes('exists')) {
+        setCurrentStep(3);
+        setValidationErrors({ adminEmail: 'An account with this email already exists. Please log in instead.' });
+      }
     }
   });
 
@@ -407,8 +444,8 @@ export default function OnboardingFlow() {
         // Complete onboarding
         await completeOnboardingMutation.mutateAsync();
       } else {
-        // If moving to step 3 (Account Info), autofill admin email from business email if not set
-        if (currentStep === 2 && onboardingData.businessEmail && !onboardingData.adminEmail) {
+        // Always sync adminEmail to businessEmail when moving to step 3
+        if (currentStep === 2 && onboardingData.businessEmail) {
           setOnboardingData(prev => ({
             ...prev,
             adminEmail: prev.businessEmail
@@ -569,8 +606,8 @@ export default function OnboardingFlow() {
                   type="email"
                   value={onboardingData.businessEmail || ''}
                   onChange={(e) => {
-                    setOnboardingData(prev => ({ ...prev, businessEmail: e.target.value }));
-                    setValidationErrors(prev => ({ ...prev, businessEmail: '' }));
+                    setOnboardingData(prev => ({ ...prev, businessEmail: e.target.value, adminEmail: '' }));
+                    setValidationErrors(prev => ({ ...prev, businessEmail: '', adminEmail: '' }));
                   }}
                   placeholder="business@example.com"
                   required
@@ -607,8 +644,14 @@ export default function OnboardingFlow() {
               </div>
               <div>
                 <Label htmlFor="industry">Industry *</Label>
-                <Select value={onboardingData.industry || ''} onValueChange={(value) => setOnboardingData(prev => ({ ...prev, industry: value }))}>
-                  <SelectTrigger>
+                <Select
+                  value={onboardingData.industry || ''}
+                  onValueChange={(value) => {
+                    setOnboardingData(prev => ({ ...prev, industry: value }));
+                    setValidationErrors(prev => ({ ...prev, industry: '' }));
+                  }}
+                >
+                  <SelectTrigger className={validationErrors.industry ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select your industry" />
                   </SelectTrigger>
                   <SelectContent>
@@ -617,6 +660,9 @@ export default function OnboardingFlow() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.industry && (
+                  <p className="text-xs text-red-500 mt-1">{validationErrors.industry}</p>
+                )}
               </div>
             </div>
           </div>
@@ -646,15 +692,23 @@ export default function OnboardingFlow() {
                       value={onboardingData.businessEmail || ''}
                       readOnly
                       disabled
-                      className="bg-gray-100 text-gray-500 cursor-not-allowed pr-10"
+                      className={`text-gray-500 cursor-not-allowed pr-10 ${validationErrors.adminEmail ? 'bg-red-50 border-red-500' : 'bg-gray-100'}`}
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                       <Lock className="h-4 w-4 text-gray-400" />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Your admin email matches your business email.
-                  </p>
+                  {isCheckingEmail ? (
+                    <p className="text-xs text-gray-400 mt-1">Checking availability…</p>
+                  ) : validationErrors.adminEmail ? (
+                    <div className="mt-1">
+                      <p className="text-xs text-red-500">{validationErrors.adminEmail}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your admin email matches your business email.
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -665,8 +719,13 @@ export default function OnboardingFlow() {
                     type={showPassword ? "text" : "password"}
                     value={onboardingData.password || ''}
                     onChange={(e) => {
-                      setOnboardingData(prev => ({ ...prev, password: e.target.value }));
-                      setValidationErrors(prev => ({ ...prev, password: '' }));
+                      const val = e.target.value;
+                      setOnboardingData(prev => ({ ...prev, password: val }));
+                      if (val && val.length < 8) {
+                        setValidationErrors(prev => ({ ...prev, password: 'Password must be at least 8 characters' }));
+                      } else {
+                        setValidationErrors(prev => ({ ...prev, password: '' }));
+                      }
                     }}
                     placeholder="Enter a secure password (min 8 characters)"
                     required
@@ -782,7 +841,7 @@ export default function OnboardingFlow() {
                   plan={selectedPlan}
                   billingPeriod={billingPeriod}
                   customerEmail={onboardingData.adminEmail || onboardingData.businessEmail || ''}
-                  onSuccess={() => setCurrentStep(5)}
+                  onSuccess={() => { setPaymentCompleted(true); setCurrentStep(5); }}
                 />
               </div>
             ) : import.meta.env.VITE_STRIPE_PUBLIC_KEY ? (
@@ -791,7 +850,7 @@ export default function OnboardingFlow() {
                   plan={selectedPlan}
                   billingPeriod={billingPeriod}
                   customerEmail={onboardingData.adminEmail || onboardingData.businessEmail || ''}
-                  onSuccess={() => setCurrentStep(5)}
+                  onSuccess={() => { setPaymentCompleted(true); setCurrentStep(5); }}
                 />
               </div>
             ) : (
@@ -812,7 +871,7 @@ export default function OnboardingFlow() {
                 <p className="text-sm text-gray-600 mb-4">
                   Payment processing will be implemented with Stripe integration
                 </p>
-                <Button onClick={() => setCurrentStep(5)}>
+                <Button onClick={() => { setPaymentCompleted(true); setCurrentStep(5); }}>
                   Simulate Payment Complete
                 </Button>
               </div>
@@ -904,13 +963,15 @@ export default function OnboardingFlow() {
           onboardingData.businessEmail &&
           onboardingData.industry;
       case 3:
-        return (onboardingData.adminEmail || onboardingData.businessEmail) &&
+        return !isCheckingEmail &&
+          !validationErrors.adminEmail &&
+          (onboardingData.adminEmail || onboardingData.businessEmail) &&
           onboardingData.password &&
-          onboardingData.password.length >= 6 &&
+          onboardingData.password.length >= 8 &&
           onboardingData.confirmPassword &&
           onboardingData.password === onboardingData.confirmPassword;
       case 4:
-        return true; // Payment step
+        return selectedPlan?.isFreeTrial || paymentCompleted;
       case 5:
         return true; // Business setup
       case 6:
@@ -921,8 +982,9 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100"
+      style={{ position: 'fixed', inset: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+      <div className="container mx-auto px-4 py-8" style={{ paddingTop: 'max(2rem, env(safe-area-inset-top))' }}>
         {/* Back to Home Button */}
         <div className="mb-6">
           <Link href="/">
@@ -1008,16 +1070,18 @@ export default function OnboardingFlow() {
                   Previous
                 </Button>
 
-                <Button
-                  onClick={handleNextStep}
-                  disabled={!canProceed() || isProcessing}
-                >
-                  {isProcessing ? 'Processing...' :
-                    currentStep === 5 ? 'Complete Setup' : 'Next'}
-                  {!isProcessing && currentStep !== 5 && (
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  )}
-                </Button>
+                {!(currentStep === 4 && selectedPlan && !selectedPlan.isFreeTrial) && (
+                  <Button
+                    onClick={handleNextStep}
+                    disabled={!canProceed() || isProcessing}
+                  >
+                    {isProcessing ? 'Processing...' :
+                      currentStep === 5 ? 'Complete Setup' : 'Next'}
+                    {!isProcessing && currentStep !== 5 && (
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

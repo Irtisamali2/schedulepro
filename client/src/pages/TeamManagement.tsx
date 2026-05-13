@@ -411,10 +411,10 @@ export default function TeamManagement({ hasPermission }: TeamManagementProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-600">
-            {canPerform('team.edit') || canPerform('team.create') || canPerform('team.delete') 
-              ? "Manage your team members, roles, and permissions" 
+          <h1 className="text-xl font-bold text-gray-900">Team Management</h1>
+          <p className="text-sm text-gray-600">
+            {canPerform('team.edit') || canPerform('team.create') || canPerform('team.delete')
+              ? "Manage your team members, roles, and permissions"
               : "View team members and their information"
             }
           </p>
@@ -435,8 +435,8 @@ export default function TeamManagement({ hasPermission }: TeamManagementProps) {
               </Button>
             </DialogTrigger>
           
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+            <DialogContent className="max-w-2xl flex flex-col p-0" style={{ maxHeight: '90dvh' } as React.CSSProperties}>
+            <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
               <DialogTitle>
                 {editingMember ? "Edit Team Member" : "Add Team Member"}
               </DialogTitle>
@@ -445,6 +445,7 @@ export default function TeamManagement({ hasPermission }: TeamManagementProps) {
               </DialogDescription>
             </DialogHeader>
 
+            <div className="flex-1 overflow-y-auto px-6 py-4" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -613,7 +614,7 @@ export default function TeamManagement({ hasPermission }: TeamManagementProps) {
                   <FormDescription className="mb-4">
                     Select which dashboard tabs and operations this team member can access
                   </FormDescription>
-                  <div className="space-y-6 max-h-96 overflow-y-auto">
+                  <div className="space-y-6">
                     {DASHBOARD_TABS.map((tab) => {
                       const IconComponent = tab.icon;
                       return (
@@ -695,6 +696,7 @@ export default function TeamManagement({ hasPermission }: TeamManagementProps) {
                 </div>
               </form>
             </Form>
+            </div>
             </DialogContent>
           </Dialog>
         )}

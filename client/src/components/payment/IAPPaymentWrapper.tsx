@@ -66,6 +66,13 @@ export default function IAPPaymentWrapper({
       const transaction = await purchaseSubscription(productId);
 
       // Verify the purchase with our server
+      // Note: during onboarding the client record may not exist yet — the
+      // onboarding/complete endpoint handles final activation using billingPeriod.
+      // This call is still made so existing accounts (plan switches) work correctly.
+      const storedClient = (() => { try { return JSON.parse(localStorage.getItem('clientData') || '{}'); } catch { return {}; } })();
+      const storedUser = (() => { try { return JSON.parse(localStorage.getItem('clientUser') || '{}'); } catch { return {}; } })();
+      const customerName = storedClient?.contactPerson || storedClient?.businessName || storedUser?.name || '';
+
       const response = await fetch('/api/iap/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,10 +82,12 @@ export default function IAPPaymentWrapper({
           planId: plan.id,
           billingPeriod,
           customerEmail,
+          customerName,
         }),
       });
 
-      if (!response.ok) {
+      // A 404 means client doesn't exist yet (onboarding flow) — not an error
+      if (!response.ok && response.status !== 404) {
         throw new Error('Failed to verify purchase');
       }
 
@@ -89,13 +98,14 @@ export default function IAPPaymentWrapper({
 
       onSuccess();
     } catch (err: any) {
-      const message = err.message || 'Purchase failed. Please try again.';
-      setError(message);
-      toast({
-        title: 'Purchase Failed',
-        description: message,
-        variant: 'destructive',
-      });
+      const msg = err.message || 'Purchase failed. Please try again.';
+      // User cancelled Apple payment sheet — silent dismissal
+      if (msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('cancelled')) {
+        setIsPurchasing(false);
+        return;
+      }
+      setError(msg);
+      toast({ title: 'Purchase Failed', description: msg, variant: 'destructive' });
     } finally {
       setIsPurchasing(false);
     }

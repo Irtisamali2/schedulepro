@@ -918,7 +918,7 @@ export default function ClientDashboard() {
   const menuItems = getFilteredMenuItems();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex relative">
+    <div className="bg-gray-50 flex" style={{ position: 'fixed', inset: 0 }}>
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
@@ -929,20 +929,20 @@ export default function ClientDashboard() {
 
       {/* Sidebar */}
       <aside className={`bg-white shadow-lg transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16 lg:w-16'
-        } flex flex-col fixed lg:relative h-full z-50 lg:z-auto ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}>
-        <div className="p-4 border-b">
+        } flex flex-col fixed inset-y-0 left-0 z-50 lg:static lg:z-auto ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`} style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="px-4 py-3 border-b">
           <div className="flex items-center">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="mr-2"
+              className="mr-2 shrink-0"
             >
               <Menu className="w-5 h-5" />
             </Button>
             {isSidebarOpen && (
-              <h2 className="font-bold text-lg text-gray-900">{clientData.businessName}</h2>
+              <h2 className="font-bold text-base text-gray-900 truncate">{clientData.businessName}</h2>
             )}
           </div>
         </div>
@@ -1004,10 +1004,10 @@ export default function ClientDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col ml-0 lg:ml-16 min-w-0">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="px-4 py-3 md:px-6 md:py-4">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header — paddingTop is the sole safe-area handler; background fills behind status bar */}
+        <header className="bg-white border-b shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="px-4 py-2 md:px-6 md:py-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 {/* Mobile Menu Button */}
@@ -1052,7 +1052,7 @@ export default function ClientDashboard() {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'max(24px, env(safe-area-inset-bottom))' } as React.CSSProperties}>
           <div className="max-w-7xl mx-auto">
 
             {activeView === "overview" && (
@@ -1172,396 +1172,394 @@ export default function ClientDashboard() {
             )}
 
             {activeView === "appointments" && (
-              <div className="space-y-6">
-                {/* Appointment Slot Management Section */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle>Appointment Availability Management</CardTitle>
-                      <Dialog open={isSlotModalOpen} onOpenChange={setIsSlotModalOpen}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline">
-                            <Clock className="h-4 w-4 mr-2" />
-                            Manage Availability
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                          <DialogHeader>
-                            <DialogTitle>Appointment Availability</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-4 gap-4">
-                              <div>
-                                <Label>Day</Label>
-                                <Select value={slotForm.dayOfWeek?.toString()} onValueChange={(value) => setSlotForm(prev => ({ ...prev, dayOfWeek: parseInt(value) }))}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select day" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="0">Sunday</SelectItem>
-                                    <SelectItem value="1">Monday</SelectItem>
-                                    <SelectItem value="2">Tuesday</SelectItem>
-                                    <SelectItem value="3">Wednesday</SelectItem>
-                                    <SelectItem value="4">Thursday</SelectItem>
-                                    <SelectItem value="5">Friday</SelectItem>
-                                    <SelectItem value="6">Saturday</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label>Start Time</Label>
-                                <Input
-                                  type="time"
-                                  step="300"
-                                  value={slotForm.startTime}
-                                  onChange={(e) => setSlotForm(prev => ({ ...prev, startTime: e.target.value }))}
-                                />
-                              </div>
-                              <div>
-                                <Label>End Time</Label>
-                                <Input
-                                  type="time"
-                                  step="300"
-                                  value={slotForm.endTime}
-                                  onChange={(e) => setSlotForm(prev => ({ ...prev, endTime: e.target.value }))}
-                                />
-                              </div>
-                              <div>
-                                <Label>Duration (min)</Label>
-                                <Input
-                                  type="number"
-                                  step="5"
-                                  min="5"
-                                  max="480"
-                                  value={slotForm.slotDuration}
-                                  onChange={(e) => setSlotForm(prev => ({ ...prev, slotDuration: parseInt(e.target.value) || 30 }))}
-                                  placeholder="30"
-                                />
-                              </div>
-                            </div>
-                            <Button onClick={handleCreateSlot} className="w-full">
-                              Add Time Slot
-                            </Button>
+              <div className="space-y-5">
 
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                              <h4 className="font-medium">Current Availability:</h4>
-                              {appointmentSlots.length === 0 ? (
-                                <p className="text-sm text-gray-500">No availability slots configured</p>
-                              ) : (
-                                appointmentSlots.map((slot) => (
-                                  <div key={slot.id} className="flex items-center justify-between p-2 border rounded">
-                                    <span className="text-sm">
-                                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][slot.dayOfWeek]} {slot.startTime}-{slot.endTime} ({slot.slotDuration}min)
-                                    </span>
-                                    <Button size="sm" variant="outline" onClick={() => deleteSlotMutation.mutate(slot.id)}>
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">Configure your available appointment times by day of the week. Click "Manage Availability" to set up time slots.</p>
-                  </CardContent>
-                </Card>
-
-                {/* Appointment Booking Section */}
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Booked Appointments</h2>
-                  <div className="flex gap-2">
-                    <GlossGeniusExport clientId={clientData?.id || "1"} />
-
-                    {/* CSV Import Dialog */}
-                    <Dialog open={isCsvImportModalOpen} onOpenChange={setIsCsvImportModalOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import CSV
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Import Appointments from CSV</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label>CSV File</Label>
-                            <Input
-                              type="file"
-                              accept=".csv"
-                              onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                              className="mt-2"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Upload a CSV file with appointment data
-                            </p>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={downloadSampleCsv}
-                              className="flex-1"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download Sample
-                            </Button>
-                            <Button
-                              onClick={handleCsvImport}
-                              disabled={!csvFile || !!csvImportProgress}
-                              className="flex-1"
-                            >
-                              {csvImportProgress || 'Import'}
-                            </Button>
-                          </div>
-
-                          {csvImportErrors.length > 0 && (
-                            <div className="bg-red-50 border border-red-200 rounded p-3 max-h-40 overflow-y-auto">
-                              <p className="text-sm font-medium text-red-800 mb-1">Import Errors:</p>
-                              <ul className="text-xs text-red-600 space-y-1">
-                                {csvImportErrors.map((error, idx) => (
-                                  <li key={idx}>• {error}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-blue-800">
-                            <p className="font-medium mb-1">Required CSV Columns:</p>
-                            <ul className="space-y-0.5">
-                              <li>• customerName</li>
-                              <li>• customerEmail</li>
-                              <li>• customerPhone</li>
-                              <li>• serviceId (from your services)</li>
-                              <li>• appointmentDate (YYYY-MM-DD)</li>
-                              <li>• startTime (HH:MM)</li>
-                              <li>• notes (optional)</li>
-                            </ul>
-                          </div>
-
-                          {/* Service IDs Reference */}
-                          <div className="bg-green-50 border border-green-200 rounded p-3 text-xs text-green-800">
-                            <p className="font-medium mb-1">Your Available Service IDs:</p>
-                            {services.length > 0 ? (
-                              <ul className="space-y-0.5 max-h-32 overflow-y-auto">
-                                {services.map((service: ClientService) => (
-                                  <li key={service.id} className="flex justify-between">
-                                    <span>{service.name}:</span>
-                                    <code className="bg-green-100 px-1 rounded font-mono">{service.id}</code>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-yellow-700">No services found. Please create services first in the Services tab.</p>
-                            )}
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
-                      <DialogTrigger asChild>
-                        <Button onClick={() => openAppointmentModal()}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          New Appointment
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="customerName">Customer Name *</Label>
-                            <Input
-                              id="customerName"
-                              value={appointmentForm.customerName}
-                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerName: e.target.value }))}
-                              placeholder="John Doe"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="customerEmail">Customer Email *</Label>
-                            <Input
-                              id="customerEmail"
-                              type="email"
-                              value={appointmentForm.customerEmail}
-                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerEmail: e.target.value }))}
-                              placeholder="john@example.com"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="customerPhone">Customer Phone</Label>
-                            <Input
-                              id="customerPhone"
-                              value={appointmentForm.customerPhone}
-                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerPhone: e.target.value }))}
-                              placeholder="(555) 123-4567"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="serviceSelect">Service *</Label>
-                            <Select value={appointmentForm.serviceId} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, serviceId: value }))}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select service" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {services.map((service) => (
-                                  <SelectItem key={service.id} value={service.id}>
-                                    {service.name} - ${service.price} ({service.durationMinutes}min)
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="appointmentDate">Date *</Label>
-                              <Input
-                                id="appointmentDate"
-                                type="date"
-                                value={appointmentForm.appointmentDate}
-                                onChange={(e) => setAppointmentForm(prev => ({ ...prev, appointmentDate: e.target.value }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="startTime">Time *</Label>
-                              <Select value={appointmentForm.startTime} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, startTime: value }))}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableTimeSlots.length > 0 ? (
-                                    availableTimeSlots.map((time) => (
-                                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="no-slots-available" disabled>No available slots - Configure availability first</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="appointmentStatus">Status</Label>
-                            <Select value={appointmentForm.status} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, status: value }))}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PENDING">Pending</SelectItem>
-                                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                                <SelectItem value="COMPLETED">Completed</SelectItem>
-                                <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsAppointmentModalOpen(false)}>Cancel</Button>
-                            <Button
-                              onClick={handleAppointmentSubmit}
-                              disabled={!appointmentForm.customerName || !appointmentForm.customerEmail || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.startTime}
-                            >
-                              {editingAppointment ? 'Update' : 'Create'} Appointment
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                {/* Page Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Appointments</h2>
+                    <p className="text-sm text-gray-600">Schedule and manage your bookings</p>
                   </div>
+                  <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full sm:w-auto" onClick={() => openAppointmentModal()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Appointment
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="customerName">Customer Name *</Label>
+                          <Input
+                            id="customerName"
+                            value={appointmentForm.customerName}
+                            onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerName: e.target.value }))}
+                            placeholder="John Doe"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="customerEmail">Customer Email *</Label>
+                          <Input
+                            id="customerEmail"
+                            type="email"
+                            value={appointmentForm.customerEmail}
+                            onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerEmail: e.target.value }))}
+                            placeholder="john@example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="customerPhone">Customer Phone</Label>
+                          <Input
+                            id="customerPhone"
+                            value={appointmentForm.customerPhone}
+                            onChange={(e) => setAppointmentForm(prev => ({ ...prev, customerPhone: e.target.value }))}
+                            placeholder="(555) 123-4567"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="serviceSelect">Service *</Label>
+                          <Select value={appointmentForm.serviceId} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, serviceId: value }))}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {services.map((service) => (
+                                <SelectItem key={service.id} value={service.id}>
+                                  {service.name} - ${service.price} ({service.durationMinutes}min)
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2">
+                          <div>
+                            <Label htmlFor="appointmentDate">Date *</Label>
+                            <Input
+                              id="appointmentDate"
+                              type="date"
+                              value={appointmentForm.appointmentDate}
+                              onChange={(e) => setAppointmentForm(prev => ({ ...prev, appointmentDate: e.target.value }))}
+                              className="w-full min-h-[44px]"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="startTime">Time *</Label>
+                            <Select value={appointmentForm.startTime} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, startTime: value }))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableTimeSlots.length > 0 ? (
+                                  availableTimeSlots.map((time) => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="no-slots-available" disabled>No available slots - Configure availability first</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="appointmentStatus">Status</Label>
+                          <Select value={appointmentForm.status} onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, status: value }))}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PENDING">Pending</SelectItem>
+                              <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                              <SelectItem value="COMPLETED">Completed</SelectItem>
+                              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setIsAppointmentModalOpen(false)}>Cancel</Button>
+                          <Button
+                            onClick={handleAppointmentSubmit}
+                            disabled={!appointmentForm.customerName || !appointmentForm.customerEmail || !appointmentForm.serviceId || !appointmentForm.appointmentDate || !appointmentForm.startTime}
+                          >
+                            {editingAppointment ? 'Update' : 'Create'} Appointment
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
 
+                {/* Secondary Actions Row */}
+                <div className="flex flex-wrap gap-2">
+                  {/* Manage Availability */}
+                  <Dialog open={isSlotModalOpen} onOpenChange={setIsSlotModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Manage Availability
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle>Appointment Availability</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        {/* Day - full width */}
+                        <div>
+                          <Label>Day</Label>
+                          <Select value={slotForm.dayOfWeek?.toString()} onValueChange={(value) => setSlotForm(prev => ({ ...prev, dayOfWeek: parseInt(value) }))}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select day" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">Sunday</SelectItem>
+                              <SelectItem value="1">Monday</SelectItem>
+                              <SelectItem value="2">Tuesday</SelectItem>
+                              <SelectItem value="3">Wednesday</SelectItem>
+                              <SelectItem value="4">Thursday</SelectItem>
+                              <SelectItem value="5">Friday</SelectItem>
+                              <SelectItem value="6">Saturday</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {/* Start + End - side by side */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Start Time</Label>
+                            <Input
+                              type="time"
+                              step="300"
+                              value={slotForm.startTime}
+                              onChange={(e) => setSlotForm(prev => ({ ...prev, startTime: e.target.value }))}
+                              className="w-full"
+                            />
+                          </div>
+                          <div>
+                            <Label>End Time</Label>
+                            <Input
+                              type="time"
+                              step="300"
+                              value={slotForm.endTime}
+                              onChange={(e) => setSlotForm(prev => ({ ...prev, endTime: e.target.value }))}
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                        {/* Duration - full width */}
+                        <div>
+                          <Label>Duration (minutes)</Label>
+                          <Input
+                            type="number"
+                            step="5"
+                            min="5"
+                            max="480"
+                            value={slotForm.slotDuration}
+                            onChange={(e) => setSlotForm(prev => ({ ...prev, slotDuration: parseInt(e.target.value) || 30 }))}
+                            placeholder="30"
+                            className="w-full"
+                          />
+                        </div>
+                        <Button onClick={handleCreateSlot} className="w-full">
+                          Add Time Slot
+                        </Button>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          <h4 className="font-medium text-sm">Current Availability:</h4>
+                          {appointmentSlots.length === 0 ? (
+                            <p className="text-sm text-gray-500">No availability slots configured</p>
+                          ) : (
+                            appointmentSlots.map((slot, index) => (
+                              <div key={slot.id ?? index} className="flex items-center justify-between p-2 border rounded gap-2">
+                                <span className="text-sm truncate">
+                                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][slot.dayOfWeek]} {slot.startTime}–{slot.endTime} ({slot.slotDuration}min)
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="shrink-0 h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50"
+                                  onClick={() => deleteSlotMutation.mutate(slot.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Export */}
+                  <GlossGeniusExport clientId={clientData?.id || "1"} />
+
+                  {/* CSV Import */}
+                  <Dialog open={isCsvImportModalOpen} onOpenChange={setIsCsvImportModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import CSV
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Import Appointments from CSV</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>CSV File</Label>
+                          <Input
+                            type="file"
+                            accept=".csv"
+                            onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                            className="mt-2"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Upload a CSV file with appointment data</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={downloadSampleCsv} className="flex-1">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Sample
+                          </Button>
+                          <Button onClick={handleCsvImport} disabled={!csvFile || !!csvImportProgress} className="flex-1">
+                            {csvImportProgress || 'Import'}
+                          </Button>
+                        </div>
+                        {csvImportErrors.length > 0 && (
+                          <div className="bg-red-50 border border-red-200 rounded p-3 max-h-40 overflow-y-auto">
+                            <p className="text-sm font-medium text-red-800 mb-1">Import Errors:</p>
+                            <ul className="text-xs text-red-600 space-y-1">
+                              {csvImportErrors.map((error, idx) => (
+                                <li key={idx}>• {error}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-blue-800">
+                          <p className="font-medium mb-1">Required CSV Columns:</p>
+                          <ul className="space-y-0.5">
+                            <li>• customerName</li>
+                            <li>• customerEmail</li>
+                            <li>• customerPhone</li>
+                            <li>• serviceId (from your services)</li>
+                            <li>• appointmentDate (YYYY-MM-DD)</li>
+                            <li>• startTime (HH:MM)</li>
+                            <li>• notes (optional)</li>
+                          </ul>
+                        </div>
+                        <div className="bg-green-50 border border-green-200 rounded p-3 text-xs text-green-800">
+                          <p className="font-medium mb-1">Your Available Service IDs:</p>
+                          {services.length > 0 ? (
+                            <ul className="space-y-0.5 max-h-32 overflow-y-auto">
+                              {services.map((service: ClientService) => (
+                                <li key={service.id} className="flex justify-between">
+                                  <span>{service.name}:</span>
+                                  <code className="bg-green-100 px-1 rounded font-mono">{service.id}</code>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-yellow-700">No services found. Please create services first in the Services tab.</p>
+                          )}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {/* Appointments List */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>All Appointments</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-0">
                     {appointments.length === 0 ? (
-                      <div className="text-center py-8">
-                        <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500 mb-4">No appointments scheduled</p>
+                      <div className="text-center py-12 px-4">
+                        <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Calendar className="h-7 w-7 text-gray-400" />
+                        </div>
+                        <p className="font-medium text-gray-900 mb-1">No appointments scheduled</p>
+                        <p className="text-sm text-gray-500 mb-5">Book your first appointment to get started</p>
                         <Button onClick={() => openAppointmentModal()}>Schedule Your First Appointment</Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="divide-y">
                         {appointments.map((appointment) => (
-                          <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div>
-                              <p className="font-medium">{appointment.customerName}</p>
-                              <p className="text-sm text-gray-600">{appointment.customerEmail}</p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(appointment.appointmentDate).toLocaleDateString()} • {appointment.startTime} - {appointment.endTime}
-                              </p>
-                              <p className="text-sm font-medium text-blue-600">
-                                {getServiceName(appointment.serviceId)} - ${appointment.totalPrice}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={appointment.status === 'CONFIRMED' ? 'default' : appointment.status === 'PENDING' ? 'secondary' : 'destructive'}>
+                          <div key={appointment.id} className="p-4">
+                            {/* Top row: name + status */}
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <p className="font-semibold text-gray-900 leading-tight">{appointment.customerName}</p>
+                              <Badge
+                                variant={appointment.status === 'CONFIRMED' ? 'default' : appointment.status === 'PENDING' ? 'secondary' : 'destructive'}
+                                className="shrink-0 text-xs"
+                              >
                                 {appointment.status}
                               </Badge>
-                              <div className="flex gap-1 ml-2">
-                                {appointment.status === 'PENDING' && (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-green-600 border-green-300 hover:bg-green-50"
-                                      onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'CONFIRMED' })}
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-red-600 border-red-300 hover:bg-red-50"
-                                      onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'REJECTED' })}
-                                    >
-                                      Reject
-                                    </Button>
-                                  </>
-                                )}
-                                <Button variant="outline" size="sm" onClick={() => openAppointmentModal(appointment)}>
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedCalendarAppointment(appointment);
-                                    setIsCalendarDialogOpen(true);
-                                  }}
-                                  data-testid="button-send-calendar"
-                                >
-                                  <CalendarPlus className="h-4 w-4" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to delete this appointment with {appointment.customerName}?
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => deleteAppointmentMutation.mutate(appointment.id)}>
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
+                            </div>
+                            {/* Details */}
+                            <p className="text-xs text-gray-500 mb-0.5">{appointment.customerEmail}</p>
+                            <p className="text-sm text-gray-700 mb-0.5">
+                              {new Date(appointment.appointmentDate).toLocaleDateString()} • {appointment.startTime} – {appointment.endTime}
+                            </p>
+                            <p className="text-sm font-medium text-blue-600 mb-3">
+                              {getServiceName(appointment.serviceId)} · ${appointment.totalPrice}
+                            </p>
+                            {/* Actions */}
+                            <div className="flex flex-wrap gap-2">
+                              {appointment.status === 'PENDING' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-green-600 border-green-300 hover:bg-green-50 text-xs h-8"
+                                    onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'CONFIRMED' })}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 border-red-300 hover:bg-red-50 text-xs h-8"
+                                    onClick={() => updateAppointmentStatusMutation.mutate({ id: appointment.id, status: 'REJECTED' })}
+                                  >
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => openAppointmentModal(appointment)}>
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  setSelectedCalendarAppointment(appointment);
+                                  setIsCalendarDialogOpen(true);
+                                }}
+                                data-testid="button-send-calendar"
+                              >
+                                <CalendarPlus className="h-3.5 w-3.5" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-red-500 border-red-200 hover:bg-red-50">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this appointment with {appointment.customerName}?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deleteAppointmentMutation.mutate(appointment.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </div>
                         ))}
@@ -1581,11 +1579,14 @@ export default function ClientDashboard() {
 
             {activeView === "leads" && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Leads</h2>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Leads</h2>
+                    <p className="text-sm text-gray-600">Manage your leads and track conversions</p>
+                  </div>
                   <Dialog open={isLeadModalOpen} onOpenChange={setIsLeadModalOpen}>
                     <DialogTrigger asChild>
-                      <Button onClick={() => openLeadModal()}>
+                      <Button className="w-full sm:w-auto" onClick={() => openLeadModal()}>
                         <Plus className="h-4 w-4 mr-2" />
                         Add Lead
                       </Button>
@@ -1834,19 +1835,22 @@ export default function ClientDashboard() {
             )}
 
             {activeView === "website" && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Your Business Website</h2>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={openWebsitePreview}>
+              <div className="space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-bold text-gray-900">Your Business Website</h2>
+                    <p className="text-sm text-gray-600">Manage your public website and online presence</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <Button variant="outline" size="sm" onClick={openWebsitePreview}>
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Preview Website
+                      Preview
                     </Button>
                     <Dialog open={isWebsiteModalOpen} onOpenChange={setIsWebsiteModalOpen}>
                       <DialogTrigger asChild>
-                        <Button>
+                        <Button size="sm">
                           <Settings className="h-4 w-4 mr-2" />
-                          Website Settings
+                          Settings
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-lg">
@@ -1875,12 +1879,25 @@ export default function ClientDashboard() {
                           </div>
                           <div>
                             <Label htmlFor="primaryColor">Primary Color</Label>
-                            <Input
-                              id="primaryColor"
-                              type="color"
-                              value={websiteSettings.primaryColor}
-                              onChange={(e) => setWebsiteSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
-                            />
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <div className="relative h-10 w-10 shrink-0">
+                                <input
+                                  id="primaryColor"
+                                  type="color"
+                                  value={websiteSettings.primaryColor}
+                                  onChange={(e) => setWebsiteSettings(prev => ({ ...prev, primaryColor: e.target.value }))}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  style={{ WebkitAppearance: 'none' } as React.CSSProperties}
+                                />
+                                <div
+                                  className="h-10 w-10 rounded-lg border-2 border-gray-200 shadow-sm pointer-events-none"
+                                  style={{ backgroundColor: websiteSettings.primaryColor }}
+                                />
+                              </div>
+                              <span className="text-sm text-gray-600 font-mono uppercase tracking-wide">
+                                {websiteSettings.primaryColor}
+                              </span>
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -1935,33 +1952,30 @@ export default function ClientDashboard() {
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Preview card */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Website Preview</CardTitle>
+                    <CardHeader className="pb-3">
+                      <h3 className="text-base font-semibold text-gray-900">Website Preview</h3>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
                       <div className="border rounded-lg p-4 bg-gray-50">
-                        <div className="mb-4">
-                          <h3 className="text-lg font-semibold">{websiteSettings.title || clientData?.businessName}</h3>
-                          <p className="text-sm text-gray-600">{websiteSettings.description || 'Professional services for all your needs'}</p>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-gray-500">✓ Contact Information</p>
-                          {websiteSettings.showServices && <p className="text-xs text-gray-500">✓ Service Listings</p>}
-                          {websiteSettings.showBooking && <p className="text-xs text-gray-500">✓ Online Booking</p>}
+                        <p className="font-semibold text-gray-900 mb-1">{websiteSettings.title || clientData?.businessName}</p>
+                        <p className="text-sm text-gray-500 mb-3">{websiteSettings.description || 'Professional services for all your needs'}</p>
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-400">✓ Contact Information</p>
+                          {websiteSettings.showServices && <p className="text-xs text-gray-400">✓ Service Listings</p>}
+                          {websiteSettings.showBooking && <p className="text-xs text-gray-400">✓ Online Booking</p>}
                         </div>
                       </div>
-                      <div className="mt-4 text-center space-y-2">
-                        <Button variant="outline" onClick={openWebsitePreview}>
+                      <div className="flex flex-col gap-2">
+                        <Button variant="outline" className="w-full" onClick={openWebsitePreview}>
                           <ExternalLink className="h-4 w-4 mr-2" />
                           View Full Website
                         </Button>
-                        <br />
                         <Button
-                          variant="default"
+                          className="w-full bg-blue-600 hover:bg-blue-700"
                           onClick={() => setLocation(`/website-builder?clientId=${clientData?.id}`)}
-                          className="bg-blue-600 hover:bg-blue-700"
                         >
                           <Settings className="h-4 w-4 mr-2" />
                           Advanced Website Builder
@@ -1970,36 +1984,37 @@ export default function ClientDashboard() {
                     </CardContent>
                   </Card>
 
+                  {/* Features card */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Website Features</CardTitle>
+                    <CardHeader className="pb-3">
+                      <h3 className="text-base font-semibold text-gray-900">Website Features</h3>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-3">
+                      <div className="space-y-3 mb-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Public Landing Page</span>
-                          <Badge variant="default">Active</Badge>
+                          <span className="text-sm text-gray-700">Public Landing Page</span>
+                          <Badge variant="default" className="text-xs">Active</Badge>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Service Showcase</span>
-                          <Badge variant={websiteSettings.showServices ? "default" : "secondary"}>
+                          <span className="text-sm text-gray-700">Service Showcase</span>
+                          <Badge variant={websiteSettings.showServices ? "default" : "secondary"} className="text-xs">
                             {websiteSettings.showServices ? "Enabled" : "Disabled"}
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Online Booking</span>
-                          <Badge variant={websiteSettings.showBooking ? "default" : "secondary"}>
+                          <span className="text-sm text-gray-700">Online Booking</span>
+                          <Badge variant={websiteSettings.showBooking ? "default" : "secondary"} className="text-xs">
                             {websiteSettings.showBooking ? "Enabled" : "Disabled"}
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Mobile Responsive</span>
-                          <Badge variant="default">Yes</Badge>
+                          <span className="text-sm text-gray-700">Mobile Responsive</span>
+                          <Badge variant="default" className="text-xs">Yes</Badge>
                         </div>
                       </div>
-                      <div className="mt-4 pt-4 border-t">
-                        <p className="text-sm text-gray-600">Website URL:</p>
-                        <p className="text-sm font-mono bg-gray-100 p-2 rounded">
+                      <div className="pt-3 border-t">
+                        <p className="text-xs text-gray-500 mb-1">Website URL</p>
+                        <p className="text-xs font-mono bg-gray-100 px-2 py-1.5 rounded text-gray-700 break-all">
                           /client-website/{clientData?.id}
                         </p>
                       </div>
@@ -2010,8 +2025,11 @@ export default function ClientDashboard() {
             )}
 
             {activeView === "settings" && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Settings</h2>
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Settings</h2>
+                  <p className="text-sm text-gray-600">Manage your business information and preferences</p>
+                </div>
 
                 <Card>
                   <CardHeader>
@@ -2089,20 +2107,26 @@ export default function ClientDashboard() {
                     <CardTitle>Operating Hours</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                        <div key={day} className="flex items-center justify-between">
-                          <span className="w-20 font-medium">{day}</span>
-                          <div className="flex items-center gap-2">
-                            <Input type="time" defaultValue="09:00" className="w-24" />
-                            <span>to</span>
-                            <Input type="time" defaultValue="17:00" className="w-24" />
-                            <input type="checkbox" defaultChecked={day !== 'Sunday'} className="ml-2" />
-                            <span className="text-sm text-gray-600">Open</span>
+                        <div key={day} className="grid grid-cols-[80px_1fr] sm:flex sm:items-center sm:gap-3 gap-y-1 items-center">
+                          <span className="font-medium text-sm truncate">{day}</span>
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                            <Input type="time" defaultValue="09:00" className="w-[100px] sm:w-28 text-sm px-2" />
+                            <span className="text-gray-500 text-xs shrink-0">to</span>
+                            <Input type="time" defaultValue="17:00" className="w-[100px] sm:w-28 text-sm px-2" />
+                            <label className="flex items-center gap-1.5 shrink-0 ml-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                defaultChecked={day !== 'Sunday'}
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                              />
+                              <span className="text-sm text-gray-600">Open</span>
+                            </label>
                           </div>
                         </div>
                       ))}
-                      <Button className="mt-4">Save Operating Hours</Button>
+                      <Button className="mt-2 w-full sm:w-auto">Save Operating Hours</Button>
                     </div>
                   </CardContent>
                 </Card>

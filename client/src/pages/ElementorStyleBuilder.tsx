@@ -25,7 +25,8 @@ import {
   Trash2,
   GripVertical,
   X,
-  PanelLeft
+  PanelLeft,
+  ArrowLeft
 } from 'lucide-react';
 import FigmaDesignedWebsite from '@/components/FigmaDesignedWebsite';
 import { EditableWebsiteProvider } from '@/contexts/EditableWebsiteContext';
@@ -205,7 +206,7 @@ export default function ElementorStyleBuilder() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 relative">
+    <div className="flex flex-col bg-gray-100 relative overflow-hidden" style={{ position: 'fixed', inset: 0 }}>
       {/* Mobile Sidebar Overlay */}
       {showSidebar && (
         <div
@@ -214,18 +215,24 @@ export default function ElementorStyleBuilder() {
         />
       )}
 
-      {/* Top Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+      {/* Top Toolbar - paddingTop extends bg behind iOS status bar, content sits below it */}
+      <div className="bg-white border-b border-gray-200 px-2 sm:px-6 pb-2 sm:pb-3 flex items-center justify-between gap-2 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex items-center gap-1 sm:gap-3 min-w-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            onClick={() => navigate(`/client-dashboard?clientId=${clientId}`)}
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <Button variant="ghost" size="sm" className="lg:hidden shrink-0" onClick={() => setShowSidebar(true)}>
             <PanelLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate" data-testid="builder-title">
             Website Builder
           </h1>
-          <span className="text-sm text-gray-500 hidden sm:inline">
-            {client?.businessName || 'Loading...'}
-          </span>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-3 shrink-0">
@@ -252,12 +259,15 @@ export default function ElementorStyleBuilder() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Settings Panel */}
-        <div className={`
-          fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 overflow-y-auto
-          transform transition-transform duration-200 ease-in-out
-          lg:relative lg:translate-x-0 lg:z-auto
-          ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
-        `}>
+        <div
+          className={`
+            fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 overflow-y-auto
+            transform transition-transform duration-200 ease-in-out
+            lg:relative lg:translate-x-0 lg:z-auto
+            ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
+          `}
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
           <div className="p-4 sm:p-6 space-y-6">
             {/* Close button for mobile */}
             <div className="flex items-center justify-between lg:hidden">

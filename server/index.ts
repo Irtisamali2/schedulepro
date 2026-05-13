@@ -105,11 +105,11 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   const port = parseInt(process.env.PORT || '5000', 10);
 
-  // Windows-compatible server configuration
+  // Platform-compatible server configuration
   const isWindows = process.platform === 'win32';
   const serverOptions: any = isWindows
-    ? { port }  // Windows doesn't support reusePort
-    : { port, host: "0.0.0.0", reusePort: true };
+    ? { port }
+    : { port, host: "127.0.0.1" };
 
   server.listen(serverOptions, () => {
     log(`serving on port ${port}`);

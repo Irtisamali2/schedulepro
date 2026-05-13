@@ -157,14 +157,8 @@ function DomainManagement() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Custom Domains</CardTitle>
-              <CardDescription>
-                Configure custom domains for your admin panel and client websites
-              </CardDescription>
-            </div>
+        <CardHeader className="pb-3">
+          <div className="flex justify-center">
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="button-add-domain">

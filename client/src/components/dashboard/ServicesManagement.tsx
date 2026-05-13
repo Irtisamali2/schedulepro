@@ -356,20 +356,20 @@ export default function ServicesManagement({ hasPermission, clientId = "client_1
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Services Management</h2>
-          <p className="text-muted-foreground">
-            {canPerform('services.create') || canPerform('services.edit') 
+          <h2 className="text-xl font-bold text-gray-900">Services Management</h2>
+          <p className="text-sm text-gray-600">
+            {canPerform('services.create') || canPerform('services.edit')
               ? "Manage your services, pricing, and durations"
               : "View services and their details"
             }
           </p>
         </div>
         {canPerform('services.create') && (
-          <Dialog open={isAddDialogOpen} onOpenChange={closeAddDialog}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!open) closeAddDialog(); }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-service">
+              <Button className="w-full sm:w-auto" onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-service">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Service
               </Button>
