@@ -434,8 +434,10 @@ export default function ClientDashboard() {
       setEditingAppointment(null);
       toast({ title: 'Appointment updated successfully' });
     },
-    onError: () => {
-      toast({ title: 'Failed to update appointment', variant: 'destructive' });
+    onError: (error: any) => {
+      console.error('Update appointment failed:', error);
+      const message = error?.message || 'Failed to update appointment';
+      toast({ title: message, variant: 'destructive' });
     }
   });
 
@@ -839,6 +841,52 @@ export default function ClientDashboard() {
     };
 
     createSlotMutation.mutate(slotData);
+  };
+
+  const updateBusinessInfo = async () => {
+    try {
+      const nameEl = document.getElementById('editBusinessName') as HTMLInputElement | null;
+      const contactEl = document.getElementById('editContactPerson') as HTMLInputElement | null;
+      const emailEl = document.getElementById('editEmail') as HTMLInputElement | null;
+      const phoneEl = document.getElementById('editPhone') as HTMLInputElement | null;
+      const addressEl = document.getElementById('editAddress') as HTMLInputElement | null;
+
+      const payload: any = {};
+      if (nameEl) payload.businessName = nameEl.value;
+      if (contactEl) payload.contactPerson = contactEl.value;
+      if (emailEl) payload.email = emailEl.value;
+      if (phoneEl) payload.phone = phoneEl.value;
+      if (addressEl) payload.businessAddress = addressEl.value;
+
+      // Ensure we have a client id
+      if (!clientData?.id) {
+        toast({ title: 'Client not found', variant: 'destructive' });
+        return;
+      }
+
+      const res = await apiRequest(`/api/clients/${clientData.id}`, 'PUT', payload);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        toast({ title: 'Failed to update', description: err?.error || 'Server error', variant: 'destructive' });
+        return;
+      }
+
+      const updatedClient = await res.json();
+
+      // Update local state and localStorage
+      setClientData(updatedClient);
+      try { localStorage.setItem('clientData', JSON.stringify(updatedClient)); } catch (e) { }
+
+      // Refresh queries that may display client info
+      queryClient.invalidateQueries({ queryKey: [`/api/client/${clientData.id}/dashboard`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/client/${clientData.id}/services`] });
+
+      toast({ title: 'Business information updated successfully' });
+      setIsSettingsModalOpen(false);
+    } catch (error: any) {
+      console.error('Update business info error:', error);
+      toast({ title: 'Update failed', description: error?.message || 'Unknown error', variant: 'destructive' });
+    }
   };
 
   // Fetch available time slots when date changes
@@ -2091,10 +2139,7 @@ export default function ClientDashboard() {
                           </div>
                           <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setIsSettingsModalOpen(false)}>Cancel</Button>
-                            <Button onClick={() => {
-                              toast({ title: 'Business information updated successfully' });
-                              setIsSettingsModalOpen(false);
-                            }}>Save Changes</Button>
+                            <Button onClick={() => updateBusinessInfo()}>Save Changes</Button>
                           </div>
                         </div>
                       </DialogContent>

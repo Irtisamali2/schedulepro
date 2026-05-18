@@ -330,6 +330,46 @@ a, button, img {
 .scroll-container {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Extra padding while keyboard is open to keep inputs above the keyboard */
+.keyboard-open .scroll-container {
+  padding-bottom: 320px; /* generous default; adjusted on native builds via Capacitor if available */
+}
+
+/* When keyboard is open, lower dialogs and allow them to scroll internally */
+.keyboard-open .dialog-content {
+  top: 10% !important;
+  transform: translateX(-50%) translateY(0) !important;
+  max-height: calc(100vh - 360px) !important;
+  overflow-y: auto !important;
+}
+
+/* Smaller devices: give even more room */
+@media (max-width: 640px) {
+  .keyboard-open .dialog-content {
+    top: 6% !important;
+    max-height: calc(100vh - 360px) !important;
+    padding-bottom: 24px !important;
+  }
+}
+
+/* When keyboard is open, allow natural document scrolling so content and modals
+   can be repositioned by the browser / visualViewport. This overrides the
+   earlier "position: fixed" root locking used for desktop/modal behavior. */
+html.keyboard-open,
+html.keyboard-open body {
+  position: static !important;
+  height: auto !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Ensure scroll-container still uses visual area when keyboard is open */
+html.keyboard-open .scroll-container {
+  height: auto !important;
 }
 
 /* Fix iOS input zoom */

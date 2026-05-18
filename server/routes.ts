@@ -2616,11 +2616,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { appointmentId, clientId } = req.params;
       const updates = req.body;
+      console.log(`[PUT] /api/client/${clientId}/appointments/${appointmentId} - payload:`, updates);
       
       // Get the appointment before update to check for status changes
       const originalAppointment = await storage.getAppointment(appointmentId);
       if (!originalAppointment) {
         return res.status(404).json({ error: "Appointment not found" });
+      }
+
+      // Ensure the appointment belongs to this client to prevent cross-tenant updates
+      if (originalAppointment.clientId !== clientId) {
+        console.warn(`Appointment ${appointmentId} clientId mismatch: requested client ${clientId}, appointment belongs to ${originalAppointment.clientId}`);
+        return res.status(403).json({ error: "Unauthorized: appointment does not belong to this client" });
       }
       
       // Update the appointment

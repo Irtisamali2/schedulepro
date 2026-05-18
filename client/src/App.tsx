@@ -44,7 +44,7 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 safe-top safe-bottom">
-      <main className="flex-grow">
+      <main className="flex-grow scroll-container">
         <Suspense fallback={<LoadingFallback />}>
         <Switch>
           {/* Public Landing Page - redirect to client login on mobile app */}

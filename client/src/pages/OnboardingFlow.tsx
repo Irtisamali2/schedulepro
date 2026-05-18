@@ -982,8 +982,8 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100"
-      style={{ position: 'fixed', inset: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 scroll-container"
+      style={{ minHeight: '100vh', WebkitOverflowScrolling: 'touch' as any }}>
       <div className="container mx-auto px-4 py-8" style={{ paddingTop: 'max(2rem, env(safe-area-inset-top))' }}>
         {/* Back to Home Button */}
         <div className="mb-6">
