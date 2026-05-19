@@ -2629,7 +2629,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn(`Appointment ${appointmentId} clientId mismatch: requested client ${clientId}, appointment belongs to ${originalAppointment.clientId}`);
         return res.status(403).json({ error: "Unauthorized: appointment does not belong to this client" });
       }
-      
+
+      // Normalize appointmentDate: convert string to Date object for drizzle-orm
+      if (updates.appointmentDate && typeof updates.appointmentDate === 'string') {
+        updates.appointmentDate = new Date(updates.appointmentDate);
+      }
+
       // Update the appointment
       const appointment = await storage.updateAppointment(appointmentId, updates);
       
@@ -2792,14 +2797,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Client not found" });
       }
       
-      // Get service details
+      // Get service details (non-fatal if service not found)
       const services = await storage.getClientServices(appointment.clientId);
       const service = services.find(s => s.id === appointment.serviceId);
-      
-      if (!service) {
-        return res.status(404).json({ error: "Service not found" });
-      }
-      
+      const serviceName = service?.name || 'Appointment';
+
       // Send calendar invite
       const { EmailService } = await import('./emailService');
       const emailService = new EmailService(storage);
@@ -2810,11 +2812,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           id: appointment.id,
           customerName: appointment.customerName,
-          serviceName: service.name,
+          serviceName: serviceName,
           appointmentDate: new Date(appointment.appointmentDate),
           startTime: appointment.startTime,
           endTime: appointment.endTime,
-          durationMinutes: service.durationMinutes,
+          durationMinutes: service?.durationMinutes || 60,
           notes: appointment.notes || undefined,
           businessName: client.businessName,
           businessPhone: client.phone || undefined,
@@ -2824,7 +2826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (result.success) {
-        res.json({ message: result.message, success: true });
+        res.json({ message: result.message, success: true, icsContent: result.icsContent || null });
       } else {
         res.status(500).json({ error: result.message, success: false });
       }

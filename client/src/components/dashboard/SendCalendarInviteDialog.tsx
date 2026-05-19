@@ -35,11 +35,26 @@ export default function SendCalendarInviteDialog({ isOpen, onClose, appointment 
         { recipientEmail: email }
       );
     },
-    onSuccess: () => {
-      toast({
-        title: "Calendar Invite Sent",
-        description: `Calendar invite has been sent to ${recipientEmail}`,
-      });
+    onSuccess: (data: any) => {
+      if (data?.icsContent) {
+        // Email not configured — trigger file download instead
+        const blob = new Blob([data.icsContent], { type: 'text/calendar' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'appointment.ics';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({
+          title: "Calendar File Downloaded",
+          description: "Open the downloaded .ics file to add this appointment to your calendar. To send via email, configure SMTP in Settings.",
+        });
+      } else {
+        toast({
+          title: "Calendar Invite Sent",
+          description: `Calendar invite has been sent to ${recipientEmail}`,
+        });
+      }
       onClose();
       setRecipientEmail('');
     },

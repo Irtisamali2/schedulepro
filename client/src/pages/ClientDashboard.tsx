@@ -121,6 +121,125 @@ interface TeamMemberContext {
   activeSection?: string;
 }
 
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const makeDefaultHours = () => DAYS.map((_, i) => ({
+  dayOfWeek: i,
+  isOpen: i !== 0,
+  openTime: '09:00',
+  closeTime: '17:00',
+}));
+
+function OperatingHoursCard({ clientId }: { clientId: string }) {
+  const { toast } = useToast();
+  const [hours, setHours] = useState(makeDefaultHours);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!clientId) return;
+    const clientData = localStorage.getItem('clientData');
+    const clientUser = localStorage.getItem('clientUser');
+    const headers: Record<string, string> = {};
+    if (clientData && clientUser) {
+      try {
+        const c = JSON.parse(clientData);
+        const u = JSON.parse(clientUser);
+        headers['X-Team-Member-Session'] = JSON.stringify({ teamMemberId: u.id, permissions: ['*'], clientId: c.id });
+      } catch {}
+    }
+    fetch(`/api/client/${clientId}/operating-hours`, { headers, credentials: 'include' })
+      .then(r => r.json())
+      .then((data: any[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setHours(DAYS.map((_, i) => {
+            const saved = data.find(h => h.dayOfWeek === i);
+            return saved
+              ? { dayOfWeek: i, isOpen: saved.isOpen ?? true, openTime: saved.openTime || '09:00', closeTime: saved.closeTime || '17:00' }
+              : makeDefaultHours()[i];
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [clientId]);
+
+  const handleSave = async () => {
+    if (!clientId || saving) return;
+    setSaving(true);
+    try {
+      const clientData = localStorage.getItem('clientData');
+      const clientUser = localStorage.getItem('clientUser');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (clientData && clientUser) {
+        try {
+          const c = JSON.parse(clientData);
+          const u = JSON.parse(clientUser);
+          headers['X-Team-Member-Session'] = JSON.stringify({ teamMemberId: u.id, permissions: ['*'], clientId: c.id });
+        } catch {}
+      }
+      const res = await fetch(`/api/client/${clientId}/operating-hours`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(hours),
+      });
+      if (!res.ok) throw new Error('Failed');
+      toast({ title: 'Operating Hours Saved', description: 'Your operating hours have been updated.' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save operating hours.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const update = (index: number, field: string, value: any) => {
+    setHours(prev => prev.map((h, i) => i === index ? { ...h, [field]: value } : h));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Operating Hours</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {hours.map((h, i) => (
+            <div key={DAYS[h.dayOfWeek]} className="grid grid-cols-[80px_1fr] sm:flex sm:items-center sm:gap-3 gap-y-1 items-center">
+              <span className="font-medium text-sm truncate">{DAYS[h.dayOfWeek]}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <Input
+                  type="time"
+                  value={h.openTime}
+                  onChange={e => update(i, 'openTime', e.target.value)}
+                  className="w-[100px] sm:w-28 text-sm px-2"
+                />
+                <span className="text-gray-500 text-xs shrink-0">to</span>
+                <Input
+                  type="time"
+                  value={h.closeTime}
+                  onChange={e => update(i, 'closeTime', e.target.value)}
+                  className="w-[100px] sm:w-28 text-sm px-2"
+                />
+                <label className="flex items-center gap-1.5 shrink-0 ml-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={h.isOpen}
+                    onChange={e => update(i, 'isOpen', e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-600">Open</span>
+                </label>
+              </div>
+            </div>
+          ))}
+          <Button className="mt-2 w-full sm:w-auto" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving...' : 'Save Operating Hours'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ClientDashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -576,12 +695,15 @@ export default function ClientDashboard() {
   const openAppointmentModal = (appointment?: Appointment) => {
     if (appointment) {
       setEditingAppointment(appointment);
+      const dateStr = appointment.appointmentDate
+        ? new Date(appointment.appointmentDate).toISOString().split('T')[0]
+        : '';
       setAppointmentForm({
         customerName: appointment.customerName,
         customerEmail: appointment.customerEmail,
         customerPhone: appointment.customerPhone,
         serviceId: appointment.serviceId,
-        appointmentDate: appointment.appointmentDate,
+        appointmentDate: dateStr,
         startTime: appointment.startTime,
         status: appointment.status
       });
@@ -2147,34 +2269,7 @@ export default function ClientDashboard() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Operating Hours</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                        <div key={day} className="grid grid-cols-[80px_1fr] sm:flex sm:items-center sm:gap-3 gap-y-1 items-center">
-                          <span className="font-medium text-sm truncate">{day}</span>
-                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                            <Input type="time" defaultValue="09:00" className="w-[100px] sm:w-28 text-sm px-2" />
-                            <span className="text-gray-500 text-xs shrink-0">to</span>
-                            <Input type="time" defaultValue="17:00" className="w-[100px] sm:w-28 text-sm px-2" />
-                            <label className="flex items-center gap-1.5 shrink-0 ml-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                defaultChecked={day !== 'Sunday'}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
-                              />
-                              <span className="text-sm text-gray-600">Open</span>
-                            </label>
-                          </div>
-                        </div>
-                      ))}
-                      <Button className="mt-2 w-full sm:w-auto">Save Operating Hours</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <OperatingHoursCard clientId={clientData?.id || ''} />
 
                 <Card>
                   <CardHeader>

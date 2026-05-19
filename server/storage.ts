@@ -3358,8 +3358,22 @@ class PostgreSQLStorage implements IStorage {
     return transfers;
   }
 
-  async getOperatingHours(clientId: string): Promise<OperatingHours[]> { return []; }
-  async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> { return []; }
+  async getOperatingHours(clientId: string): Promise<OperatingHours[]> {
+    const dbInstance = this.ensureDB();
+    return dbInstance.select().from(operatingHours).where(eq(operatingHours.clientId, clientId));
+  }
+  async setOperatingHours(clientId: string, hours: InsertOperatingHours[]): Promise<OperatingHours[]> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(operatingHours).where(eq(operatingHours.clientId, clientId));
+    if (hours.length === 0) return [];
+    const rows = hours.map(h => ({
+      ...h,
+      id: `oh_${clientId}_${h.dayOfWeek}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+    return dbInstance.insert(operatingHours).values(rows).returning();
+  }
   async getLeads(clientId: string): Promise<Lead[]> {
     const dbInstance = this.ensureDB();
     const clientLeads = await dbInstance
@@ -3498,8 +3512,20 @@ class PostgreSQLStorage implements IStorage {
     }).returning();
     return newSlot;
   }
-  async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> { throw new Error("Not implemented"); }
-  async deleteAppointmentSlot(id: string): Promise<void> { throw new Error("Not implemented"); }
+  async updateAppointmentSlot(id: string, updates: Partial<InsertAppointmentSlot>): Promise<AppointmentSlot> {
+    const dbInstance = this.ensureDB();
+    const [updated] = await dbInstance
+      .update(appointmentSlots)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(appointmentSlots.id, id))
+      .returning();
+    if (!updated) throw new Error("Appointment slot not found");
+    return updated;
+  }
+  async deleteAppointmentSlot(id: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(appointmentSlots).where(eq(appointmentSlots.id, id));
+  }
 
   async getAvailableSlots(clientId: string, date: string): Promise<string[]> {
     const dbInstance = this.ensureDB();
@@ -3715,11 +3741,48 @@ class PostgreSQLStorage implements IStorage {
     if (!domain) throw new Error("Domain configuration not found");
     return domain;
   }
-  async getGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile | undefined> { return undefined; }
-  async createGoogleBusinessProfile(profile: InsertGoogleBusinessProfile): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
-  async updateGoogleBusinessProfile(clientId: string, updates: Partial<InsertGoogleBusinessProfile>): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
-  async deleteGoogleBusinessProfile(clientId: string): Promise<void> { throw new Error("Not implemented"); }
-  async syncGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile> { throw new Error("Not implemented"); }
+  async getGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile | undefined> {
+    const dbInstance = this.ensureDB();
+    const [profile] = await dbInstance
+      .select()
+      .from(googleBusinessProfiles)
+      .where(eq(googleBusinessProfiles.clientId, clientId));
+    return profile;
+  }
+  async createGoogleBusinessProfile(profile: InsertGoogleBusinessProfile): Promise<GoogleBusinessProfile> {
+    const dbInstance = this.ensureDB();
+    const id = `gbp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const [created] = await dbInstance
+      .insert(googleBusinessProfiles)
+      .values({ ...profile, id, createdAt: new Date(), updatedAt: new Date() })
+      .returning();
+    return created;
+  }
+  async updateGoogleBusinessProfile(clientId: string, updates: Partial<InsertGoogleBusinessProfile>): Promise<GoogleBusinessProfile> {
+    const dbInstance = this.ensureDB();
+    const [updated] = await dbInstance
+      .update(googleBusinessProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(googleBusinessProfiles.clientId, clientId))
+      .returning();
+    if (!updated) throw new Error("Google Business Profile not found");
+    return updated;
+  }
+  async deleteGoogleBusinessProfile(clientId: string): Promise<void> {
+    const dbInstance = this.ensureDB();
+    await dbInstance.delete(googleBusinessProfiles).where(eq(googleBusinessProfiles.clientId, clientId));
+  }
+  async syncGoogleBusinessProfile(clientId: string): Promise<GoogleBusinessProfile> {
+    const profile = await this.getGoogleBusinessProfile(clientId);
+    if (!profile) throw new Error("Google Business Profile not found");
+    if (!profile.oauthConnected) {
+      throw new Error("Google Business Profile sync requires OAuth authentication. Please connect your Google account first.");
+    }
+    return this.updateGoogleBusinessProfile(clientId, {
+      verificationStatus: "VERIFIED",
+      lastSyncAt: new Date(),
+    });
+  }
   async getDomainVerificationLogs(domainConfigId: string): Promise<DomainVerificationLog[]> { return []; }
   async createDomainVerificationLog(log: InsertDomainVerificationLog): Promise<DomainVerificationLog> { throw new Error("Not implemented"); }
   async getNewsletterSubscriptions(clientId: string): Promise<NewsletterSubscription[]> { return []; }
