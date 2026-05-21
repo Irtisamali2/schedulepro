@@ -2219,16 +2219,41 @@ class MemStorage implements IStorage {
     }
     const smtp = this.systemSettings.smtp || {};
     const isConfigured = !!(smtp.smtpHost && smtp.smtpPort && smtp.smtpUsername && smtp.smtpPassword && smtp.smtpFromEmail);
+
+    if (isConfigured) {
+      return {
+        smtpHost: smtp.smtpHost || null,
+        smtpPort: smtp.smtpPort || null,
+        smtpUsername: smtp.smtpUsername || null,
+        smtpPassword: smtp.smtpPassword || null,
+        smtpFromEmail: smtp.smtpFromEmail || null,
+        smtpFromName: smtp.smtpFromName || null,
+        smtpSecure: smtp.smtpSecure !== undefined ? smtp.smtpSecure : true,
+        smtpEnabled: smtp.smtpEnabled || false,
+        isConfigured,
+      };
+    }
+
+    // Fall back to environment variables
+    const envHost = process.env.SYSTEM_SMTP_HOST;
+    const envPort = process.env.SYSTEM_SMTP_PORT ? parseInt(process.env.SYSTEM_SMTP_PORT) : null;
+    const envUser = process.env.SYSTEM_SMTP_USER;
+    const envPass = process.env.SYSTEM_SMTP_PASS;
+    const envFrom = process.env.SYSTEM_SMTP_FROM_EMAIL;
+    const envFromName = process.env.SYSTEM_SMTP_FROM_NAME || 'Scheduled Platform';
+    const envSecure = process.env.SYSTEM_SMTP_SECURE === 'true' || envPort === 465;
+    const envConfigured = !!(envHost && envPort && envUser && envPass && envFrom);
+
     return {
-      smtpHost: smtp.smtpHost || null,
-      smtpPort: smtp.smtpPort || null,
-      smtpUsername: smtp.smtpUsername || null,
-      smtpPassword: smtp.smtpPassword || null,
-      smtpFromEmail: smtp.smtpFromEmail || null,
-      smtpFromName: smtp.smtpFromName || null,
-      smtpSecure: smtp.smtpSecure !== undefined ? smtp.smtpSecure : true,
-      smtpEnabled: smtp.smtpEnabled || false,
-      isConfigured,
+      smtpHost: envHost || null,
+      smtpPort: envPort,
+      smtpUsername: envUser || null,
+      smtpPassword: envPass || null,
+      smtpFromEmail: envFrom || null,
+      smtpFromName: envFromName,
+      smtpSecure: envSecure,
+      smtpEnabled: envConfigured,
+      isConfigured: envConfigured,
     };
   }
 
@@ -4064,16 +4089,41 @@ class PostgreSQLStorage implements IStorage {
     }
     const smtp = this.systemSettings.smtp || {};
     const isConfigured = !!(smtp.smtpHost && smtp.smtpPort && smtp.smtpUsername && smtp.smtpPassword && smtp.smtpFromEmail);
+
+    if (isConfigured) {
+      return {
+        smtpHost: smtp.smtpHost || null,
+        smtpPort: smtp.smtpPort || null,
+        smtpUsername: smtp.smtpUsername || null,
+        smtpPassword: smtp.smtpPassword || null,
+        smtpFromEmail: smtp.smtpFromEmail || null,
+        smtpFromName: smtp.smtpFromName || null,
+        smtpSecure: smtp.smtpSecure !== undefined ? smtp.smtpSecure : true,
+        smtpEnabled: smtp.smtpEnabled || false,
+        isConfigured,
+      };
+    }
+
+    // Fall back to environment variables
+    const envHost = process.env.SYSTEM_SMTP_HOST;
+    const envPort = process.env.SYSTEM_SMTP_PORT ? parseInt(process.env.SYSTEM_SMTP_PORT) : null;
+    const envUser = process.env.SYSTEM_SMTP_USER;
+    const envPass = process.env.SYSTEM_SMTP_PASS;
+    const envFrom = process.env.SYSTEM_SMTP_FROM_EMAIL;
+    const envFromName = process.env.SYSTEM_SMTP_FROM_NAME || 'Scheduled Platform';
+    const envSecure = process.env.SYSTEM_SMTP_SECURE === 'true' || envPort === 465;
+    const envConfigured = !!(envHost && envPort && envUser && envPass && envFrom);
+
     return {
-      smtpHost: smtp.smtpHost || null,
-      smtpPort: smtp.smtpPort || null,
-      smtpUsername: smtp.smtpUsername || null,
-      smtpPassword: smtp.smtpPassword || null,
-      smtpFromEmail: smtp.smtpFromEmail || null,
-      smtpFromName: smtp.smtpFromName || null,
-      smtpSecure: smtp.smtpSecure !== undefined ? smtp.smtpSecure : true,
-      smtpEnabled: smtp.smtpEnabled || false,
-      isConfigured,
+      smtpHost: envHost || null,
+      smtpPort: envPort,
+      smtpUsername: envUser || null,
+      smtpPassword: envPass || null,
+      smtpFromEmail: envFrom || null,
+      smtpFromName: envFromName,
+      smtpSecure: envSecure,
+      smtpEnabled: envConfigured,
+      isConfigured: envConfigured,
     };
   }
 
